@@ -1,3 +1,17 @@
+server:
+  port: 8080
+
 spring:
   application:
-    name: library-backend
+    name: quanlythuvien
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/quanlythuvien
+    username: postgres
+    password: 123456 # đổi mật khẩu ở đây nhé
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
