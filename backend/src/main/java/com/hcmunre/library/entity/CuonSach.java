@@ -14,7 +14,7 @@ import lombok.*;
 public class CuonSach extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer maCuonSach;
+    private Long maCuonSach;
 
     private String maVach;
     private String viTriKe;

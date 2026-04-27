@@ -15,7 +15,7 @@ import java.util.List;
 public class TheLoai extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer maTheLoai;
+    private Long maTheLoai;
 
     private String tentheLoai;
     private String moTa;

@@ -13,7 +13,7 @@ import lombok.*;
 public class HinhAnhSach extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer maHinhAnh;
+    private Long maHinhAnh;
 
     private String duongDan;
 
