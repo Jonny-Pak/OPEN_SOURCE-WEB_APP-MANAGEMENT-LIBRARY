@@ -15,7 +15,7 @@ import java.util.List;
 public class NhaXuatBan extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer maNhaXuatBan;
+    private Long maNhaXuatBan;
 
     private String tenNhaXuatBan;
     private String diaChi;

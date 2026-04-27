@@ -15,7 +15,7 @@ import java.util.List;
 public class TacGia extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer maTacGia;
+    private Long maTacGia;
 
     private String hoDem;
     private String ten;

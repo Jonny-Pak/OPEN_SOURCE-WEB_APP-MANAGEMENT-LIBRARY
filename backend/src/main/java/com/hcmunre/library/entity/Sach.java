@@ -15,7 +15,7 @@ import java.util.List;
 public class Sach extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer maSach;
+    private Long maSach;
 
     private String tenSach;
     private String maIsbn;
