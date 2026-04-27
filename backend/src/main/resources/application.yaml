@@ -1,3 +1,28 @@
 spring:
   application:
-    name: library-backend
+    name: quanlythuvien
+
+  config:
+    import: optional:classpath:application-local.yaml
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/quanlythuvien}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:123456}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+app:
+  security:
+    default-user:
+      username: ${APP_SECURITY_USERNAME:admin}
+      password: ${APP_SECURITY_PASSWORD:admin123}
+      role: ${APP_SECURITY_ROLE:THU_THU}
+    jwt:
+      secret: ${APP_JWT_SECRET:change-this-secret-key-change-this-secret-key}
+      access-token-expiration-seconds: ${APP_JWT_EXP_SECONDS:3600}
+      refresh-token-expiration-seconds: ${APP_JWT_REFRESH_EXP_SECONDS:604800}

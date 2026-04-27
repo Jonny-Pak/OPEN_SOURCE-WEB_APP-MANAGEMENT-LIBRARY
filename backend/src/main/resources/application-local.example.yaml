@@ -1,0 +1,22 @@
+# Copy this file to application-local.yaml for machine-specific settings.
+# application-local.yaml is ignored by git.
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/quanlythuvien
+    username: postgres
+    password: your_local_password
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+app:
+  security:
+    default-user:
+      username: admin
+      password: admin123
+      role: THU_THU
+    jwt:
+      secret: change-this-secret-key-change-this-secret-key
+      access-token-expiration-seconds: 3600

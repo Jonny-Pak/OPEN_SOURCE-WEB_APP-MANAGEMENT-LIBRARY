@@ -1,0 +1,14 @@
+# Workspace/editor local files
+.vscode/
+
+# Local helper scripts (machine-specific)
+start-backend.cmd
+start-backend.ps1
+
+# Local backend overrides (do not commit secrets)
+backend/src/main/resources/application-local.yaml
+backend/src/main/resources/application-*.local.yaml
+
+# Optional local env files
+.env
+.env.*
