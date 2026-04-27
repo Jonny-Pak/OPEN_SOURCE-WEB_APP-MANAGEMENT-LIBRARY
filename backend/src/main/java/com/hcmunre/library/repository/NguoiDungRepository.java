@@ -1,6 +1,6 @@
 package com.hcmunre.library.repository;
 
-import com.hcmunre.library.entity.NguoiDung;
+import com.hcmunre.library_backend.entity.NguoiDung;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

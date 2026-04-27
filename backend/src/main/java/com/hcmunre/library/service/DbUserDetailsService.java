@@ -1,6 +1,6 @@
 package com.hcmunre.library.service;
 
-import com.hcmunre.library.entity.NguoiDung;
+import com.hcmunre.library_backend.entity.NguoiDung;
 import com.hcmunre.library.enums.TrangThaiNguoiDung;
 import com.hcmunre.library.repository.NguoiDungRepository;
 import org.springframework.security.core.GrantedAuthority;

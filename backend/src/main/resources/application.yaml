@@ -12,6 +12,7 @@ spring:
     driver-class-name: org.postgresql.Driver
 
   jpa:
+    packages-to-scan: com.hcmunre.library_backend.entity
     hibernate:
       ddl-auto: update
     show-sql: true
