@@ -78,8 +78,8 @@ public class AuthController {
     public RegisterResponse register(@Valid @RequestBody RegisterRequest request) {
         // Check if email or soDienThoai already exists
         if (nguoiDungRepository.findByEmailOrSoDienThoai(request.getEmail(), request.getSoDienThoai()).isPresent()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
-                "Email hoặc số điện thoại đã được sử dụng");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Email hoặc số điện thoại đã được sử dụng");
         }
 
         NguoiDung nguoiDung = new NguoiDung();
@@ -94,27 +94,26 @@ public class AuthController {
         NguoiDung savedUser = nguoiDungRepository.save(nguoiDung);
 
         return new RegisterResponse(
-            savedUser.getMaNguoiDung(),
-            savedUser.getEmail(),
-            savedUser.getSoDienThoai(),
-            savedUser.getHoDem(),
-            savedUser.getTen(),
-            "Đăng ký thành công"
-        );
+                savedUser.getMaNguoiDung(),
+                savedUser.getEmail(),
+                savedUser.getSoDienThoai(),
+                savedUser.getHoDem(),
+                savedUser.getTen(),
+                "Đăng ký thành công");
     }
 
     @PostMapping("/change-password")
     public Map<String, String> changePassword(
             Authentication authentication,
             @Valid @RequestBody ChangePasswordRequest request) {
-        
+
         if (authentication == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Chưa đăng nhập");
         }
 
         String username = authentication.getName();
         NguoiDung nguoiDung = nguoiDungRepository.findByEmailOrSoDienThoai(username, username)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Người dùng không tồn tại"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Người dùng không tồn tại"));
 
         // Validate old password
         if (!passwordEncoder.matches(request.getOldPassword(), nguoiDung.getMatKhau())) {
@@ -123,8 +122,8 @@ public class AuthController {
 
         // Check if new password is same as old password
         if (passwordEncoder.matches(request.getNewPassword(), nguoiDung.getMatKhau())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
-                "Mật khẩu mới phải khác với mật khẩu cũ");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Mật khẩu mới phải khác với mật khẩu cũ");
         }
 
         nguoiDung.setMatKhau(passwordEncoder.encode(request.getNewPassword()));

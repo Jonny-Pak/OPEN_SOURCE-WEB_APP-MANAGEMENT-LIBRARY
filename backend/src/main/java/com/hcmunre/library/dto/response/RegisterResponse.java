@@ -10,7 +10,8 @@ public class RegisterResponse {
     private String ten;
     private String message;
 
-    public RegisterResponse(UUID maNguoiDung, String email, String soDienThoai, String hoDem, String ten, String message) {
+    public RegisterResponse(UUID maNguoiDung, String email, String soDienThoai, String hoDem, String ten,
+            String message) {
         this.maNguoiDung = maNguoiDung;
         this.email = email;
         this.soDienThoai = soDienThoai;
