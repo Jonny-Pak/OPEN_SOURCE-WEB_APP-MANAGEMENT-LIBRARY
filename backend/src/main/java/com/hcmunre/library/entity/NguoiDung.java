@@ -1,4 +1,4 @@
-package com.hcmunre.library_backend.entity;
+package com.hcmunre.library.entity;
 
 import com.hcmunre.library.enums.TrangThaiNguoiDung;
 import com.hcmunre.library.enums.VaiTro;

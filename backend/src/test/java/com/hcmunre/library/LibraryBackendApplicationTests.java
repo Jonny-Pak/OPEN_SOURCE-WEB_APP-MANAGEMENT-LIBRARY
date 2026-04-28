@@ -1,4 +1,4 @@
-package com.hcmunre.library_backend;
+package com.hcmunre.library;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

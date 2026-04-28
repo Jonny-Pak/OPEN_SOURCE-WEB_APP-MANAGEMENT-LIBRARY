@@ -1,4 +1,4 @@
-package com.hcmunre.library_backend;
+package com.hcmunre.library;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

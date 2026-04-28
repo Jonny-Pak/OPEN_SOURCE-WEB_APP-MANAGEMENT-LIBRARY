@@ -1,6 +1,6 @@
 package com.hcmunre.library.config;
 
-import com.hcmunre.library_backend.entity.NguoiDung;
+import com.hcmunre.library.entity.NguoiDung;
 import com.hcmunre.library.enums.TrangThaiNguoiDung;
 import com.hcmunre.library.enums.VaiTro;
 import com.hcmunre.library.repository.NguoiDungRepository;
