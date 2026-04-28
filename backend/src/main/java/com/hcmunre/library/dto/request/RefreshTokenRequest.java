@@ -1,17 +1,14 @@
 package com.hcmunre.library.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import lombok.*;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class RefreshTokenRequest {
-
     @NotBlank
     private String refreshToken;
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
-    }
 }

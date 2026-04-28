@@ -9,12 +9,12 @@ import com.hcmunre.library.dto.response.RegisterResponse;
 import com.hcmunre.library.entity.NguoiDung;
 import com.hcmunre.library.enums.TrangThaiNguoiDung;
 import com.hcmunre.library.enums.VaiTro;
+import com.hcmunre.library.exception.*;
 import com.hcmunre.library.repository.NguoiDungRepository;
 import com.hcmunre.library.service.JwtService;
 import com.hcmunre.library.service.TokenBlacklistService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -27,7 +27,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Map;
@@ -78,8 +77,7 @@ public class AuthController {
     public RegisterResponse register(@Valid @RequestBody RegisterRequest request) {
         // Check if email or soDienThoai already exists
         if (nguoiDungRepository.findByEmailOrSoDienThoai(request.getEmail(), request.getSoDienThoai()).isPresent()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Email hoặc số điện thoại đã được sử dụng");
+            throw new UserAlreadyExistsException(ErrorCode.USER_ALREADY_EXISTS.getDefaultMessage());
         }
 
         NguoiDung nguoiDung = new NguoiDung();
@@ -108,22 +106,21 @@ public class AuthController {
             @Valid @RequestBody ChangePasswordRequest request) {
 
         if (authentication == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Chưa đăng nhập");
+            throw new UnauthorizedException(ErrorCode.UNAUTHORIZED);
         }
 
         String username = authentication.getName();
         NguoiDung nguoiDung = nguoiDungRepository.findByEmailOrSoDienThoai(username, username)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Người dùng không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND.getDefaultMessage()));
 
         // Validate old password
         if (!passwordEncoder.matches(request.getOldPassword(), nguoiDung.getMatKhau())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mật khẩu cũ không đúng");
+            throw new ValidationException(ErrorCode.INVALID_PASSWORD);
         }
 
         // Check if new password is same as old password
         if (passwordEncoder.matches(request.getNewPassword(), nguoiDung.getMatKhau())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Mật khẩu mới phải khác với mật khẩu cũ");
+            throw new ValidationException(ErrorCode.PASSWORD_SAME);
         }
 
         nguoiDung.setMatKhau(passwordEncoder.encode(request.getNewPassword()));
@@ -138,15 +135,14 @@ public class AuthController {
             String refreshToken = request.getRefreshToken();
 
             if (tokenBlacklistService.isBlacklisted(refreshToken) || !jwtService.isRefreshToken(refreshToken)) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token không hợp lệ");
+                throw new UnauthorizedException(ErrorCode.INVALID_TOKEN);
             }
 
             String username = jwtService.extractUsername(refreshToken);
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
             if (!jwtService.isRefreshTokenValid(refreshToken, userDetails)) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
-                        "Refresh token đã hết hạn hoặc không hợp lệ");
+                throw new UnauthorizedException(ErrorCode.TOKEN_EXPIRED);
             }
 
             String newAccessToken = jwtService.generateAccessToken(userDetails);
@@ -160,10 +156,10 @@ public class AuthController {
                     jwtService.getAccessTokenExpirationSeconds(),
                     newRefreshToken,
                     jwtService.getRefreshTokenExpirationSeconds());
-        } catch (ResponseStatusException ex) {
+        } catch (AppException ex) {
             throw ex;
         } catch (RuntimeException ex) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token không hợp lệ");
+            throw new UnauthorizedException(ErrorCode.INVALID_TOKEN);
         }
     }
 
@@ -171,19 +167,19 @@ public class AuthController {
     public Map<String, String> logout(HttpServletRequest request) {
         String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authorization == null || !authorization.startsWith("Bearer ")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Thiếu access token");
+            throw new ValidationException(ErrorCode.INVALID_TOKEN, "Thiếu access token");
         }
 
         try {
             String accessToken = authorization.substring(7);
             if (!jwtService.isAccessToken(accessToken)) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Access token không hợp lệ");
+                throw new UnauthorizedException(ErrorCode.INVALID_TOKEN);
             }
             tokenBlacklistService.blacklist(accessToken, jwtService.extractExpiration(accessToken));
-        } catch (ResponseStatusException ex) {
+        } catch (AppException ex) {
             throw ex;
         } catch (RuntimeException ex) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Access token không hợp lệ");
+            throw new UnauthorizedException(ErrorCode.INVALID_TOKEN);
         }
 
         return Map.of("message", "Đăng xuất thành công");
