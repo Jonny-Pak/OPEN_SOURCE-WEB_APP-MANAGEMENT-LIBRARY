@@ -10,7 +10,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @Entity
-public class HinhAnhSach extends BaseEntity{
+public class HinhAnhSach extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long maHinhAnh;
@@ -22,6 +22,7 @@ public class HinhAnhSach extends BaseEntity{
 
     private Integer thuTuHienThi;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ma_sach")
     private Sach sach;
