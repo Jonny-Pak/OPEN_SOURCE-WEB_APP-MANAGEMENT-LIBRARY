@@ -110,6 +110,10 @@ public class SecurityConfig {
             // Phân quyền các endpoint
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
+                // Chỉ ADMIN mới truy cập được /api/admin/**
+                .requestMatchers("/api/admin/**").hasRole("QUAN_TRI_VIEN")
+                // THU_THU và ADMIN truy cập được /api/thu-thu/**
+                .requestMatchers("/api/thu-thu/**").hasAnyRole("THU_THU", "QUAN_TRI_VIEN")
                 .anyRequest().authenticated()
             )
             // Đăng ký AuthenticationProvider

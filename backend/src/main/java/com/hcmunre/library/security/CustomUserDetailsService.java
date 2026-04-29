@@ -1,8 +1,7 @@
 package com.hcmunre.library.security;
 
 import com.hcmunre.library.entity.NguoiDung;
-import com.hcmunre.library.exception.ErrorCode;
-import com.hcmunre.library.exception.ResourceNotFoundException;
+
 import com.hcmunre.library.repository.NguoiDungRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -28,7 +27,8 @@ public class CustomUserDetailsService implements UserDetailsService {
      *
      * @param email email (tên đăng nhập) của người dùng
      * @return đối tượng UserDetails chứa thông tin người dùng
-     * @throws UsernameNotFoundException nếu không tìm thấy người dùng với email đã cho
+     * @throws UsernameNotFoundException nếu không tìm thấy người dùng với email đã
+     *                                   cho
      */
     @Override
     @Transactional(readOnly = true)
@@ -36,8 +36,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         // Tìm người dùng trong database theo email
         NguoiDung nguoiDung = nguoiDungRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException(
-                        "Không tìm thấy người dùng với email: " + email
-                ));
+                        "Không tìm thấy người dùng với email: " + email));
 
         // Bọc entity NguoiDung vào CustomUserDetails để Spring Security sử dụng
         return new CustomUserDetails(nguoiDung);
