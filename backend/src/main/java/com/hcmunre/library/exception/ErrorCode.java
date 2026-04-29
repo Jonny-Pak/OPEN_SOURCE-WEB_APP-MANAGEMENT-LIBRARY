@@ -33,7 +33,7 @@ public enum ErrorCode {
      * <h1>409 - Conflict (Dữ liệu đã tồn tại)</h1>
      */
     EMAIL_DA_TON_TAI(409, "Email này đã được sử dụng"),
-
+    SO_DIEN_THOAI_DA_TON_TAI(409, "Số điện thoại này đã được sử dụng"),
     /**
      * <h1>404 - Not Found (Người dùng)</h1>
      */
@@ -48,6 +48,7 @@ public enum ErrorCode {
      * <h1>500 - Internal Server</h1>
      */
     SERVER_ERROR(500, "Hệ thống đang gặp sự cố, vui lòng thử lại sau");
+
     private final int status;
     private final String message;
 }

@@ -32,4 +32,6 @@ public interface NguoiDungRepository extends JpaRepository<NguoiDung, UUID> {
      * @return true nếu email đã tồn tại
      */
     boolean existsByEmail(String email);
+
+    boolean existsBySoDienThoai(String soDienThoai);
 }
