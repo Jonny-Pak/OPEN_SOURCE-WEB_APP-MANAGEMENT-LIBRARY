@@ -1,8 +1,5 @@
 package com.hcmunre.library.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.hcmunre.library.dto.response.ErrorResponse;
 import com.hcmunre.library.exception.ErrorCode;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,20 +25,27 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
                        AccessDeniedException accessDeniedException) throws IOException, ServletException {
         ErrorCode errorCode = ErrorCode.KHONG_CO_QUYEN;
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(errorCode.getStatus())
-                .error(errorCode.name())
-                .message(errorCode.getMessage())
-                .path(request.getRequestURI())
-                .build();
-
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.writeValue(response.getOutputStream(), errorResponse);
+        // Viết JSON trực tiếp, không phụ thuộc Jackson
+        String json = """
+                {
+                    "timestamp": "%s",
+                    "status": %d,
+                    "error": "%s",
+                    "message": "%s",
+                    "path": "%s"
+                }
+                """.formatted(
+                LocalDateTime.now(),
+                errorCode.getStatus(),
+                errorCode.name(),
+                errorCode.getMessage(),
+                request.getRequestURI()
+        );
+
+        response.getWriter().write(json);
     }
 }
