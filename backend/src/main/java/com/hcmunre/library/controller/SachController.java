@@ -1,6 +1,7 @@
 package com.hcmunre.library.controller;
 
 import com.hcmunre.library.dto.request.SachRequest;
+import com.hcmunre.library.dto.response.ApiResponse;
 import com.hcmunre.library.entity.Sach;
 import com.hcmunre.library.service.SachService;
 import jakarta.validation.Valid;
@@ -49,8 +50,8 @@ public class SachController {
 
     // API xóa bỏ một đầu sách khỏi hệ thống
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse> delete(@PathVariable Long id) {
         sachService.deleteSach(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(new ApiResponse("Xóa thành công đầu sách có ID: " + id));
     }
 }

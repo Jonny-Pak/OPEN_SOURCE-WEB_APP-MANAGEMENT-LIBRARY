@@ -1,6 +1,7 @@
 package com.hcmunre.library.controller;
 
 import com.hcmunre.library.dto.request.NhaXuatBanRequest;
+import com.hcmunre.library.dto.response.ApiResponse;
 import com.hcmunre.library.entity.NhaXuatBan;
 import com.hcmunre.library.service.NhaXuatBanService;
 import jakarta.validation.Valid;
@@ -49,8 +50,8 @@ public class NhaXuatBanController {
 
     // API xóa bỏ một nhà xuất bản khỏi hệ thống
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse> delete(@PathVariable Long id) {
         nhaXuatBanService.deleteNhaXuatBan(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(new ApiResponse("Xóa thành công nhà xuất bản có ID: " + id));
     }
 }

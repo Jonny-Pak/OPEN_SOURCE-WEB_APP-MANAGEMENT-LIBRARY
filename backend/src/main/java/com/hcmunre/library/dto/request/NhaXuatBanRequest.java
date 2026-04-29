@@ -14,7 +14,7 @@ public class NhaXuatBanRequest {
     private String diaChi;
 
     @NotBlank(message = "Số điện thoại không được để trống")
-    @Pattern(regexp = "^(0|\\+84)[3578]\\d{8}$", message = "Số điện thoại không đúng định dạng (ví dụ: 0912345678 hoặc +84912345678)")
+    @Pattern(regexp = "^0\\d{9}$", message = "Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0")
     private String soDienThoai;
 
     @NotBlank(message = "Email không được để trống")

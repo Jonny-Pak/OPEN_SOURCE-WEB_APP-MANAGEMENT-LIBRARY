@@ -1,6 +1,7 @@
 package com.hcmunre.library.controller;
 
 import com.hcmunre.library.dto.request.TacGiaRequest;
+import com.hcmunre.library.dto.response.ApiResponse;
 import com.hcmunre.library.entity.TacGia;
 import com.hcmunre.library.service.TacGiaService;
 import jakarta.validation.Valid;
@@ -43,8 +44,8 @@ public class TacGiaController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse> delete(@PathVariable Long id) {
         tacGiaService.deleteTacGia(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(new ApiResponse("Xóa thành công tác giả có ID: " + id));
     }
 }

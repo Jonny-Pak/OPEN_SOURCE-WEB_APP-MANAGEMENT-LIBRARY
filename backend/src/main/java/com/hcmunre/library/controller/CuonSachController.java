@@ -1,6 +1,7 @@
 package com.hcmunre.library.controller;
 
 import com.hcmunre.library.dto.request.CuonSachRequest;
+import com.hcmunre.library.dto.response.ApiResponse;
 import com.hcmunre.library.entity.CuonSach;
 import com.hcmunre.library.service.CuonSachService;
 import jakarta.validation.Valid;
@@ -49,8 +50,8 @@ public class CuonSachController {
 
     // API xóa bỏ một bản sao sách khỏi hệ thống
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse> delete(@PathVariable Long id) {
         cuonSachService.deleteCuonSach(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(new ApiResponse("Xóa thành công bản sao sách có ID: " + id));
     }
 }

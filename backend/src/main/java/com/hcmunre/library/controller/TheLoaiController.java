@@ -1,5 +1,6 @@
 package com.hcmunre.library.controller;
 
+import com.hcmunre.library.dto.response.ApiResponse;
 import com.hcmunre.library.entity.TheLoai;
 import com.hcmunre.library.service.TheLoaiService;
 import lombok.RequiredArgsConstructor;
@@ -47,8 +48,8 @@ public class TheLoaiController {
 
     // API xóa bỏ một thể loại sách khỏi hệ thống
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse> delete(@PathVariable Long id) {
         theLoaiService.deleteTheLoai(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(new ApiResponse("Xóa thành công thể loại có ID: " + id));
     }
 }

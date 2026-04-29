@@ -1,5 +1,6 @@
 package com.hcmunre.library.controller;
 
+import com.hcmunre.library.dto.response.ApiResponse;
 import com.hcmunre.library.entity.HinhAnhSach;
 import com.hcmunre.library.service.HinhAnhSachService;
 import lombok.RequiredArgsConstructor;
@@ -41,8 +42,8 @@ public class HinhAnhSachController {
 
     // API xóa bỏ một hình ảnh sách khỏi hệ thống
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse> delete(@PathVariable Long id) {
         hinhAnhSachService.deleteHinhAnh(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(new ApiResponse("Xóa thành công hình ảnh có ID: " + id));
     }
 }
