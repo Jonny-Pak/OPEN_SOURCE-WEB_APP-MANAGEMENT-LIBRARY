@@ -2,6 +2,7 @@ package com.hcmunre.library.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -24,6 +25,7 @@ public class LichSuGiaHan {
     private String lyDo;
 
     @Column(updatable = false)
+    @CreationTimestamp
     private LocalDateTime ngayTao;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -1,9 +1,9 @@
 package com.hcmunre.library.enums;
 
 public enum TrangThaiPhieuMuon {
+    DANG_XU_LY,
     DANG_MUON,
-    DA_TRA_DU,
-    DA_TRA_MOT_PHAN,
+    DA_TRA,
     QUA_HAN,
     DA_HUY
 }

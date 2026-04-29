@@ -1,9 +1,10 @@
 package com.hcmunre.library.service;
 
-import com.hcmunre.library.entity.Sach;
+import com.hcmunre.library.entity.CuonSach;
+import com.hcmunre.library.enums.TrangThaiCuonSach;
 
 public interface SachService {
-    Sach getSachAvailable(Long maSach);
+    CuonSach getCuonSachAvailable(Long maSach);
 
-    void updateSoLuongSach(Long maSach, int delta);
+    void updateTrangThaiCuonSach(Long maCuonSach, TrangThaiCuonSach trangThai);
 }

@@ -1,16 +1,23 @@
 package com.hcmunre.library.service.implement;
 
-import com.hcmunre.library.entity.Sach;
+import com.hcmunre.library.entity.CuonSach;
+import com.hcmunre.library.enums.TrangThaiCuonSach;
 import com.hcmunre.library.service.SachService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
+
+@Service
+@RequiredArgsConstructor
 public class SachServiceImplement implements SachService {
     @Override
-    public Sach getSachAvailable(Long maSach) {
+    public CuonSach getCuonSachAvailable(Long maSach) {
         return null;
     }
 
     @Override
-    public void updateSoLuongSach(Long maSach, int delta) {
+    public void updateTrangThaiCuonSach(Long maSach, TrangThaiCuonSach trangThai) {
 
     }
+
 }
