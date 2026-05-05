@@ -14,7 +14,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @Entity
-public class PhieuMuon extends BaseEntity{
+public class PhieuMuon extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID maPhieuMuon;

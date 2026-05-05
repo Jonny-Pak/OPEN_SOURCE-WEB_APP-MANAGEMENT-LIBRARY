@@ -1,6 +1,5 @@
 package com.hcmunre.library.exception;
 
-import com.hcmunre.library.dto.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
