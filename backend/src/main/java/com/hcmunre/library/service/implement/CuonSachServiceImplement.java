@@ -3,6 +3,7 @@ package com.hcmunre.library.service.implement;
 import com.hcmunre.library.dto.request.CuonSachRequest;
 import com.hcmunre.library.entity.CuonSach;
 import com.hcmunre.library.entity.Sach;
+import com.hcmunre.library.enums.TrangThaiCuonSach;
 import com.hcmunre.library.exception.BusinessException;
 import com.hcmunre.library.exception.ErrorCode;
 import com.hcmunre.library.repository.CuonSachRepository;
@@ -96,5 +97,16 @@ public class CuonSachServiceImplement implements CuonSachService {
             throw new BusinessException(ErrorCode.CUON_SACH_KHONG_TON_TAI);
         }
         cuonSachRepository.deleteById(id);
+    }
+
+    @Override
+    public CuonSach getCuonSachAvailable(Long maSach) {
+        // TODO: implement - tìm cuốn sách có trạng thái SẴN SÀNG
+        return null;
+    }
+
+    @Override
+    public void updateTrangThaiCuonSach(Long maCuonSach, TrangThaiCuonSach trangThai) {
+        // TODO: implement - cập nhật trạng thái cuốn sách (ĐANG_MƯỢN, SẴN_SÀNG, etc.)
     }
 }

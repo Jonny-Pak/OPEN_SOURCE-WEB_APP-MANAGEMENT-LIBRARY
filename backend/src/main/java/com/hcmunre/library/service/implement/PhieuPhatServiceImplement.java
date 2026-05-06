@@ -79,10 +79,6 @@ public class PhieuPhatServiceImplement implements PhieuPhatService {
                 .build();
     }
 
-    // =============================================
-    // === CRUD (Book module - chờ implement) ===
-    // =============================================
-
     @Override
     public List<PhieuPhat> getAllPhieuPhat() {
         // TODO: implement

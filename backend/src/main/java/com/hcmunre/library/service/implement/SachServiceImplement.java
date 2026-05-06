@@ -29,9 +29,6 @@ public class SachServiceImplement implements SachService {
     private final TheLoaiRepository theLoaiRepository;
     private final TacGiaRepository tacGiaRepository;
 
-    // =============================================
-    // === CRUD (Book module - bạn mình implement) ===
-    // =============================================
 
     @Override
     public List<Sach> getAllSach() {
@@ -137,20 +134,5 @@ public class SachServiceImplement implements SachService {
             throw new BusinessException(ErrorCode.SACH_KHONG_TON_TAI);
         }
         sachRepository.deleteById(id);
-    }
-
-    // =============================================
-    // === Borrowing System (stub - chờ implement) ===
-    // =============================================
-
-    @Override
-    public CuonSach getCuonSachAvailable(Long maSach) {
-        // TODO: implement - tìm cuốn sách có trạng thái SẴN SÀNG
-        return null;
-    }
-
-    @Override
-    public void updateTrangThaiCuonSach(Long maCuonSach, TrangThaiCuonSach trangThai) {
-        // TODO: implement - cập nhật trạng thái cuốn sách (ĐANG_MƯỢN, SẴN_SÀNG, etc.)
     }
 }

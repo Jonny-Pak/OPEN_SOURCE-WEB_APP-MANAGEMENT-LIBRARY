@@ -18,7 +18,7 @@ import com.hcmunre.library.repository.PhieuMuonRepository;
 import com.hcmunre.library.service.NguoiDungService;
 import com.hcmunre.library.service.PhieuMuonService;
 import com.hcmunre.library.service.PhieuPhatService;
-import com.hcmunre.library.service.SachService;
+import com.hcmunre.library.service.CuonSachService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,7 +42,7 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
     private final ChiTietPhieuMuonRepository chiTietPhieuMuonRepository;
     private final LichSuGiaHanRepository lichSuGiaHanRepository;
     private final NguoiDungService nguoiDungService;
-    private final SachService sachService;
+    private final CuonSachService cuonSachService;
     private final PhieuPhatService phieuPhatService;
 
     @Override
@@ -65,7 +65,7 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
         LocalDateTime hanTra = now.plusDays(SO_NGAY_MUON_MAC_DINH);
 
         for(Long maCuonSach : request.getDanhSachMaCuonSach()){
-            CuonSach cuonSach = sachService.getCuonSachAvailable(maCuonSach);
+            CuonSach cuonSach = cuonSachService.getCuonSachAvailable(maCuonSach);
 
             ChiTietPhieuMuon chiTietPhieuMuon = ChiTietPhieuMuon.builder()
                     .phieuMuon(phieuMuon)
@@ -78,7 +78,7 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
                     .build();
 
             danhSachChiTiet.add(chiTietPhieuMuon);
-            sachService.updateTrangThaiCuonSach(maCuonSach, TrangThaiCuonSach.DANG_MUON);
+            cuonSachService.updateTrangThaiCuonSach(maCuonSach, TrangThaiCuonSach.DANG_MUON);
         }
 
         phieuMuon.setDanhSachChiTietPhieuMuon(danhSachChiTiet);
@@ -102,7 +102,7 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
 
         for(ChiTietPhieuMuon chiTietPhieuMuon : phieuMuon.getDanhSachChiTietPhieuMuon()){
             if(chiTietPhieuMuon.getNgayTraThucTe() == null){
-                sachService.updateTrangThaiCuonSach(chiTietPhieuMuon.getCuonSach().getMaCuonSach(), TrangThaiCuonSach.SAN_SANG);
+                cuonSachService.updateTrangThaiCuonSach(chiTietPhieuMuon.getCuonSach().getMaCuonSach(), TrangThaiCuonSach.SAN_SANG);
             }
         }
         phieuMuon.setTrangThaiPhieu(TrangThaiPhieuMuon.DA_HUY);
@@ -127,7 +127,7 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
         chiTietPhieuMuon.setNgayTraThucTe(now);
         chiTietPhieuMuon.setTinhTrangLucTra(request.getTinhTrangLucTra());
 
-        sachService.updateTrangThaiCuonSach(chiTietPhieuMuon.getCuonSach().getMaCuonSach(), TrangThaiCuonSach.SAN_SANG);
+        cuonSachService.updateTrangThaiCuonSach(chiTietPhieuMuon.getCuonSach().getMaCuonSach(), TrangThaiCuonSach.SAN_SANG);
 
         if(now.isAfter(chiTietPhieuMuon.getHanTraHienTai())){
             Long soNgayTre = ChronoUnit.DAYS.between((chiTietPhieuMuon.getHanTraHienTai()), now);
