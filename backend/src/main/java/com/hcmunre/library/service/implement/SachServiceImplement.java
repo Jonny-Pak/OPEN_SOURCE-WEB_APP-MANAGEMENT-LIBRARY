@@ -1,12 +1,10 @@
 package com.hcmunre.library.service.implement;
 
 import com.hcmunre.library.dto.request.SachRequest;
-import com.hcmunre.library.entity.CuonSach;
 import com.hcmunre.library.entity.NhaXuatBan;
 import com.hcmunre.library.entity.Sach;
 import com.hcmunre.library.entity.TacGia;
 import com.hcmunre.library.entity.TheLoai;
-import com.hcmunre.library.enums.TrangThaiCuonSach;
 import com.hcmunre.library.exception.BusinessException;
 import com.hcmunre.library.exception.ErrorCode;
 import com.hcmunre.library.repository.NhaXuatBanRepository;
@@ -28,7 +26,6 @@ public class SachServiceImplement implements SachService {
     private final NhaXuatBanRepository nhaXuatBanRepository;
     private final TheLoaiRepository theLoaiRepository;
     private final TacGiaRepository tacGiaRepository;
-
 
     @Override
     public List<Sach> getAllSach() {
