@@ -11,12 +11,14 @@ import java.util.List;
 import java.util.UUID;
 
 public interface PhieuMuonService {
+    // Queries
+    List<GiaHanResponse> getLichSuGiaHanByChiTiet(UUID maChiTietPhieuMuon);
+
+    // Commands
     PhieuMuonResponse createPhieuMuon(MuonSachRequest request);
     void returnChiTietPhieuMuon(UUID maChiTietPhieuMuon, TinhTrangSach tinhTrangSach);
     void returnPhieuMuon(UUID maPhieuMuon, TinhTrangSach tinhTrangChung);
     PhieuMuonResponse.ChitietResponse returnCuonSach(TraSachRequest request);
     void cancelPhieuMuon(UUID maPhieuMuon);
     GiaHanResponse createGiaHan(GiaHanRequest request);
-    List<GiaHanResponse> getLichSuGiaHanByChiTiet(UUID maChiTietPhieuMuon);
-
 }

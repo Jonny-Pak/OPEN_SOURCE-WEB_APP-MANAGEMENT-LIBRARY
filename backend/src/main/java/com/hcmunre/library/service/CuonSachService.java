@@ -7,13 +7,15 @@ import com.hcmunre.library.enums.TrangThaiCuonSach;
 import java.util.List;
 
 public interface CuonSachService {
+    // Queries
     List<CuonSach> getAllCuonSach();
     List<CuonSach> getCuonSachBySach(Long maSach);
     CuonSach getCuonSachById(Long id);
+    CuonSach getCuonSachAvailable(Long maSach);
+
+    // Commands
     CuonSach createCuonSach(CuonSachRequest request);
     CuonSach updateCuonSach(Long id, CuonSachRequest request);
-    void deleteCuonSach(Long id);
-
-    CuonSach getCuonSachAvailable(Long maSach);
     void updateTrangThaiCuonSach(Long maCuonSach, TrangThaiCuonSach trangThai);
+    void deleteCuonSach(Long id);
 }
