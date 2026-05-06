@@ -79,5 +79,37 @@ public class PhieuPhatServiceImplement implements PhieuPhatService {
                 .build();
     }
 
+    // =============================================
+    // === CRUD (Book module - chờ implement) ===
+    // =============================================
 
+    @Override
+    public List<PhieuPhat> getAllPhieuPhat() {
+        // TODO: implement
+        return phieuPhatRepository.findAll();
+    }
+
+    @Override
+    public PhieuPhat getPhieuPhatById(UUID id) {
+        // TODO: implement
+        return phieuPhatRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public PhieuPhat createPhieuPhat(PhieuPhat phieuPhat) {
+        // TODO: implement
+        return phieuPhatRepository.save(phieuPhat);
+    }
+
+    @Override
+    public PhieuPhat updatePhieuPhat(UUID id, PhieuPhat phieuPhat) {
+        // TODO: implement
+        return null;
+    }
+
+    @Override
+    public void deletePhieuPhat(UUID id) {
+        // TODO: implement
+        phieuPhatRepository.deleteById(id);
+    }
 }

@@ -25,6 +25,7 @@ public class TacGia extends BaseEntity {
 
     private LocalDateTime ngayXoa;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToMany(mappedBy = "danhSachTacGia")
     private List<Sach> danhSachSach;
 }

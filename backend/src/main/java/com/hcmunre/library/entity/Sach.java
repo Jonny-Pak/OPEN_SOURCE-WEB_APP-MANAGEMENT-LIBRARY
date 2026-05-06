@@ -1,6 +1,10 @@
 package com.hcmunre.library.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -12,18 +16,28 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @Entity
-public class Sach extends BaseEntity{
+public class Sach extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long maSach;
 
     private String tenSach;
+    @NotBlank(message = "Mã ISBN không được để trống")
+    @Pattern(
+        regexp = "^(\\d{9}[\\dX]|\\d{13})$",
+        message = "Mã ISBN phải là ISBN-10 (10 ký tự) hoặc ISBN-13 (13 chữ số)"
+    )
+    @Column(unique = true, nullable = false)
     private String maIsbn;
-    private Integer lanTaiBan;
+    @Min(value = 1, message = "Số trang phải là số nguyên dương")
     private Integer soTrang;
+
+    private Integer lanTaiBan;
     private Integer namXuatBan;
     private String kichThuoc;
     private String dichGia;
+
+    @DecimalMin(value = "0.0", message = "Đơn giá phạt phải >= 0")
     private Double donGiaPhatTheoNgay;
 
     @Column(columnDefinition = "TEXT")
