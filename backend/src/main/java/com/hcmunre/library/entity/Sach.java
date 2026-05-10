@@ -2,8 +2,10 @@ package com.hcmunre.library.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
@@ -21,6 +23,7 @@ public class Sach extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long maSach;
 
+    @NotBlank(message = "Tên sách không được để trống")
     private String tenSach;
     @NotBlank(message = "Mã ISBN không được để trống")
     @Pattern(
@@ -32,10 +35,17 @@ public class Sach extends BaseEntity {
     @Min(value = 1, message = "Số trang phải là số nguyên dương")
     private Integer soTrang;
 
+    @Min(value = 1, message = "Lần tái bản phải là số nguyên dương")
     private Integer lanTaiBan;
+    @Max(value = 9999, message = "Năm xuất bản không hợp lệ")
+    @Min(value = 1000, message = "Năm xuất bản phải hợp lệ")
     private Integer namXuatBan;
     private String kichThuoc;
     private String dichGia;
+    @NotNull(message = "Giá tiền không được để trống")
+    @DecimalMin(value = "0.0", message = "Giá tiền phải >= 0")
+    @Column(name = "gia_tien")
+    private Double giaTien;
 
     @DecimalMin(value = "0.0", message = "Đơn giá phạt phải >= 0")
     private Double donGiaPhatTheoNgay;
@@ -45,6 +55,7 @@ public class Sach extends BaseEntity {
 
     private LocalDateTime ngayXoa;
 
+    @NotNull(message = "Nhà xuất bản không được để trống")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ma_nha_xuat_ban")
     private NhaXuatBan nhaXuatBan;

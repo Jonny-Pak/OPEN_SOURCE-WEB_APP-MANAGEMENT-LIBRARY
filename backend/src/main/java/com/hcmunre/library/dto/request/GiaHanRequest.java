@@ -7,7 +7,11 @@ import java.util.UUID;
 
 @Getter
 public class GiaHanRequest {
-    @NotNull(message = "Mã chi tiết phiếu mượn không được ể trống")
+    @NotNull(message = "Mã chi tiết phiếu mượn không được để trống")
     private UUID maChiTietPhieuMuon;
+
+    @NotNull(message = "Mã người thực hiện không được để trống")
+    private UUID maNguoiThucHien;
+
     private String lyDo;
 }

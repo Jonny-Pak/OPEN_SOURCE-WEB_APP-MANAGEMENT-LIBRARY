@@ -1,9 +1,11 @@
 package com.hcmunre.library.controller;
 
-import com.hcmunre.library.dto.response.ApiResponse;
-import com.hcmunre.library.entity.TheLoai;
+import com.hcmunre.library.dto.request.TheLoaiRequest;
+import com.hcmunre.library.dto.response.TheLoaiResponse;
 import com.hcmunre.library.service.TheLoaiService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,38 +20,38 @@ public class TheLoaiController {
 
     // API lấy toàn bộ danh sách thể loại
     @GetMapping
-    public ResponseEntity<List<TheLoai>> getAll() {
+    public ResponseEntity<List<TheLoaiResponse>> getAll() {
         return ResponseEntity.ok(theLoaiService.getAllTheLoai());
     }
 
     // API tìm kiếm thể loại theo từ khóa
     @GetMapping("/search")
-    public ResponseEntity<List<TheLoai>> search(@RequestParam String keyword) {
+    public ResponseEntity<List<TheLoaiResponse>> search(@RequestParam String keyword) {
         return ResponseEntity.ok(theLoaiService.searchTheLoai(keyword));
     }
 
     // API lấy chi tiết một thể loại qua ID
     @GetMapping("/{id}")
-    public ResponseEntity<TheLoai> getById(@PathVariable Long id) {
+    public ResponseEntity<TheLoaiResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(theLoaiService.getTheLoaiById(id));
     }
 
     // API tạo mới một thể loại sách
     @PostMapping
-    public ResponseEntity<TheLoai> create(@RequestBody TheLoai theLoai) {
-        return ResponseEntity.ok(theLoaiService.createTheLoai(theLoai));
+    public ResponseEntity<TheLoaiResponse> create(@Valid @RequestBody TheLoaiRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(theLoaiService.createTheLoai(request));
     }
 
     // API cập nhật thông tin cho thể loại sách hiện có
     @PutMapping("/{id}")
-    public ResponseEntity<TheLoai> update(@PathVariable Long id, @RequestBody TheLoai theLoai) {
-        return ResponseEntity.ok(theLoaiService.updateTheLoai(id, theLoai));
+    public ResponseEntity<TheLoaiResponse> update(@PathVariable Long id, @Valid @RequestBody TheLoaiRequest request) {
+        return ResponseEntity.ok(theLoaiService.updateTheLoai(id, request));
     }
 
     // API xóa bỏ một thể loại sách khỏi hệ thống
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
         theLoaiService.deleteTheLoai(id);
-        return ResponseEntity.ok(new ApiResponse("Xóa thành công thể loại có ID: " + id));
+        return ResponseEntity.noContent().build();
     }
 }

@@ -1,15 +1,16 @@
 package com.hcmunre.library.service;
 
-import com.hcmunre.library.entity.HinhAnhSach;
+import com.hcmunre.library.dto.request.HinhAnhSachRequest;
+import com.hcmunre.library.dto.response.HinhAnhSachResponse;
 import java.util.List;
 
 public interface HinhAnhSachService {
     // Queries
-    List<HinhAnhSach> getAllHinhAnh();
-    List<HinhAnhSach> getHinhAnhBySach(Long maSach);
-    HinhAnhSach getHinhAnhById(Long id);
+    List<HinhAnhSachResponse> getAllHinhAnh();
+    List<HinhAnhSachResponse> getHinhAnhBySach(Long maSach);
+    HinhAnhSachResponse getHinhAnhById(Long id);
 
     // Commands
-    HinhAnhSach createHinhAnh(HinhAnhSach hinhAnhSach);
+    HinhAnhSachResponse createHinhAnh(HinhAnhSachRequest request);
     void deleteHinhAnh(Long id);
 }

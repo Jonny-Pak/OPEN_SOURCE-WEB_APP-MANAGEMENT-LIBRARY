@@ -1,11 +1,12 @@
 package com.hcmunre.library.controller;
 
 import com.hcmunre.library.dto.request.SachRequest;
-import com.hcmunre.library.dto.response.ApiResponse;
-import com.hcmunre.library.entity.Sach;
+import com.hcmunre.library.dto.response.SachResponse;
 import com.hcmunre.library.service.SachService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,38 +21,39 @@ public class SachController {
 
     // API lấy toàn bộ danh sách đầu sách
     @GetMapping
-    public ResponseEntity<List<Sach>> getAll() {
+    public ResponseEntity<List<SachResponse>> getAll() {
         return ResponseEntity.ok(sachService.getAllSach());
     }
 
     // API tìm kiếm đầu sách theo từ khóa
     @GetMapping("/search")
-    public ResponseEntity<List<Sach>> search(@RequestParam String keyword) {
+    public ResponseEntity<List<SachResponse>> search(@RequestParam String keyword) {
         return ResponseEntity.ok(sachService.searchSach(keyword));
     }
 
     // API lấy chi tiết một đầu sách qua ID
     @GetMapping("/{id}")
-    public ResponseEntity<Sach> getById(@PathVariable Long id) {
+    public ResponseEntity<SachResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(sachService.getSachById(id));
     }
 
     // API tạo mới một đầu sách — @Valid kích hoạt Bean Validation trên SachRequest
     @PostMapping
-    public ResponseEntity<Sach> create(@Valid @RequestBody SachRequest request) {
-        return ResponseEntity.ok(sachService.createSach(request));
+    public ResponseEntity<SachResponse> create(@Valid @RequestBody SachRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(sachService.createSach(request));
     }
 
-    // API cập nhật thông tin cho đầu sách hiện có — @Valid kích hoạt Bean Validation
+    // API cập nhật thông tin cho đầu sách hiện có — @Valid kích hoạt Bean
+    // Validation
     @PutMapping("/{id}")
-    public ResponseEntity<Sach> update(@PathVariable Long id, @Valid @RequestBody SachRequest request) {
+    public ResponseEntity<SachResponse> update(@PathVariable Long id, @Valid @RequestBody SachRequest request) {
         return ResponseEntity.ok(sachService.updateSach(id, request));
     }
 
     // API xóa bỏ một đầu sách khỏi hệ thống
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
         sachService.deleteSach(id);
-        return ResponseEntity.ok(new ApiResponse("Xóa thành công đầu sách có ID: " + id));
+        return ResponseEntity.noContent().build();
     }
 }

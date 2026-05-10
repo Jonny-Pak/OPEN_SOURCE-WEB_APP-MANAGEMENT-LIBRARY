@@ -2,6 +2,7 @@ package com.hcmunre.library.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import jakarta.validation.constraints.NotNull;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -28,10 +29,12 @@ public class LichSuGiaHan {
     @CreationTimestamp
     private LocalDateTime ngayTao;
 
+    @NotNull(message = "Người thực hiện không được để trống")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ma_nguoi_thuc_hien")
     private NguoiDung nguoiThucHien;
 
+    @NotNull(message = "Chi tiết phiếu mượn không được để trống")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ma_chi_tiet_phieu_muon")
     private ChiTietPhieuMuon chiTietPhieuMuon;

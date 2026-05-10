@@ -1,7 +1,7 @@
 package com.hcmunre.library.entity;
 
 import com.hcmunre.library.enums.TrangThaiCuonSach;
-import com.hcmunre.library.enums.TinhTrangSach;
+import com.hcmunre.library.enums.TinhTrangVatLy;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -29,7 +29,7 @@ public class CuonSach extends BaseEntity {
     private TrangThaiCuonSach trangThai;
 
     @Enumerated(EnumType.STRING)
-    private TinhTrangSach tinhTrangVatLy;
+    private TinhTrangVatLy tinhTrangVatLy;
 
     @Column(columnDefinition = "TEXT")
     private String ghiChuBaoTri;

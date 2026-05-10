@@ -1,16 +1,18 @@
 package com.hcmunre.library.dto.request;
 
-import com.hcmunre.library.enums.TinhTrangSach;
+import com.hcmunre.library.enums.TinhTrangVatLy;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.UUID;
 
 @Getter
-public class TraSachRequest {
-    @NotNull(message = "Mã chi tiết phiê mượn không được dê trống")
+@Setter
+public class TraCuonSachRequest {
+    @NotNull(message = "Mã chi tiết phiếu mượn không được để trống")
     private UUID maChiTietPhieuMuon;
 
     @NotNull(message = "Tình trạng sách lúc trả không được để trống")
-    private TinhTrangSach tinhTrangLucTra;
+    private TinhTrangVatLy tinhTrangLucTra;
 }

@@ -11,4 +11,6 @@ public interface PhieuPhatRepository extends JpaRepository<PhieuPhat, UUID> {
     List<PhieuPhat> findByChiTietPhieuMuon_MaChiTietPhieuMuon(UUID maChiTietPhieuMuon);
     boolean existsByChiTietPhieuMuon_PhieuMuon_NguoiDung_MaNguoiDungAndTrangThaiThanhToan(
             UUID maNguoiDung, TrangThaiThanhToan trangThai);
+
+    List<PhieuPhat> findByChiTietPhieuMuon_PhieuMuon_NguoiDung_MaNguoiDungOrderByNgayTaoDesc(UUID maNguoiDung);
 }

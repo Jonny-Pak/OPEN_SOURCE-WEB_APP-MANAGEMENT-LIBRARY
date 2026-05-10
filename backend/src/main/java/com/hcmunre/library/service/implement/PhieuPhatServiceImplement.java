@@ -4,9 +4,8 @@ import com.hcmunre.library.dto.response.PhieuPhatResponse;
 import com.hcmunre.library.entity.ChiTietPhieuMuon;
 import com.hcmunre.library.entity.PhieuPhat;
 import com.hcmunre.library.enums.TrangThaiThanhToan;
-import com.hcmunre.library.exception.BusinessException;
+import com.hcmunre.library.exception.LibraryException;
 import com.hcmunre.library.exception.ErrorCode;
-import com.hcmunre.library.exception.ResourceNotFoundException;
 import com.hcmunre.library.repository.ChiTietPhieuMuonRepository;
 import com.hcmunre.library.repository.PhieuPhatRepository;
 import com.hcmunre.library.service.PhieuPhatService;
@@ -27,7 +26,7 @@ public class PhieuPhatServiceImplement implements PhieuPhatService {
     @Override
     public PhieuPhatResponse createPhieuPhat(UUID maChiTietPhieuMuon, Double tienPhat, String lyDoPhat) {
         ChiTietPhieuMuon chiTietPhieuMuon = chiTietPhieuMuonRepository.findById(maChiTietPhieuMuon).orElseThrow(
-                () -> new ResourceNotFoundException(ErrorCode.PHIEU_MUON_KHONG_TON_TAI));
+                () -> new LibraryException(ErrorCode.PHIEU_MUON_KHONG_TON_TAI));
 
         PhieuPhat phieuPhat = PhieuPhat.builder()
                 .chiTietPhieuMuon(chiTietPhieuMuon)
@@ -35,23 +34,48 @@ public class PhieuPhatServiceImplement implements PhieuPhatService {
                 .lyDoPhat(lyDoPhat)
                 .trangThaiThanhToan(TrangThaiThanhToan.CHUA_THANH_TOAN)
                 .build();
+        
+        phieuPhat = phieuPhatRepository.save(phieuPhat);
 
         return toResponse(phieuPhat);
     }
 
     @Override
+    public PhieuPhatResponse createPhieuPhat(com.hcmunre.library.dto.request.TaoPhieuPhatRequest request) {
+        return createPhieuPhat(request.getMaChiTietPhieuMuon(), request.getSoTienPhat(), request.getLyDoPhat());
+    }
+
+    @Override
+    public PhieuPhatResponse cancelPhieuPhat(UUID maPhieuPhat){
+        PhieuPhat phieuPhat = phieuPhatRepository.findById(maPhieuPhat).orElseThrow(()
+                -> new LibraryException(ErrorCode.PHIEU_PHAT_KHONG_TON_TAI));
+
+        if (phieuPhat.getTrangThaiThanhToan() == TrangThaiThanhToan.DA_THANH_TOAN) {
+            throw new LibraryException(ErrorCode.PHIEU_PHAT_DA_THANH_TOAN);
+        }
+        
+        if (phieuPhat.getTrangThaiThanhToan() == TrangThaiThanhToan.DA_HUY) {
+            throw new LibraryException(ErrorCode.PHIEU_PHAT_DA_HUY);
+        }
+
+        phieuPhat.setTrangThaiThanhToan(TrangThaiThanhToan.DA_HUY);
+
+        return toResponse(phieuPhatRepository.save(phieuPhat));
+    }
+
+        @Override
     public PhieuPhatResponse payPhieuPhat(UUID maPhieuPhat) {
         PhieuPhat phieuPhat = phieuPhatRepository.findById(maPhieuPhat).orElseThrow(()
-                -> new ResourceNotFoundException(ErrorCode.PHIEU_PHAT_KHONG_TON_TAI));
+                -> new LibraryException(ErrorCode.PHIEU_PHAT_KHONG_TON_TAI));
 
         if(phieuPhat.getTrangThaiThanhToan() == TrangThaiThanhToan.DA_THANH_TOAN){
-            throw new BusinessException(ErrorCode.PHIEU_PHAT_DA_THANH_TOAN);
+            throw new LibraryException(ErrorCode.PHIEU_PHAT_DA_THANH_TOAN);
         }
 
         phieuPhat.setTrangThaiThanhToan(TrangThaiThanhToan.DA_THANH_TOAN);
         phieuPhat.setNgayThanhToan(LocalDateTime.now());
 
-        return toResponse(phieuPhat);
+        return toResponse(phieuPhatRepository.save(phieuPhat));
     }
 
     @Override
@@ -63,8 +87,13 @@ public class PhieuPhatServiceImplement implements PhieuPhatService {
     @Override
     public boolean hasPhieuPhatUnpaid(UUID maNguoiDung) {
         return phieuPhatRepository.existsByChiTietPhieuMuon_PhieuMuon_NguoiDung_MaNguoiDungAndTrangThaiThanhToan(
-                maNguoiDung, TrangThaiThanhToan.CHUA_THANH_TOAN
-        );
+                maNguoiDung, TrangThaiThanhToan.CHUA_THANH_TOAN);
+    }
+
+    @Override
+    public List<PhieuPhatResponse> getPhieuPhatByNguoiDung(UUID maNguoiDung) {
+        return phieuPhatRepository.findByChiTietPhieuMuon_PhieuMuon_NguoiDung_MaNguoiDungOrderByNgayTaoDesc(maNguoiDung)
+                .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     private PhieuPhatResponse toResponse(PhieuPhat pp) {
@@ -77,35 +106,5 @@ public class PhieuPhatServiceImplement implements PhieuPhatService {
                 .ngayThanhToan(pp.getNgayThanhToan())
                 .ngayTao(pp.getNgayTao())
                 .build();
-    }
-
-    @Override
-    public List<PhieuPhat> getAllPhieuPhat() {
-        // TODO: implement
-        return phieuPhatRepository.findAll();
-    }
-
-    @Override
-    public PhieuPhat getPhieuPhatById(UUID id) {
-        // TODO: implement
-        return phieuPhatRepository.findById(id).orElse(null);
-    }
-
-    @Override
-    public PhieuPhat createPhieuPhat(PhieuPhat phieuPhat) {
-        // TODO: implement
-        return phieuPhatRepository.save(phieuPhat);
-    }
-
-    @Override
-    public PhieuPhat updatePhieuPhat(UUID id, PhieuPhat phieuPhat) {
-        // TODO: implement
-        return null;
-    }
-
-    @Override
-    public void deletePhieuPhat(UUID id) {
-        // TODO: implement
-        phieuPhatRepository.deleteById(id);
     }
 }

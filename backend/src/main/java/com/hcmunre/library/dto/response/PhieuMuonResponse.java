@@ -1,6 +1,7 @@
 package com.hcmunre.library.dto.response;
 
-import com.hcmunre.library.enums.TinhTrangSach;
+import com.hcmunre.library.enums.TinhTrangVatLy;
+import com.hcmunre.library.enums.TrangThaiChiTietPhieuMuon;
 import com.hcmunre.library.enums.TrangThaiPhieuMuon;
 import lombok.*;
 
@@ -33,8 +34,9 @@ public class PhieuMuonResponse {
         private LocalDateTime hanTraBanDau;
         private LocalDateTime hanTraHienTai;
         private LocalDateTime ngayTraThucTe;
-        private TinhTrangSach tinhTrangLucMuon;
-        private TinhTrangSach tinhTrangLucTra;
+        private TinhTrangVatLy tinhTrangLucMuon;
+        private TinhTrangVatLy tinhTrangLucTra;
+        private TrangThaiChiTietPhieuMuon trangThaiChiTietPhieuMuon;
         private Integer soLanGiaHan;
         private Double donGiaPhatApDung;
 
