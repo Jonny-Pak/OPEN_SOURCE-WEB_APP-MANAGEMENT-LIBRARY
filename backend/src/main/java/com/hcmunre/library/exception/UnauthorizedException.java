@@ -5,7 +5,7 @@ package com.hcmunre.library.exception;
  * Được ném ra khi người dùng truy cập tài nguyên mà chưa đăng nhập
  * hoặc token JWT không hợp lệ / đã hết hạn.
  */
-public class UnauthorizedException extends LibraryBaseException {
+public class UnauthorizedException extends LibraryException {
     public UnauthorizedException(ErrorCode errorCode) {
         super(errorCode);
     }

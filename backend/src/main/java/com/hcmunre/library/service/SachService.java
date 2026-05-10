@@ -1,9 +1,18 @@
 package com.hcmunre.library.service;
 
-import com.hcmunre.library.entity.Sach;
+import com.hcmunre.library.dto.request.SachRequest;
+import com.hcmunre.library.dto.response.SachResponse;
+
+import java.util.List;
 
 public interface SachService {
-    Sach getSachAvailable(Long maSach);
+    // Queries
+    List<SachResponse> getAllSach();
+    List<SachResponse> searchSach(String keyword);
+    SachResponse getSachById(Long id);
 
-    void updateSoLuongSach(Long maSach, int delta);
+    // Commands
+    SachResponse createSach(SachRequest request);
+    SachResponse updateSach(Long id, SachRequest request);
+    void deleteSach(Long id);
 }

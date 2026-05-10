@@ -6,7 +6,7 @@ import com.hcmunre.library.dto.response.AuthResponse;
 import com.hcmunre.library.entity.NguoiDung;
 import com.hcmunre.library.enums.TrangThaiNguoiDung;
 import com.hcmunre.library.enums.VaiTro;
-import com.hcmunre.library.exception.BusinessException;
+import com.hcmunre.library.exception.LibraryException;
 import com.hcmunre.library.exception.ErrorCode;
 import com.hcmunre.library.exception.UnauthorizedException;
 import com.hcmunre.library.repository.NguoiDungRepository;
@@ -56,7 +56,7 @@ public class AuthServiceImplement implements AuthService {
                                 .orElseThrow(() -> new UnauthorizedException(ErrorCode.DANG_NHAP_THAT_BAI));
 
                 if (nguoiDung.getTrangThai() == TrangThaiNguoiDung.KHOA) {
-                        throw new BusinessException(ErrorCode.TAI_KHOAN_BI_KHOA);
+                        throw new LibraryException(ErrorCode.TAI_KHOAN_BI_KHOA);
                 }
 
                 try {
@@ -108,10 +108,10 @@ public class AuthServiceImplement implements AuthService {
         public AuthResponse dangKy(RegisterRequest request) {
                 // Bước 1: Kiểm tra email trùng lặp
                 if (nguoiDungRepository.existsByEmail(request.getEmail())) {
-                        throw new BusinessException(ErrorCode.EMAIL_DA_TON_TAI);
+                        throw new LibraryException(ErrorCode.EMAIL_DA_TON_TAI);
                 }
                 if (nguoiDungRepository.existsBySoDienThoai(request.getSoDienThoai())) {
-                        throw new BusinessException(ErrorCode.SO_DIEN_THOAI_DA_TON_TAI);
+                        throw new LibraryException(ErrorCode.SDT_DA_TON_TAI);
                 }
                 // Bước 2: Tạo entity NguoiDung mới
                 NguoiDung nguoiDung = NguoiDung.builder()
