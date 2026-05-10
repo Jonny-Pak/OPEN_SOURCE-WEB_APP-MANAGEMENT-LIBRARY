@@ -6,9 +6,8 @@ import com.hcmunre.library.dto.response.AuthResponse;
 import com.hcmunre.library.entity.NguoiDung;
 import com.hcmunre.library.enums.TrangThaiNguoiDung;
 import com.hcmunre.library.enums.VaiTro;
-import com.hcmunre.library.exception.BusinessException;
+import com.hcmunre.library.exception.LibraryException;
 import com.hcmunre.library.exception.ErrorCode;
-import com.hcmunre.library.exception.UnauthorizedException;
 import com.hcmunre.library.repository.NguoiDungRepository;
 import com.hcmunre.library.security.CustomUserDetails;
 import com.hcmunre.library.security.JwtTokenProvider;
@@ -157,9 +156,9 @@ class AuthServiceTest {
 
         // WHEN & THEN: Gọi đăng nhập -> ném UnauthorizedException
         assertThatThrownBy(() -> authService.dangNhap(authRequestMau))
-                .isInstanceOf(UnauthorizedException.class)
+                .isInstanceOf(LibraryException.class)
                 .satisfies(ex -> {
-                    UnauthorizedException ue = (UnauthorizedException) ex;
+                    LibraryException ue = (LibraryException) ex;
                     assertThat(ue.getErrorCode()).isEqualTo(ErrorCode.DANG_NHAP_THAT_BAI);
                 });
 
@@ -177,9 +176,9 @@ class AuthServiceTest {
 
         // WHEN & THEN: Gọi đăng nhập -> ném BusinessException (TAI_KHOAN_BI_KHOA)
         assertThatThrownBy(() -> authService.dangNhap(authRequestMau))
-                .isInstanceOf(BusinessException.class)
+                .isInstanceOf(LibraryException.class)
                 .satisfies(ex -> {
-                    BusinessException be = (BusinessException) ex;
+                    LibraryException be = (LibraryException) ex;
                     assertThat(be.getErrorCode()).isEqualTo(ErrorCode.TAI_KHOAN_BI_KHOA);
                 });
 
@@ -260,9 +259,9 @@ class AuthServiceTest {
 
         // WHEN & THEN: Gọi đăng ký -> ném BusinessException (EMAIL_DA_TON_TAI)
         assertThatThrownBy(() -> authService.dangKy(registerRequestMau))
-                .isInstanceOf(BusinessException.class)
+                .isInstanceOf(LibraryException.class)
                 .satisfies(ex -> {
-                    BusinessException be = (BusinessException) ex;
+                    LibraryException be = (LibraryException) ex;
                     assertThat(be.getErrorCode()).isEqualTo(ErrorCode.EMAIL_DA_TON_TAI);
                 });
 

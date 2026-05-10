@@ -8,7 +8,6 @@ import com.hcmunre.library.enums.TrangThaiNguoiDung;
 import com.hcmunre.library.enums.VaiTro;
 import com.hcmunre.library.exception.LibraryException;
 import com.hcmunre.library.exception.ErrorCode;
-import com.hcmunre.library.exception.UnauthorizedException;
 import com.hcmunre.library.repository.NguoiDungRepository;
 import com.hcmunre.library.security.CustomUserDetails;
 import com.hcmunre.library.security.JwtTokenProvider;
@@ -53,7 +52,7 @@ public class AuthServiceImplement implements AuthService {
         public AuthResponse dangNhap(AuthRequest request) {
                 // Bước 1: Kiểm tra tài khoản có tồn tại và bị khóa không
                 NguoiDung nguoiDung = nguoiDungRepository.findByEmail(request.getEmail())
-                                .orElseThrow(() -> new UnauthorizedException(ErrorCode.DANG_NHAP_THAT_BAI));
+                                .orElseThrow(() -> new LibraryException(ErrorCode.DANG_NHAP_THAT_BAI));
 
                 if (nguoiDung.getTrangThai() == TrangThaiNguoiDung.KHOA) {
                         throw new LibraryException(ErrorCode.TAI_KHOAN_BI_KHOA);
@@ -86,7 +85,7 @@ public class AuthServiceImplement implements AuthService {
 
                 } catch (BadCredentialsException e) {
                         log.warn("Đăng nhập thất bại cho email: {}", request.getEmail());
-                        throw new UnauthorizedException(ErrorCode.DANG_NHAP_THAT_BAI);
+                        throw new LibraryException(ErrorCode.DANG_NHAP_THAT_BAI);
                 }
         }
 

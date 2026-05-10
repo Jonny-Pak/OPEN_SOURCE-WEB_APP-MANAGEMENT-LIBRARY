@@ -40,7 +40,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
                 }
                 """.formatted(
                 LocalDateTime.now(),
-                errorCode.getStatus(),
+                errorCode.getHttpStatus().value(),
                 errorCode.name(),
                 errorCode.getMessage(),
                 request.getRequestURI()

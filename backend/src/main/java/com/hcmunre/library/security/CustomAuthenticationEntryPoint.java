@@ -50,7 +50,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
                 }
                 """.formatted(
                 LocalDateTime.now(),
-                errorCode.getStatus(),
+                errorCode.getHttpStatus().value(),
                 errorCode.name(),
                 errorCode.getMessage(),
                 request.getRequestURI()
