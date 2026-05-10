@@ -1,24 +1,17 @@
 package com.hcmunre.library.service;
 
-import com.hcmunre.library.entity.TheLoai;
+import com.hcmunre.library.dto.request.TheLoaiRequest;
+import com.hcmunre.library.dto.response.TheLoaiResponse;
 import java.util.List;
 
 public interface TheLoaiService {
-    // Lấy danh sách tất cả thể loại
-    List<TheLoai> getAllTheLoai();
+    // Queries
+    List<TheLoaiResponse> getAllTheLoai();
+    List<TheLoaiResponse> searchTheLoai(String keyword);
+    TheLoaiResponse getTheLoaiById(Long id);
 
-    // Tìm kiếm thể loại theo từ khóa
-    List<TheLoai> searchTheLoai(String keyword);
-
-    // Lấy thông tin thể loại theo ID
-    TheLoai getTheLoaiById(Long id);
-
-    // Tạo mới một thể loại
-    TheLoai createTheLoai(TheLoai theLoai);
-
-    // Cập nhật thông tin thể loại
-    TheLoai updateTheLoai(Long id, TheLoai theLoai);
-
-    // Xóa thể loại theo ID
+    // Commands
+    TheLoaiResponse createTheLoai(TheLoaiRequest request);
+    TheLoaiResponse updateTheLoai(Long id, TheLoaiRequest request);
     void deleteTheLoai(Long id);
 }

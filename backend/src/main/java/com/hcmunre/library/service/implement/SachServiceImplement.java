@@ -1,11 +1,16 @@
 package com.hcmunre.library.service.implement;
 
 import com.hcmunre.library.dto.request.SachRequest;
+import com.hcmunre.library.dto.response.SachResponse;
+import com.hcmunre.library.dto.response.NhaXuatBanResponse;
+import com.hcmunre.library.dto.response.TacGiaResponse;
+import com.hcmunre.library.dto.response.TheLoaiResponse;
 import com.hcmunre.library.entity.NhaXuatBan;
 import com.hcmunre.library.entity.Sach;
 import com.hcmunre.library.entity.TacGia;
 import com.hcmunre.library.entity.TheLoai;
-import com.hcmunre.library.exception.BusinessException;
+import com.hcmunre.library.entity.HinhAnhSach;
+import com.hcmunre.library.exception.LibraryException;
 import com.hcmunre.library.exception.ErrorCode;
 import com.hcmunre.library.repository.NhaXuatBanRepository;
 import com.hcmunre.library.repository.SachRepository;
@@ -17,6 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor
@@ -28,31 +35,28 @@ public class SachServiceImplement implements SachService {
     private final TacGiaRepository tacGiaRepository;
 
     @Override
-    // Lấy toàn bộ danh sách đầu sách
-    public List<Sach> getAllSach() {
-        return sachRepository.findAll();
+    public List<SachResponse> getAllSach() {
+        return sachRepository.findAll().stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     @Override
-    // Tìm kiếm đầu sách theo từ khóa
-    public List<Sach> searchSach(String keyword) {
-        return sachRepository.findByTenSachContainingIgnoreCase(keyword);
+    public List<SachResponse> searchSach(String keyword) {
+        return sachRepository.findByTenSachContainingIgnoreCase(keyword).stream().map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
-    // Lấy thông tin đầu sách theo ID, trả lỗi nếu không tìm thấy
-    public Sach getSachById(Long id) {
+    public SachResponse getSachById(Long id) {
         return sachRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.SACH_KHONG_TON_TAI));
+                .map(this::toResponse)
+                .orElseThrow(() -> new LibraryException(ErrorCode.SACH_KHONG_TON_TAI));
     }
 
     @Override
     @Transactional
-    // Tạo mới đầu sách — kiểm tra ISBN unique trước khi lưu
-    public Sach createSach(SachRequest request) {
-        // Validate ISBN unique — kiểm tra bằng cách tìm sách có cùng ISBN
+    public SachResponse createSach(SachRequest request) {
         if (!sachRepository.findByMaIsbn(request.getMaIsbn()).isEmpty()) {
-            throw new BusinessException(ErrorCode.ISBN_DA_TON_TAI);
+            throw new LibraryException(ErrorCode.ISBN_DA_TON_TAI);
         }
 
         Sach sach = Sach.builder()
@@ -62,47 +66,43 @@ public class SachServiceImplement implements SachService {
                 .lanTaiBan(request.getLanTaiBan())
                 .soTrang(request.getSoTrang())
                 .moTa(request.getMoTa())
+                .giaTien(request.getGiaTien())
                 .donGiaPhatTheoNgay(request.getDonGiaPhatTheoNgay())
                 .kichThuoc(request.getKichThuoc())
                 .dichGia(request.getDichGia())
                 .build();
 
-        // Gán nhà xuất bản nếu có
         if (request.getMaNhaXuatBan() != null) {
             NhaXuatBan nxb = nhaXuatBanRepository.findById(request.getMaNhaXuatBan())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.NHA_XUAT_BAN_KHONG_TON_TAI));
+                    .orElseThrow(() -> new LibraryException(ErrorCode.NHA_XUAT_BAN_KHONG_TON_TAI));
             sach.setNhaXuatBan(nxb);
         }
 
-        // Gán danh sách thể loại nếu có
         if (request.getMaTheLoais() != null && !request.getMaTheLoais().isEmpty()) {
             List<TheLoai> theLoais = theLoaiRepository.findAllById(request.getMaTheLoais());
             sach.setDanhSachTheLoai(theLoais);
         }
 
-        // Gán danh sách tác giả nếu có
         if (request.getMaTacGias() != null && !request.getMaTacGias().isEmpty()) {
             List<TacGia> tacGias = tacGiaRepository.findAllById(request.getMaTacGias());
             sach.setDanhSachTacGia(tacGias);
         }
 
-        return sachRepository.save(sach);
+        return toResponse(sachRepository.save(sach));
     }
 
     @Override
     @Transactional
-    // Cập nhật đầu sách — kiểm tra ISBN unique (ngoại trừ chính nó)
-    public Sach updateSach(Long id, SachRequest request) {
+    public SachResponse updateSach(Long id, SachRequest request) {
         Sach sach = sachRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.SACH_KHONG_TON_TAI));
+                .orElseThrow(() -> new LibraryException(ErrorCode.SACH_KHONG_TON_TAI));
 
-        // Validate ISBN unique (trừ đầu sách đang update)
         if (request.getMaIsbn() != null) {
             List<Sach> existing = sachRepository.findByMaIsbn(request.getMaIsbn());
             boolean isbnTrungVoiSachKhac = existing.stream()
                     .anyMatch(s -> !s.getMaSach().equals(id));
             if (isbnTrungVoiSachKhac) {
-                throw new BusinessException(ErrorCode.ISBN_DA_TON_TAI);
+                throw new LibraryException(ErrorCode.ISBN_DA_TON_TAI);
             }
         }
 
@@ -112,13 +112,14 @@ public class SachServiceImplement implements SachService {
         sach.setLanTaiBan(request.getLanTaiBan());
         sach.setSoTrang(request.getSoTrang());
         sach.setMoTa(request.getMoTa());
+        sach.setGiaTien(request.getGiaTien());
         sach.setDonGiaPhatTheoNgay(request.getDonGiaPhatTheoNgay());
         sach.setKichThuoc(request.getKichThuoc());
         sach.setDichGia(request.getDichGia());
 
         if (request.getMaNhaXuatBan() != null) {
             NhaXuatBan nxb = nhaXuatBanRepository.findById(request.getMaNhaXuatBan())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.NHA_XUAT_BAN_KHONG_TON_TAI));
+                    .orElseThrow(() -> new LibraryException(ErrorCode.NHA_XUAT_BAN_KHONG_TON_TAI));
             sach.setNhaXuatBan(nxb);
         }
 
@@ -132,15 +133,61 @@ public class SachServiceImplement implements SachService {
             sach.setDanhSachTacGia(tacGias);
         }
 
-        return sachRepository.save(sach);
+        return toResponse(sachRepository.save(sach));
     }
 
     @Override
-    // Xóa đầu sách theo ID
     public void deleteSach(Long id) {
         if (!sachRepository.existsById(id)) {
-            throw new BusinessException(ErrorCode.SACH_KHONG_TON_TAI);
+            throw new LibraryException(ErrorCode.SACH_KHONG_TON_TAI);
         }
         sachRepository.deleteById(id);
+    }
+
+    private SachResponse toResponse(Sach sach) {
+        NhaXuatBanResponse nxbResponse = null;
+        if (sach.getNhaXuatBan() != null) {
+            nxbResponse = NhaXuatBanResponse.builder()
+                    .maNhaXuatBan(sach.getNhaXuatBan().getMaNhaXuatBan())
+                    .tenNhaXuatBan(sach.getNhaXuatBan().getTenNhaXuatBan())
+                    .diaChi(sach.getNhaXuatBan().getDiaChi())
+                    .soDienThoai(sach.getNhaXuatBan().getSoDienThoai())
+                    .email(sach.getNhaXuatBan().getEmail())
+                    .build();
+        }
+
+        List<TacGiaResponse> tacGias = sach.getDanhSachTacGia() == null ? Collections.emptyList()
+                : sach.getDanhSachTacGia().stream().map(tg -> TacGiaResponse.builder()
+                        .maTacGia(tg.getMaTacGia())
+                        .hoDem(tg.getHoDem())
+                        .ten(tg.getTen())
+                        .build()).collect(Collectors.toList());
+
+        List<TheLoaiResponse> theLoais = sach.getDanhSachTheLoai() == null ? Collections.emptyList()
+                : sach.getDanhSachTheLoai().stream().map(tl -> TheLoaiResponse.builder()
+                        .maTheLoai(tl.getMaTheLoai())
+                        .tenTheLoai(tl.getTenTheLoai())
+                        .build()).collect(Collectors.toList());
+
+        List<String> hinhAnhs = sach.getDanhSachHinhAnh() == null ? Collections.emptyList()
+                : sach.getDanhSachHinhAnh().stream().map(HinhAnhSach::getDuongDan).collect(Collectors.toList());
+
+        return SachResponse.builder()
+                .maSach(sach.getMaSach())
+                .tenSach(sach.getTenSach())
+                .maIsbn(sach.getMaIsbn())
+                .soTrang(sach.getSoTrang())
+                .lanTaiBan(sach.getLanTaiBan())
+                .namXuatBan(sach.getNamXuatBan())
+                .kichThuoc(sach.getKichThuoc())
+                .dichGia(sach.getDichGia())
+                .giaTien(sach.getGiaTien())
+                .donGiaPhatTheoNgay(sach.getDonGiaPhatTheoNgay())
+                .moTa(sach.getMoTa())
+                .nhaXuatBan(nxbResponse)
+                .danhSachTacGia(tacGias)
+                .danhSachTheLoai(theLoais)
+                .danhSachHinhAnhUrl(hinhAnhs)
+                .build();
     }
 }

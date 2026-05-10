@@ -1,6 +1,6 @@
 package com.hcmunre.library.dto.request;
 
-import com.hcmunre.library.enums.TinhTrangSach;
+import com.hcmunre.library.enums.TinhTrangVatLy;
 import com.hcmunre.library.enums.TrangThaiCuonSach;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -17,7 +17,7 @@ public class CuonSachRequest {
     @NotNull(message = "Trạng thái cuốn sách không được để trống")
     private TrangThaiCuonSach trangThai;
 
-    private TinhTrangSach tinhTrangVatLy;
+    private TinhTrangVatLy tinhTrangVatLy;
 
     private String ghiChuBaoTri;
 

@@ -1,0 +1,17 @@
+package com.hcmunre.library.dto.request;
+
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+
+import java.util.List;
+import java.util.UUID;
+
+@Getter
+public class MuonSachRequest {
+    @NotNull(message = "Mã người dùng không được để trống")
+    private UUID maNguoiDung;
+
+    @NotEmpty(message = "Vui lòng quét mã vạch ít nhất một cuốn sách")
+    private List<Long> danhSachMaCuonSach;
+}

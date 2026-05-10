@@ -1,20 +1,22 @@
 package com.hcmunre.library.service;
 
 import com.hcmunre.library.dto.request.CuonSachRequest;
+import com.hcmunre.library.dto.response.CuonSachResponse;
 import com.hcmunre.library.entity.CuonSach;
+import com.hcmunre.library.enums.TrangThaiCuonSach;
+
 import java.util.List;
 
 public interface CuonSachService {
-    // Lấy danh sách tất cả bản sao sách
-    List<CuonSach> getAllCuonSach();
-    // Lấy danh sách bản sao thuộc về một đầu sách
-    List<CuonSach> getCuonSachBySach(Long maSach);
-    // Lấy thông tin bản sao theo ID
-    CuonSach getCuonSachById(Long id);
-    // Tạo mới một bản sao sách
-    CuonSach createCuonSach(CuonSachRequest request);
-    // Cập nhật thông tin bản sao sách
-    CuonSach updateCuonSach(Long id, CuonSachRequest request);
-    // Xóa bản sao sách theo ID
+    // Queries
+    List<CuonSachResponse> getAllCuonSach();
+    List<CuonSachResponse> getCuonSachBySach(Long maSach);
+    CuonSachResponse getCuonSachById(Long id);
+    CuonSach getCuonSachAvailable(Long maSach);
+
+    // Commands
+    CuonSachResponse createCuonSach(CuonSachRequest request);
+    CuonSachResponse updateCuonSach(Long id, CuonSachRequest request);
+    void updateTrangThaiCuonSach(Long maCuonSach, TrangThaiCuonSach trangThai);
     void deleteCuonSach(Long id);
 }

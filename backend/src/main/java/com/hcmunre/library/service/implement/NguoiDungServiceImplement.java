@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class NguoiDungServerImplement implements NguoiDungService {
+public class NguoiDungServiceImplement implements NguoiDungService {
     private final NguoiDungRepository nguoiDungRepository;
 
     @Override

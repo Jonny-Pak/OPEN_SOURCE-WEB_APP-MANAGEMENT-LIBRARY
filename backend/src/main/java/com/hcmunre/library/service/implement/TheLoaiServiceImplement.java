@@ -1,7 +1,7 @@
 package com.hcmunre.library.service.implement;
 
 import com.hcmunre.library.entity.TheLoai;
-import com.hcmunre.library.exception.BusinessException;
+import com.hcmunre.library.exception.LibraryException;
 import com.hcmunre.library.exception.ErrorCode;
 import com.hcmunre.library.repository.TheLoaiRepository;
 import com.hcmunre.library.service.TheLoaiService;
@@ -9,6 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import com.hcmunre.library.dto.request.TheLoaiRequest;
+import com.hcmunre.library.dto.response.TheLoaiResponse;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -17,46 +20,55 @@ public class TheLoaiServiceImplement implements TheLoaiService {
     private final TheLoaiRepository theLoaiRepository;
 
     @Override
-    // Lấy toàn bộ danh sách thể loại từ database
-    public List<TheLoai> getAllTheLoai() {
-        return theLoaiRepository.findAll();
+    public List<TheLoaiResponse> getAllTheLoai() {
+        return theLoaiRepository.findAll().stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     @Override
-    // Tìm kiếm các thể loại dựa trên từ khóa trong tên
-    public List<TheLoai> searchTheLoai(String keyword) {
-        return theLoaiRepository.findByTenTheLoaiContainingIgnoreCase(keyword);
+    public List<TheLoaiResponse> searchTheLoai(String keyword) {
+        return theLoaiRepository.findByTenTheLoaiContainingIgnoreCase(keyword).stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     @Override
-    // Lấy một thể loại theo ID, trả lỗi nếu không tồn tại
-    public TheLoai getTheLoaiById(Long id) {
+    public TheLoaiResponse getTheLoaiById(Long id) {
         return theLoaiRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.THE_LOAI_KHONG_TON_TAI));
+                .map(this::toResponse)
+                .orElseThrow(() -> new LibraryException(ErrorCode.THE_LOAI_KHONG_TON_TAI));
     }
 
     @Override
-    // Lưu thông tin thể loại mới vào database
-    public TheLoai createTheLoai(TheLoai theLoai) {
-        return theLoaiRepository.save(theLoai);
+    public TheLoaiResponse createTheLoai(TheLoaiRequest request) {
+        TheLoai theLoai = TheLoai.builder()
+                .tenTheLoai(request.getTenTheLoai())
+                .moTa(request.getMoTa())
+                .ngayXoa(null)
+                .build();
+        return toResponse(theLoaiRepository.save(theLoai));
     }
 
     @Override
-    // Cập nhật thông tin thể loại đã có, trả lỗi nếu không tìm thấy
-    public TheLoai updateTheLoai(Long id, TheLoai theLoai) {
-        if (!theLoaiRepository.existsById(id)) {
-            throw new BusinessException(ErrorCode.THE_LOAI_KHONG_TON_TAI);
-        }
-        theLoai.setMaTheLoai(id);
-        return theLoaiRepository.save(theLoai);
+    public TheLoaiResponse updateTheLoai(Long id, TheLoaiRequest request) {
+        TheLoai theLoai = theLoaiRepository.findById(id)
+                .orElseThrow(() -> new LibraryException(ErrorCode.THE_LOAI_KHONG_TON_TAI));
+        
+        theLoai.setTenTheLoai(request.getTenTheLoai());
+        theLoai.setMoTa(request.getMoTa());
+        return toResponse(theLoaiRepository.save(theLoai));
     }
 
     @Override
-    // Xóa thể loại khỏi hệ thống dựa trên ID
     public void deleteTheLoai(Long id) {
         if (!theLoaiRepository.existsById(id)) {
-            throw new BusinessException(ErrorCode.THE_LOAI_KHONG_TON_TAI);
+            throw new LibraryException(ErrorCode.THE_LOAI_KHONG_TON_TAI);
         }
         theLoaiRepository.deleteById(id);
+    }
+
+    private TheLoaiResponse toResponse(TheLoai theLoai) {
+        return TheLoaiResponse.builder()
+                .maTheLoai(theLoai.getMaTheLoai())
+                .tenTheLoai(theLoai.getTenTheLoai())
+                .moTa(theLoai.getMoTa())
+                .build();
     }
 }

@@ -1,13 +1,15 @@
-package com.hcmunre.library.exception;
+package com.hcmunre.library.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
-import lombok.Data;
-import java.time.LocalDateTime;
-import java.util.Map;
+import lombok.*;
 
-@Data
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponse {
     private LocalDateTime timestamp;
@@ -15,5 +17,5 @@ public class ErrorResponse {
     private String error;
     private String message;
     private String path;
-    private Map<String, String> details;
+    private Object details;
 }

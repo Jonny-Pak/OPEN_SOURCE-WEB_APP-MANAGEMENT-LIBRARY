@@ -1,21 +1,16 @@
 package com.hcmunre.library.service;
 
-import com.hcmunre.library.entity.HinhAnhSach;
+import com.hcmunre.library.dto.request.HinhAnhSachRequest;
+import com.hcmunre.library.dto.response.HinhAnhSachResponse;
 import java.util.List;
 
 public interface HinhAnhSachService {
-    // Lấy danh sách tất cả hình ảnh
-    List<HinhAnhSach> getAllHinhAnh();
+    // Queries
+    List<HinhAnhSachResponse> getAllHinhAnh();
+    List<HinhAnhSachResponse> getHinhAnhBySach(Long maSach);
+    HinhAnhSachResponse getHinhAnhById(Long id);
 
-    // Lấy danh sách hình ảnh thuộc về một đầu sách
-    List<HinhAnhSach> getHinhAnhBySach(Long maSach);
-
-    // Lấy thông tin hình ảnh theo ID
-    HinhAnhSach getHinhAnhById(Long id);
-
-    // Lưu thông tin hình ảnh mới
-    HinhAnhSach createHinhAnh(HinhAnhSach hinhAnhSach);
-
-    // Xóa hình ảnh theo ID
+    // Commands
+    HinhAnhSachResponse createHinhAnh(HinhAnhSachRequest request);
     void deleteHinhAnh(Long id);
 }

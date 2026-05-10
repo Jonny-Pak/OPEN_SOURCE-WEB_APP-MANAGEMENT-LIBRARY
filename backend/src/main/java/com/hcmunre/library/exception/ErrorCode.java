@@ -2,48 +2,56 @@ package com.hcmunre.library.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
 public enum ErrorCode {
-    // Lỗi không tìm thấy cuốn sách
-    SACH_KHONG_TON_TAI(404, "Không tìm thấy thông tin cuốn sách này"),
 
-    // Lỗi không tìm thấy nhà xuất bản
-    NHA_XUAT_BAN_KHONG_TON_TAI(404, "Không tìm thấy thông tin nhà xuất bản này"),
+    /** 404 - Not Found */
+    SACH_KHONG_TON_TAI(HttpStatus.NOT_FOUND, "Không tìm thấy thông tin đầu sách này"),
+    NHA_XUAT_BAN_KHONG_TON_TAI(HttpStatus.NOT_FOUND, "Không tìm thấy thông tin nhà xuất bản này"),
+    THE_LOAI_KHONG_TON_TAI(HttpStatus.NOT_FOUND, "Không tìm thấy thông tin thể loại này"),
+    TAC_GIA_KHONG_TON_TAI(HttpStatus.NOT_FOUND, "Không tìm thấy thông tin tác giả này"),
+    CUON_SACH_KHONG_TON_TAI(HttpStatus.NOT_FOUND, "Không tìm thấy thông tin cuốn sách này"),
+    HINH_ANH_SACH_KHONG_TON_TAI(HttpStatus.NOT_FOUND, "Không tìm thấy thông tin hình ảnh này"),
+    PHIEU_MUON_KHONG_TON_TAI(HttpStatus.NOT_FOUND, "Không tìm thấy phiếu mượn này"),
+    CHI_TIET_PHIEU_MUON_KHONG_TON_TAI(HttpStatus.NOT_FOUND, "Không tìm thấy chi tiết phiếu mượn"),
+    PHIEU_PHAT_KHONG_TON_TAI(HttpStatus.NOT_FOUND, "Không tìm thấy phiếu phạt này"),
+    DAT_CHO_KHONG_TON_TAI(HttpStatus.NOT_FOUND, "Không tìm thấy thông tin đặt chỗ này"),
 
-    // Lỗi không tìm thấy thể loại
-    THE_LOAI_KHONG_TON_TAI(404, "Không tìm thấy thông tin thể loại này"),
 
-    // Lỗi không tìm thấy tác giả
-    TAC_GIA_KHONG_TON_TAI(404, "Không tìm thấy thông tin tác giả này"),
+    /** 400 - Bad Request */
+    INVALID_INPUT(HttpStatus.BAD_REQUEST, "Dữ liệu đầu vào không hợp lệ"),
+    NGUOI_DUNG_CON_NO_PHAT(HttpStatus.BAD_REQUEST, "Người dùng còn phiếu phạt chưa thanh toán"),
+    SACH_DANG_QUA_HAN(HttpStatus.BAD_REQUEST, "Bạn đang có sách quá hạn chưa trả, không thể thực hiện giao dịch mới"),
+    CUON_SACH_KHONG_SAN_SANG(HttpStatus.BAD_REQUEST, "Cuốn sách này hiện không sẵn sàng để mượn"),
 
-    // Lỗi không tìm thấy cuốn sách (bản sao vật lý)
-    CUON_SACH_KHONG_TON_TAI(404, "Không tìm thấy thông tin cuốn sách này"),
 
-    // Lỗi không tìm thấy hình ảnh sách
-    HINH_ANH_SACH_KHONG_TON_TAI(404, "Không tìm thấy thông tin hình ảnh này"),
+    PHIEU_MUON_DA_HOAN_TAT(HttpStatus.BAD_REQUEST, "Phiếu mượn này đã được hoàn tất trước đó"),
+    PHIEU_MUON_DA_HUY(HttpStatus.BAD_REQUEST, "Phiếu mượn này đã bị huỷ"),
 
-    // Lỗi mã ISBN đã tồn tại trong hệ thống
-    ISBN_DA_TON_TAI(409, "Mã ISBN này đã được sử dụng bởi một đầu sách khác"),
+    KHONG_THE_HUY_PHIEU_DANG_SU_DUNG(HttpStatus.BAD_REQUEST, "Không thể hủy phiếu mượn vì đã có sách được trả"),
+    CHI_TIET_DA_TRA(HttpStatus.BAD_REQUEST, "Cuốn sách này đã được trả trước đó"),
+    VUOT_QUA_SO_LAN_GIA_HAN(HttpStatus.BAD_REQUEST, "Đã vượt quá số lần gia hạn tối đa"),
+    KHONG_THE_GIA_HAN_QUA_HAN(HttpStatus.BAD_REQUEST, "Không thể gia hạn cuốn sách đã quá hạn"),
+    PHIEU_PHAT_DA_THANH_TOAN(HttpStatus.BAD_REQUEST, "Phiếu phạt này đã được thanh toán"),
+    PHIEU_PHAT_DA_HUY(HttpStatus.BAD_REQUEST, "Phiếu phạt này đã bị huỷ"),
+    VUOT_QUA_GIOI_HAN_MUON(HttpStatus.BAD_REQUEST, "Bạn đã vượt quá số lượng sách tối đa được phép mượn cùng lúc"),
+    VUOT_QUA_GIOI_HAN_DAT_CHO(HttpStatus.BAD_REQUEST, "Bạn đã vượt quá số lượng sách tối đa được phép đặt chỗ cùng lúc"),
+    KHONG_THE_BAO_MAT_SACH_DA_TRA(HttpStatus.BAD_REQUEST, "Không thể báo mất cuốn sách đã được trả"),
 
-    // Lỗi mã vạch cuốn sách đã tồn tại
-    MA_VACH_DA_TON_TAI(409, "Mã vạch này đã được gắn cho một cuốn sách khác"),
+    DAT_CHO_DA_XU_LY(HttpStatus.BAD_REQUEST, "Lượt đặt chỗ này đã được xử lý hoặc hủy bỏ trước đó"),
+    /** 409 - Conflict */
+    ISBN_DA_TON_TAI(HttpStatus.CONFLICT, "Mã ISBN này đã được sử dụng bởi một đầu sách khác"),
+    MA_VACH_DA_TON_TAI(HttpStatus.CONFLICT, "Mã vạch này đã được gắn cho một cuốn sách khác"),
+    EMAIL_DA_TON_TAI(HttpStatus.CONFLICT, "Địa chỉ email này đã được sử dụng"),
+    SDT_DA_TON_TAI(HttpStatus.CONFLICT, "Số điện thoại này đã được sử dụng"),
+    DA_DAT_CHO(HttpStatus.CONFLICT, "Bạn đã có một lượt đặt chỗ đang chờ cho đầu sách này"),
 
-    // Lỗi email đã tồn tại
-    EMAIL_DA_TON_TAI(409, "Địa chỉ email này đã được sử dụng"),
+    /** 500 - Internal Server Error */
+    SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Hệ thống đang gặp sự cố, vui lòng thử lại sau");
 
-    // Lỗi số điện thoại đã tồn tại
-    SDT_DA_TON_TAI(409, "Số điện thoại này đã được sử dụng"),
-
-    // Lỗi người dùng đã có đơn đặt chỗ đang chờ cho cùng đầu sách
-    DA_DAT_CHO(409, "Bạn đã có một lượt đặt chỗ đang chờ cho đầu sách này"),
-
-    // Lỗi dữ liệu đầu vào không hợp lệ
-    INVALID_INPUT(400, "Dữ liệu đầu vào không hợp lệ"),
-    // Lỗi hệ thống mặc định
-    SERVER_ERROR(500, "Hệ thống đang gặp sự cố, vui lòng thử lại sau");
-
-    private final int status;
+    private final HttpStatus httpStatus;
     private final String message;
 }

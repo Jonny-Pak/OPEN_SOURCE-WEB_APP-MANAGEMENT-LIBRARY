@@ -1,5 +1,6 @@
 package com.hcmunre.library.exception;
 
+import com.hcmunre.library.dto.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -13,19 +14,19 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    @ExceptionHandler(LibraryBaseException.class)
-    public ResponseEntity<ErrorResponse> handleLibraryException(LibraryBaseException ex, HttpServletRequest request){
+    @ExceptionHandler(LibraryException.class)
+    public ResponseEntity<ErrorResponse> handleLibraryException(LibraryException ex, HttpServletRequest request){
         ErrorCode code = ex.getErrorCode();
 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
-                .status(code.getStatus())
+                .status(code.getHttpStatus().value())
                 .error(code.name())
                 .message(code.getMessage())
                 .path(request.getRequestURI())
                 .build();
 
-        return ResponseEntity.status(code.getStatus()).body(errorResponse);
+        return ResponseEntity.status(code.getHttpStatus()).body(errorResponse);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -39,14 +40,14 @@ public class GlobalExceptionHandler {
 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
-                .status(code.getStatus())
+                .status(code.getHttpStatus().value())
                 .error(code.name())
                 .message(code.getMessage())
                 .path(request.getRequestURI())
                 .details(errors)
                 .build();
 
-        return ResponseEntity.status(code.getStatus()).body(errorResponse);
+        return ResponseEntity.status(code.getHttpStatus()).body(errorResponse);
     }
 
     @ExceptionHandler(Exception.class)
@@ -56,12 +57,12 @@ public class GlobalExceptionHandler {
         ErrorCode code = ErrorCode.SERVER_ERROR;
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
-                .status(code.getStatus())
+                .status(code.getHttpStatus().value())
                 .error(code.name())
                 .message(code.getMessage())
                 .path(request.getRequestURI())
                 .build();
 
-        return ResponseEntity.status(code.getStatus()).body(errorResponse);
+        return ResponseEntity.status(code.getHttpStatus()).body(errorResponse);
     }
 }
