@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,11 +21,13 @@ public class DatChoController {
     private final DatChoService datChoService;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
     public ResponseEntity<List<DatChoResponse>> getAll() {
         return ResponseEntity.ok(datChoService.getAllDatCho());
     }
 
     @GetMapping("/nguoi-dung/{maNguoiDung}")
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN') or #maNguoiDung == authentication.principal.nguoiDung.maNguoiDung")
     public ResponseEntity<List<DatChoResponse>> getByNguoiDung(@PathVariable UUID maNguoiDung) {
         return ResponseEntity.ok(datChoService.getDatChoByNguoiDung(maNguoiDung));
     }
@@ -40,3 +43,4 @@ public class DatChoController {
         return ResponseEntity.noContent().build();
     }
 }
+

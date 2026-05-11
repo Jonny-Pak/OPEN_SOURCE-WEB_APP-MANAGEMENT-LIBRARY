@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,18 +39,21 @@ public class CuonSachController {
 
     // API tạo mới một bản sao sách — @Valid kích hoạt Bean Validation
     @PostMapping
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
     public ResponseEntity<CuonSachResponse> create(@Valid @RequestBody CuonSachRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(cuonSachService.createCuonSach(request));
     }
 
     // API cập nhật thông tin bản sao sách — @Valid kích hoạt Bean Validation
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
     public ResponseEntity<CuonSachResponse> update(@PathVariable Long id, @Valid @RequestBody CuonSachRequest request) {
         return ResponseEntity.ok(cuonSachService.updateCuonSach(id, request));
     }
 
     // API xóa bỏ một bản sao sách khỏi hệ thống
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         cuonSachService.deleteCuonSach(id);
         return ResponseEntity.noContent().build();

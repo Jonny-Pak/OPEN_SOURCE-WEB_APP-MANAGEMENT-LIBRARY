@@ -1,0 +1,121 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "Library Auth APIs",
+		"description": "Bộ API xác thực cho ứng dụng Quản lý Thư viện.\nBao gồm: Đăng ký, Đăng nhập, Test Token (401), Test Phân quyền (403).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Đăng ký tài khoản mới",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"hoDem\": \"Nguyễn Văn\",\n    \"ten\": \"A\",\n    \"email\": \"nguyenvana@gmail.com\",\n    \"matKhau\": \"matkhau123\",\n    \"soDienThoai\": \"0901234567\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/auth/register",
+					"protocol": "http",
+					"host": ["localhost"],
+					"port": "8080",
+					"path": ["api", "auth", "register"]
+				},
+				"description": "Đăng ký tài khoản mới với vai trò mặc định DOC_GIA.\nResponse trả về JWT token và thông tin người dùng."
+			},
+			"response": []
+		},
+		{
+			"name": "2. Đăng nhập",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"// Tự động lưu JWT token vào biến môi trường sau khi đăng nhập thành công",
+							"if (pm.response.code === 200) {",
+							"    var jsonData = pm.response.json();",
+							"    pm.collectionVariables.set('jwt_token', jsonData.accessToken);",
+							"    console.log('Đã lưu JWT token thành công!');",
+							"}"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"nguyenvana@gmail.com\",\n    \"matKhau\": \"matkhau123\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/auth/login",
+					"protocol": "http",
+					"host": ["localhost"],
+					"port": "8080",
+					"path": ["api", "auth", "login"]
+				},
+				"description": "Đăng nhập bằng email + mật khẩu.\nNếu thành công, JWT token sẽ tự động được lưu vào biến {{jwt_token}}."
+			},
+			"response": []
+		},
+		{
+			"name": "3. Test Token Lỗi (401 Unauthorized)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/test/user",
+					"protocol": "http",
+					"host": ["localhost"],
+					"port": "8080",
+					"path": ["api", "test", "user"]
+				},
+				"description": "Gọi API mà KHÔNG truyền token Authorization.\nKết quả mong đợi: 401 Unauthorized với message 'Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn'."
+			},
+			"response": []
+		},
+		{
+			"name": "4. Test Phân quyền (403 Forbidden)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"description": "JWT token của user DOC_GIA (không phải ADMIN)"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8080/api/admin/dashboard",
+					"protocol": "http",
+					"host": ["localhost"],
+					"port": "8080",
+					"path": ["api", "admin", "dashboard"]
+				},
+				"description": "Gọi API admin bằng token của user DOC_GIA.\nKết quả mong đợi: 403 Forbidden với message 'Bạn không có quyền truy cập tài nguyên này'."
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "jwt_token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

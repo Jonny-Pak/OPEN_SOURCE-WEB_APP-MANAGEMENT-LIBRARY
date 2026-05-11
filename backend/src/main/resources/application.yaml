@@ -15,3 +15,10 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+# ===== Cấu hình JWT =====
+# Khóa bí mật mã hóa Base64 (thay đổi trong môi trường production!)
+# Thời gian hết hạn: 7 ngày = 604800000 ms (để dev/test dễ dàng)
+jwt:
+  secret: Y29tLmhjbXVucmUubGlicmFyeS5zZWNyZXQua2V5LmZvci5qd3QuYXV0aGVudGljYXRpb24uc3VwZXIuc2VjdXJl
+  expiration: 604800000

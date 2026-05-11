@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,18 +39,21 @@ public class TheLoaiController {
 
     // API tạo mới một thể loại sách
     @PostMapping
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
     public ResponseEntity<TheLoaiResponse> create(@Valid @RequestBody TheLoaiRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(theLoaiService.createTheLoai(request));
     }
 
     // API cập nhật thông tin cho thể loại sách hiện có
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
     public ResponseEntity<TheLoaiResponse> update(@PathVariable Long id, @Valid @RequestBody TheLoaiRequest request) {
         return ResponseEntity.ok(theLoaiService.updateTheLoai(id, request));
     }
 
     // API xóa bỏ một thể loại sách khỏi hệ thống
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         theLoaiService.deleteTheLoai(id);
         return ResponseEntity.noContent().build();

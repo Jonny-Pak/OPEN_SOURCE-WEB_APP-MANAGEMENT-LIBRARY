@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,12 +39,14 @@ public class HinhAnhSachController {
 
     // API thêm mới một hình ảnh sách
     @PostMapping
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
     public ResponseEntity<HinhAnhSachResponse> create(@Valid @RequestBody HinhAnhSachRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(hinhAnhSachService.createHinhAnh(request));
     }
 
     // API xóa bỏ một hình ảnh sách khỏi hệ thống
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         hinhAnhSachService.deleteHinhAnh(id);
         return ResponseEntity.noContent().build();

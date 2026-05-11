@@ -23,7 +23,7 @@ public class ChiTietPhieuMuon extends BaseEntity {
     @Column(updatable = false, nullable = false)
     private UUID maChiTietPhieuMuon;
 
-    @DecimalMin(value = "0.0", inclusive = true, message = "Đơn giá phạt áp dụng phải >= 0")
+    @DecimalMin(value = "0.0", message = "Đơn giá phạt áp dụng phải >= 0")
     private Double donGiaPhatApDung;
 
     @Enumerated(EnumType.STRING)

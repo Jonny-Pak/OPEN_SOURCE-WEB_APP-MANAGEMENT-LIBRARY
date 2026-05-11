@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,18 +39,21 @@ public class NhaXuatBanController {
 
     // API tạo mới một nhà xuất bản — @Valid kích hoạt Bean Validation
     @PostMapping
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
     public ResponseEntity<NhaXuatBanResponse> create(@Valid @RequestBody NhaXuatBanRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(nhaXuatBanService.createNhaXuatBan(request));
     }
 
     // API cập nhật thông tin cho nhà xuất bản hiện có — @Valid kích hoạt Bean Validation
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
     public ResponseEntity<NhaXuatBanResponse> update(@PathVariable Long id, @Valid @RequestBody NhaXuatBanRequest request) {
         return ResponseEntity.ok(nhaXuatBanService.updateNhaXuatBan(id, request));
     }
 
     // API xóa bỏ một nhà xuất bản khỏi hệ thống
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         nhaXuatBanService.deleteNhaXuatBan(id);
         return ResponseEntity.noContent().build();
