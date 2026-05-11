@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -39,6 +40,7 @@ public class SachController {
 
     // API tạo mới một đầu sách — @Valid kích hoạt Bean Validation trên SachRequest
     @PostMapping
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
     public ResponseEntity<SachResponse> create(@Valid @RequestBody SachRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(sachService.createSach(request));
     }
@@ -46,12 +48,14 @@ public class SachController {
     // API cập nhật thông tin cho đầu sách hiện có — @Valid kích hoạt Bean
     // Validation
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
     public ResponseEntity<SachResponse> update(@PathVariable Long id, @Valid @RequestBody SachRequest request) {
         return ResponseEntity.ok(sachService.updateSach(id, request));
     }
 
     // API xóa bỏ một đầu sách khỏi hệ thống
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         sachService.deleteSach(id);
         return ResponseEntity.noContent().build();

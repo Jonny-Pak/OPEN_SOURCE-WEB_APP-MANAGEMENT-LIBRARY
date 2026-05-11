@@ -109,11 +109,21 @@ public class SecurityConfig {
             )
             // Phân quyền các endpoint
             .authorizeHttpRequests(auth -> auth
+                // Cho phép gọi xác thực đăng nhập / đăng ký
                 .requestMatchers("/api/auth/**").permitAll()
-                // Chỉ ADMIN mới truy cập được /api/admin/**
-                .requestMatchers("/api/admin/**").hasRole("QUAN_TRI_VIEN")
-                // THU_THU và ADMIN truy cập được /api/thu-thu/**
-                .requestMatchers("/api/thu-thu/**").hasAnyRole("THU_THU", "QUAN_TRI_VIEN")
+                // Mở khoá cho Swagger Document
+                .requestMatchers(
+                    "/v3/api-docs/**",
+                    "/swagger-ui/**",
+                    "/swagger-ui.html"
+                ).permitAll()
+                // Cho phép xem (GET) công khai cho một số API thông tin sách
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/sach/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/tac-gia/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/the-loai/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/nha-xuat-ban/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/hinh-anh-sach/**").permitAll()
+                // Tất cả request khác BẮT BUỘC phải đăng nhập (có token)
                 .anyRequest().authenticated()
             )
             // Đăng ký AuthenticationProvider

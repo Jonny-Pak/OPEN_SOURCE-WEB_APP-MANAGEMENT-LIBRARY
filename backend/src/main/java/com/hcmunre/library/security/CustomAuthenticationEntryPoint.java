@@ -1,7 +1,6 @@
 package com.hcmunre.library.security;
 
 import com.hcmunre.library.exception.ErrorCode;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
@@ -32,7 +31,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     @Override
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
-                         AuthenticationException authException) throws IOException, ServletException {
+                         AuthenticationException authException) throws IOException {
         ErrorCode errorCode = ErrorCode.CHUA_DANG_NHAP;
 
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);

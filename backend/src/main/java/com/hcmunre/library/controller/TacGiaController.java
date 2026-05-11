@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,16 +35,19 @@ public class TacGiaController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
     public ResponseEntity<TacGiaResponse> create(@Valid @RequestBody TacGiaRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(tacGiaService.createTacGia(request));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
     public ResponseEntity<TacGiaResponse> update(@PathVariable Long id, @Valid @RequestBody TacGiaRequest request) {
         return ResponseEntity.ok(tacGiaService.updateTacGia(id, request));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         tacGiaService.deleteTacGia(id);
         return ResponseEntity.noContent().build();

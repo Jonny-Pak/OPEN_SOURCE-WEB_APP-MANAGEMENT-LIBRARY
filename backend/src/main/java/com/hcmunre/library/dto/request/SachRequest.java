@@ -32,11 +32,11 @@ public class SachRequest {
 
     private String moTa;
 
-    @DecimalMin(value = "0.0", inclusive = true, message = "Đơn giá phạt theo ngày phải >= 0")
+    @DecimalMin(value = "0.0", message = "Đơn giá phạt theo ngày phải >= 0")
     private Double donGiaPhatTheoNgay;
 
     @NotNull(message = "Giá tiền sách không được để trống")
-    @DecimalMin(value = "0.0", inclusive = true, message = "Giá tiền sách phải >= 0")
+    @DecimalMin(value = "0.0", message = "Giá tiền sách phải >= 0")
     private Double giaTien;
 
     private String kichThuoc;

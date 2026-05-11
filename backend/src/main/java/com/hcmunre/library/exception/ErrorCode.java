@@ -26,7 +26,6 @@ public enum ErrorCode {
     SACH_DANG_QUA_HAN(HttpStatus.BAD_REQUEST, "Bạn đang có sách quá hạn chưa trả, không thể thực hiện giao dịch mới"),
     CUON_SACH_KHONG_SAN_SANG(HttpStatus.BAD_REQUEST, "Cuốn sách này hiện không sẵn sàng để mượn"),
 
-
     PHIEU_MUON_DA_HOAN_TAT(HttpStatus.BAD_REQUEST, "Phiếu mượn này đã được hoàn tất trước đó"),
     PHIEU_MUON_DA_HUY(HttpStatus.BAD_REQUEST, "Phiếu mượn này đã bị huỷ"),
 
@@ -42,6 +41,8 @@ public enum ErrorCode {
 
     DAT_CHO_DA_XU_LY(HttpStatus.BAD_REQUEST, "Lượt đặt chỗ này đã được xử lý hoặc hủy bỏ trước đó"),
 
+    MAT_KHAU_KHONG_KHOP(HttpStatus.BAD_REQUEST, "Mật khẩu mới và xác nhận mật khẩu không trùng khớp"),
+    MAT_KHAU_CU_SAI(HttpStatus.BAD_REQUEST, "Mật khẩu cũ không chính xác"),
     /** 401 - Unauthorized */
     CHUA_DANG_NHAP(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn"),
     DANG_NHAP_THAT_BAI(HttpStatus.UNAUTHORIZED, "Tên đăng nhập hoặc mật khẩu không đúng"),
