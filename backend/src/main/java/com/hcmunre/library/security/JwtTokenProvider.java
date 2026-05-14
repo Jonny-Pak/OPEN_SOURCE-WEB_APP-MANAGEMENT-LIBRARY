@@ -35,6 +35,12 @@ public class JwtTokenProvider {
     private long jwtExpiration;
 
     /**
+     * Thời gian hết hạn của refresh token (mặc định 30 ngày = 2592000000 ms).
+     */
+    @Value("${jwt.refresh-expiration:2592000000}")
+    private long jwtRefreshExpiration;
+
+    /**
      * Tạo JWT token từ thông tin xác thực (Authentication).
      *
      * @param authentication đối tượng Authentication chứa thông tin người dùng đã xác thực
@@ -52,6 +58,38 @@ public class JwtTokenProvider {
                 .issuedAt(ngayHienTai)                              // Thời điểm phát hành
                 .expiration(ngayHetHan)                             // Thời điểm hết hạn
                 .signWith(layKhoaBiMat())                           // Ký bằng khóa bí mật
+                .compact();
+    }
+
+    /**
+     * Tạo Refresh token từ thông tin xác thực.
+     */
+    public String taoRefreshToken(Authentication authentication) {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Date ngayHienTai = new Date();
+        Date ngayHetHan = new Date(ngayHienTai.getTime() + jwtRefreshExpiration);
+
+        return Jwts.builder()
+                .subject(userDetails.getUsername())
+                .issuedAt(ngayHienTai)
+                .expiration(ngayHetHan)
+                .signWith(layKhoaBiMat())
+                .compact();
+    }
+
+    /**
+     * Tạo Access token trực tiếp từ Entity NguoiDung.
+     */
+    public String taoTokenTuNguoiDung(com.hcmunre.library.entity.NguoiDung nguoiDung) {
+        Date ngayHienTai = new Date();
+        Date ngayHetHan = new Date(ngayHienTai.getTime() + jwtExpiration);
+
+        return Jwts.builder()
+                .subject(nguoiDung.getEmail())
+                .claim("vaiTro", nguoiDung.getVaiTro().name())
+                .issuedAt(ngayHienTai)
+                .expiration(ngayHetHan)
+                .signWith(layKhoaBiMat())
                 .compact();
     }
 

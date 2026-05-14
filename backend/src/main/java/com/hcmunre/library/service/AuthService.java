@@ -2,6 +2,7 @@ package com.hcmunre.library.service;
 
 import com.hcmunre.library.dto.request.AuthRequest;
 import com.hcmunre.library.dto.request.RegisterRequest;
+import com.hcmunre.library.dto.request.RefreshTokenRequest;
 import com.hcmunre.library.dto.response.AuthResponse;
 
 /**
@@ -24,4 +25,9 @@ public interface AuthService {
      * @return AuthResponse chứa JWT token và thông tin user đã tạo
      */
     AuthResponse dangKy(RegisterRequest request);
+
+    /**
+     * Cấp lại access token mới từ refresh token.
+     */
+    AuthResponse refreshToken(RefreshTokenRequest request);
 }

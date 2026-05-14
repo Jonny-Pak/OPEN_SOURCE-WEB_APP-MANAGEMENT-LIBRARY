@@ -22,6 +22,8 @@ public enum ErrorCode {
 
     /** 400 - Bad Request */
     INVALID_INPUT(HttpStatus.BAD_REQUEST, "Dữ liệu đầu vào không hợp lệ"),
+    FILE_TRONG(HttpStatus.BAD_REQUEST, "File tải lên không được để trống"),
+    LOI_LUU_FILE(HttpStatus.INTERNAL_SERVER_ERROR, "Có lỗi xảy ra khi lưu trữ file"),
     NGUOI_DUNG_CON_NO_PHAT(HttpStatus.BAD_REQUEST, "Người dùng còn phiếu phạt chưa thanh toán"),
     SACH_DANG_QUA_HAN(HttpStatus.BAD_REQUEST, "Bạn đang có sách quá hạn chưa trả, không thể thực hiện giao dịch mới"),
     CUON_SACH_KHONG_SAN_SANG(HttpStatus.BAD_REQUEST, "Cuốn sách này hiện không sẵn sàng để mượn"),
@@ -43,6 +45,10 @@ public enum ErrorCode {
 
     MAT_KHAU_KHONG_KHOP(HttpStatus.BAD_REQUEST, "Mật khẩu mới và xác nhận mật khẩu không trùng khớp"),
     MAT_KHAU_CU_SAI(HttpStatus.BAD_REQUEST, "Mật khẩu cũ không chính xác"),
+
+    SACH_DA_CO_TRONG_YEU_THICH(HttpStatus.BAD_REQUEST, "Cuốn sách này đã có trong danh sách yêu thích của bạn"),
+    THONG_BAO_KHONG_TON_TAI(HttpStatus.NOT_FOUND, "Không tìm thấy thông báo này"),
+
     /** 401 - Unauthorized */
     CHUA_DANG_NHAP(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn"),
     DANG_NHAP_THAT_BAI(HttpStatus.UNAUTHORIZED, "Tên đăng nhập hoặc mật khẩu không đúng"),
@@ -59,6 +65,8 @@ public enum ErrorCode {
     EMAIL_DA_TON_TAI(HttpStatus.CONFLICT, "Địa chỉ email này đã được sử dụng"),
     SDT_DA_TON_TAI(HttpStatus.CONFLICT, "Số điện thoại này đã được sử dụng"),
     DA_DAT_CHO(HttpStatus.CONFLICT, "Bạn đã có một lượt đặt chỗ đang chờ cho đầu sách này"),
+
+    SACH_YEU_THICH_KHONG_TON_TAI(HttpStatus.NOT_FOUND, "Không tìm thấy sách trong danh sách yêu thích"),
 
     /** 423 - Locked */
     TAI_KHOAN_BI_KHOA(HttpStatus.LOCKED, "Tài khoản của bạn đã bị khóa"),

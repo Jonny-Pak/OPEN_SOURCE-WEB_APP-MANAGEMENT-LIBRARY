@@ -16,13 +16,18 @@ import com.hcmunre.library.repository.NhaXuatBanRepository;
 import com.hcmunre.library.repository.SachRepository;
 import com.hcmunre.library.repository.TacGiaRepository;
 import com.hcmunre.library.repository.TheLoaiRepository;
+import com.hcmunre.library.repository.CuonSachRepository;
 import com.hcmunre.library.service.SachService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 import java.util.stream.Collectors;
+import java.time.LocalDateTime;
 import java.util.Collections;
 
 @Service
@@ -33,16 +38,18 @@ public class SachServiceImplement implements SachService {
     private final NhaXuatBanRepository nhaXuatBanRepository;
     private final TheLoaiRepository theLoaiRepository;
     private final TacGiaRepository tacGiaRepository;
+    private final CuonSachRepository cuonSachRepository;
 
     @Override
-    public List<SachResponse> getAllSach() {
-        return sachRepository.findAll().stream().map(this::toResponse).collect(Collectors.toList());
+    public Page<SachResponse> getAllSach(Pageable pageable) {
+        return sachRepository.findAll(pageable).map(this::toResponse);
     }
 
     @Override
-    public List<SachResponse> searchSach(String keyword) {
-        return sachRepository.findByTenSachContainingIgnoreCase(keyword).stream().map(this::toResponse)
-                .collect(Collectors.toList());
+    public Page<SachResponse> searchAndFilterSach(String keyword, Long maTheLoai, Long maTacGia, Long maNhaXuatBan,
+            Pageable pageable) {
+        return sachRepository.searchAndFilter(keyword, maTheLoai, maTacGia, maNhaXuatBan, pageable)
+                .map(this::toResponse);
     }
 
     @Override
@@ -138,10 +145,10 @@ public class SachServiceImplement implements SachService {
 
     @Override
     public void deleteSach(Long id) {
-        if (!sachRepository.existsById(id)) {
-            throw new LibraryException(ErrorCode.SACH_KHONG_TON_TAI);
-        }
-        sachRepository.deleteById(id);
+        Sach sach = sachRepository.findById(id).orElseThrow(
+                () -> new LibraryException(ErrorCode.SACH_KHONG_TON_TAI));
+        sach.setNgayXoa(LocalDateTime.now());
+        sachRepository.save(sach);
     }
 
     private SachResponse toResponse(Sach sach) {
@@ -188,6 +195,8 @@ public class SachServiceImplement implements SachService {
                 .danhSachTacGia(tacGias)
                 .danhSachTheLoai(theLoais)
                 .danhSachHinhAnhUrl(hinhAnhs)
+                .soLuongCoSan(cuonSachRepository.countBySach_MaSachAndTrangThai(
+                        sach.getMaSach(), com.hcmunre.library.enums.TrangThaiCuonSach.SAN_SANG))
                 .build();
     }
 }

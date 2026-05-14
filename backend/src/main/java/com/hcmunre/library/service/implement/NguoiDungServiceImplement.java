@@ -17,6 +17,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 @Service
 @RequiredArgsConstructor
 public class NguoiDungServiceImplement implements NguoiDungService {
@@ -25,12 +28,18 @@ public class NguoiDungServiceImplement implements NguoiDungService {
 
     @Override
     public NguoiDung getNguoiDungActive(UUID maNugoiDung) {
-        return nguoiDungRepository.findById(maNugoiDung).orElse(null);
+        NguoiDung nguoiDung = nguoiDungRepository.findById(maNugoiDung).orElseThrow(() -> new LibraryException(ErrorCode.NGUOI_DUNG_KHONG_TON_TAI));
+
+        if(nguoiDung.getTrangThai() == TrangThaiNguoiDung.KHOA){
+            throw new LibraryException(ErrorCode.TAI_KHOAN_BI_KHOA);
+        }
+
+        return nguoiDung;
     }
 
     @Override
-    public List<NguoiDungResponse> getAllNguoiDung() {
-        return nguoiDungRepository.findAll().stream().map(this::toRespone).collect(Collectors.toList());
+    public Page<NguoiDungResponse> getAllNguoiDung(Pageable pageable) {
+        return nguoiDungRepository.findAll(pageable).map(this::toRespone);
     }
 
     @Override
@@ -42,10 +51,7 @@ public class NguoiDungServiceImplement implements NguoiDungService {
         return toRespone(nguoiDung);
     }
 
-    @Override
-    public void checkNguoiDungPenalty(UUID maNguoiDung) {
 
-    }
 
     @Override
     public NguoiDungResponse updateProfile(UUID maNguoiDung, UpdateProfileRequest request) {
@@ -56,6 +62,10 @@ public class NguoiDungServiceImplement implements NguoiDungService {
         nguoiDung.setHoDem(request.getHoDem());
         nguoiDung.setTen(request.getTen());
         nguoiDung.setSoDienThoai(request.getSoDienThoai());
+        nguoiDung.setNgaySinh(request.getNgaySinh());
+        nguoiDung.setGioiTinh(request.getGioiTinh());
+        nguoiDung.setCccd(request.getCccd());
+        nguoiDung.setDiaChi(request.getDiaChi());
 
         return toRespone(nguoiDungRepository.save(nguoiDung));
     }
@@ -95,8 +105,13 @@ public class NguoiDungServiceImplement implements NguoiDungService {
                 .ten(nguoiDung.getTen())
                 .email(nguoiDung.getEmail())
                 .soDienThoai(nguoiDung.getSoDienThoai())
+                .ngaySinh(nguoiDung.getNgaySinh())
+                .gioiTinh(nguoiDung.getGioiTinh())
+                .cccd(nguoiDung.getCccd())
+                .diaChi(nguoiDung.getDiaChi())
                 .vaiTro(nguoiDung.getVaiTro())
                 .trangThai(nguoiDung.getTrangThai())
+                .ngayTao(nguoiDung.getNgayTao())
                 .build();
     }
 }
