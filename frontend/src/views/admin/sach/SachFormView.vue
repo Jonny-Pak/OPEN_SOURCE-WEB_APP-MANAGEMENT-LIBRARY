@@ -1,0 +1,241 @@
+<!--
+  SachFormView.vue — Form thêm/sửa đầu sách (dùng chung cho cả 2 mode).
+  Hỗ trợ upload ảnh bìa với preview.
+-->
+<script setup lang="ts">
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { sachService } from '@/services/sachService'
+import { tacGiaService, nhaXuatBanService, theLoaiService } from '@/services/danhMucService'
+import { useToast } from '@/composables/useToast'
+import type { TacGia, NhaXuatBan, TheLoai } from '@/types/danhmuc'
+
+const route = useRoute()
+const router = useRouter()
+const toast = useToast()
+
+const isEdit = computed(() => !!route.params.id)
+const sachId = computed(() => Number(route.params.id))
+
+// Dữ liệu form
+const form = ref({ tenSach: '', isbn: '', namXuatBan: new Date().getFullYear(), moTa: '', nhaXuatBanId: 0, tacGiaIds: [] as number[], theLoaiIds: [] as number[] })
+const danhSachNXB = ref<NhaXuatBan[]>([])
+const danhSachTacGia = ref<TacGia[]>([])
+const danhSachTheLoai = ref<TheLoai[]>([])
+const dangGui = ref(false)
+const dangTai = ref(false)
+
+// Upload ảnh bìa
+const anhBiaCu = ref('')
+const anhBiaPreview = ref('')
+const fileDaChon = ref<File | null>(null)
+
+function chonFile(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  fileDaChon.value = file
+  anhBiaPreview.value = URL.createObjectURL(file)
+}
+
+async function uploadAnhBia(id: number) {
+  if (!fileDaChon.value) return
+  try {
+    await sachService.uploadAnhBia(id, fileDaChon.value)
+  } catch { toast.canhBao('Upload ảnh bìa thất bại, bạn có thể thử lại sau') }
+}
+
+async function taiDuLieu() {
+  dangTai.value = true
+  try {
+    const [nxb, tg, tl] = await Promise.all([
+      nhaXuatBanService.danhSach(),
+      tacGiaService.danhSach(),
+      theLoaiService.danhSach(),
+    ])
+    danhSachNXB.value = nxb
+    danhSachTacGia.value = tg
+    danhSachTheLoai.value = tl
+
+    if (isEdit.value) {
+      const sach = await sachService.layMotCuon(sachId.value)
+      form.value = {
+        tenSach: sach.tenSach, isbn: sach.isbn, namXuatBan: sach.namXuatBan,
+        moTa: sach.moTa ?? '', nhaXuatBanId: sach.nhaXuatBan.maNXB,
+        tacGiaIds: sach.tacGias.map(t => t.maTacGia),
+        theLoaiIds: sach.theLoais.map(t => t.maTheLoai),
+      }
+      anhBiaCu.value = sach.anhBiaUrl ?? ''
+    }
+  } catch { toast.loi('Không thể tải dữ liệu') }
+  finally { dangTai.value = false }
+}
+
+function toggleId(arr: number[], id: number) {
+  const idx = arr.indexOf(id)
+  if (idx === -1) arr.push(id)
+  else arr.splice(idx, 1)
+}
+
+async function luuSach() {
+  if (!form.value.tenSach.trim()) return toast.canhBao('Tên sách không được để trống')
+  if (!form.value.isbn.trim()) return toast.canhBao('ISBN không được để trống')
+  if (!form.value.nhaXuatBanId) return toast.canhBao('Vui lòng chọn nhà xuất bản')
+  if (form.value.tacGiaIds.length === 0) return toast.canhBao('Vui lòng chọn ít nhất 1 tác giả')
+
+  dangGui.value = true
+  try {
+    let id = sachId.value
+    if (isEdit.value) {
+      await sachService.capNhat(id, form.value)
+      toast.thanhCong('Cập nhật đầu sách thành công')
+    } else {
+      const sach = await sachService.taoCai(form.value)
+      id = sach.maSach
+      toast.thanhCong('Thêm đầu sách thành công')
+    }
+    await uploadAnhBia(id)
+    router.push('/admin/sach')
+  } catch { toast.loi('Lưu thất bại, vui lòng kiểm tra lại') }
+  finally { dangGui.value = false }
+}
+
+onMounted(taiDuLieu)
+</script>
+
+<template>
+  <div class="sach-form">
+    <div class="dau-trang">
+      <button class="nut-quay-lai" @click="router.push('/admin/sach')">← Quay lại</button>
+      <h2>{{ isEdit ? 'Chỉnh sửa đầu sách' : 'Thêm đầu sách mới' }}</h2>
+    </div>
+
+    <div v-if="dangTai" style="padding:2rem"><span>Đang tải dữ liệu...</span></div>
+
+    <div v-else class="khung-form">
+      <div class="luoi-form">
+        <!-- Cột trái: thông tin chính -->
+        <div class="cot-chinh">
+          <div class="the-nhom">
+            <h3 class="tieu-de-nhom">Thông tin cơ bản</h3>
+            <div class="form-group">
+              <label>Tên sách *</label>
+              <input v-model="form.tenSach" class="form-input" placeholder="Nhập tên sách" />
+            </div>
+            <div class="hang-doi">
+              <div class="form-group">
+                <label>ISBN *</label>
+                <input v-model="form.isbn" class="form-input" placeholder="978-..." />
+              </div>
+              <div class="form-group">
+                <label>Năm xuất bản *</label>
+                <input v-model.number="form.namXuatBan" type="number" class="form-input" :min="1900" :max="2099" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Mô tả</label>
+              <textarea v-model="form.moTa" class="form-input form-textarea" placeholder="Mô tả nội dung sách..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>Nhà xuất bản *</label>
+              <select v-model.number="form.nhaXuatBanId" class="form-input form-select">
+                <option value="0" disabled>-- Chọn NXB --</option>
+                <option v-for="nxb in danhSachNXB" :key="nxb.maNXB" :value="nxb.maNXB">{{ nxb.tenNXB }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Tác giả -->
+          <div class="the-nhom">
+            <h3 class="tieu-de-nhom">Tác giả * (chọn nhiều)</h3>
+            <div class="chon-nhieu">
+              <label v-for="tg in danhSachTacGia" :key="tg.maTacGia" class="nhan-checkbox">
+                <input type="checkbox" :value="tg.maTacGia" :checked="form.tacGiaIds.includes(tg.maTacGia)" @change="toggleId(form.tacGiaIds, tg.maTacGia)" />
+                <span>{{ tg.tenTacGia }}</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Thể loại -->
+          <div class="the-nhom">
+            <h3 class="tieu-de-nhom">Thể loại (chọn nhiều)</h3>
+            <div class="chon-nhieu">
+              <label v-for="tl in danhSachTheLoai" :key="tl.maTheLoai" class="nhan-checkbox">
+                <input type="checkbox" :value="tl.maTheLoai" :checked="form.theLoaiIds.includes(tl.maTheLoai)" @change="toggleId(form.theLoaiIds, tl.maTheLoai)" />
+                <span>{{ tl.tenTheLoai }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cột phải: ảnh bìa -->
+        <div class="cot-phu">
+          <div class="the-nhom">
+            <h3 class="tieu-de-nhom">Ảnh bìa</h3>
+            <div class="vung-upload">
+              <div class="preview-anh">
+                <img v-if="anhBiaPreview || anhBiaCu" :src="anhBiaPreview || anhBiaCu" alt="Ảnh bìa" />
+                <div v-else class="placeholder-anh">📚<br /><span>Chưa có ảnh</span></div>
+              </div>
+              <label class="nut-chon-anh">
+                <input type="file" accept="image/*" class="input-file" @change="chonFile" />
+                📁 Chọn ảnh bìa
+              </label>
+              <p class="ghi-chu-anh">Định dạng: JPG, PNG, WebP. Tối đa 5MB.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nút hành động -->
+      <div class="nhom-nut">
+        <button class="nut-huy" @click="router.push('/admin/sach')">Hủy bỏ</button>
+        <button class="nut-luu" :disabled="dangGui" @click="luuSach">
+          <span v-if="dangGui">Đang lưu...</span>
+          <span v-else>{{ isEdit ? '💾 Lưu thay đổi' : '✅ Thêm đầu sách' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.sach-form { animation: fadeInUp 0.4s ease; }
+.dau-trang { display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem; }
+.dau-trang h2 { font-size:1.2rem; font-weight:700; }
+.nut-quay-lai { background:none; border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu-mo); cursor:pointer; padding:0.5rem 1rem; font-family:inherit; font-size:0.875rem; transition:all 0.2s; }
+.nut-quay-lai:hover { color:var(--mau-chu); background:rgba(255,255,255,0.06); }
+.khung-form { display:flex; flex-direction:column; gap:1.25rem; }
+.luoi-form { display:grid; grid-template-columns:1fr 280px; gap:1.25rem; }
+.cot-chinh,.cot-phu { display:flex; flex-direction:column; gap:1.25rem; }
+.the-nhom { background:var(--glass-nen); border:1px solid var(--glass-vien); border-radius:12px; padding:1.25rem; }
+.tieu-de-nhom { font-size:0.875rem; font-weight:700; color:var(--mau-chinh); margin-bottom:1rem; text-transform:uppercase; letter-spacing:0.05em; }
+.form-group { display:flex; flex-direction:column; gap:0.375rem; margin-bottom:0.875rem; }
+.form-group:last-child { margin-bottom:0; }
+.form-group label { font-size:0.8rem; font-weight:600; color:var(--mau-chu); }
+.form-input { padding:0.7rem 1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu); font-family:inherit; font-size:0.875rem; outline:none; transition:border-color 0.2s; }
+.form-input:focus { border-color:var(--mau-chinh); }
+.form-textarea { resize:vertical; min-height:100px; }
+.form-select { cursor:pointer; }
+.form-select option { background:#1a1a2e; }
+.hang-doi { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
+.chon-nhieu { display:flex; flex-wrap:wrap; gap:0.5rem; }
+.nhan-checkbox { display:flex; align-items:center; gap:0.4rem; cursor:pointer; padding:0.3rem 0.65rem; border-radius:20px; border:1px solid rgba(255,255,255,0.08); font-size:0.8rem; transition:all 0.2s; }
+.nhan-checkbox:hover { border-color:var(--mau-chinh); background:rgba(6,182,212,0.08); }
+.nhan-checkbox input { accent-color:var(--mau-chinh); }
+/* Upload ảnh bìa */
+.vung-upload { display:flex; flex-direction:column; gap:0.75rem; align-items:center; }
+.preview-anh { width:160px; height:220px; border-radius:8px; overflow:hidden; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; }
+.preview-anh img { width:100%; height:100%; object-fit:cover; }
+.placeholder-anh { text-align:center; font-size:2rem; color:var(--mau-chu-rat-mo); line-height:2; }
+.placeholder-anh span { font-size:0.8rem; display:block; }
+.nut-chon-anh { cursor:pointer; padding:0.6rem 1rem; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:8px; font-size:0.8rem; color:var(--mau-chu); transition:all 0.2s; text-align:center; }
+.nut-chon-anh:hover { background:rgba(6,182,212,0.12); border-color:var(--mau-chinh); }
+.input-file { display:none; }
+.ghi-chu-anh { font-size:0.75rem; color:var(--mau-chu-rat-mo); text-align:center; }
+/* Nút hành động */
+.nhom-nut { display:flex; justify-content:flex-end; gap:0.75rem; }
+.nut-huy { padding:0.75rem 1.5rem; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu-mo); cursor:pointer; font-family:inherit; font-size:0.9rem; }
+.nut-luu { padding:0.75rem 1.75rem; background:var(--color-primary); border:none; border-radius:8px; color:white; cursor:pointer; font-family:inherit; font-size:0.9rem; font-weight:600; }
+.nut-luu:disabled { opacity:0.6; cursor:not-allowed; }
+@media (max-width:768px) { .luoi-form { grid-template-columns:1fr; } }
+</style>

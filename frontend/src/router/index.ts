@@ -1,3 +1,7 @@
+/**
+ * router/index.ts — Cấu hình Vue Router cho toàn bộ ứng dụng.
+ * [DEV MODE] Auth guard bị vô hiệu hóa — cho phép truy cập tất cả route admin trực tiếp.
+ */
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/Home/HomeView.vue'
 
@@ -22,6 +26,7 @@ import PublisherDetailView from '../views/PublisherDetail/PublisherDetailView.vu
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
+  scrollBehavior: () => ({ top: 0 }),
   routes: [
     {
       path: '/',
@@ -63,7 +68,6 @@ const router = createRouter({
       name: 'book-detail',
       component: BookDetailView,
     },
-
     {
       path: '/borrow/cart',
       name: 'borrow-cart',
@@ -104,13 +108,125 @@ const router = createRouter({
       name: 'profile',
       component: ProfileView,
     },
-
     {
       path: '/login',
       name: 'login',
       component: LoginView,
     },
+
+    // ===== ADMIN ROUTES =====
+    {
+      path: '/admin',
+      component: () => import('@/components/admin/layout/AdminLayout.vue'),
+      children: [
+        {
+          path: '',
+          redirect: '/admin/dashboard',
+        },
+        {
+          path: 'dashboard',
+          name: 'dashboard',
+          component: () => import('@/views/admin/DashboardView.vue'),
+        },
+        {
+          path: 'danh-muc',
+          children: [
+            {
+              path: '',
+              name: 'danh-muc',
+              component: () => import('@/views/admin/danh-muc/DanhMucView.vue')
+            },
+            { path: 'tac-gia', component: () => import('@/views/admin/danh-muc/DanhMucView.vue') },
+            { path: 'nha-xuat-ban', component: () => import('@/views/admin/danh-muc/DanhMucView.vue') },
+            { path: 'the-loai', component: () => import('@/views/admin/danh-muc/DanhMucView.vue') },
+            { path: 'vi-tri', component: () => import('@/views/admin/danh-muc/DanhMucView.vue') },
+          ]
+        },
+        {
+          path: 'nhan-su',
+          name: 'nhan-su',
+          component: () => import('@/views/admin/DashboardView.vue'),
+        },
+        {
+          path: 'settings',
+          name: 'settings',
+          component: () => import('@/views/admin/DashboardView.vue'),
+        },
+        {
+          path: 'sach',
+          name: 'admin-sach-list',
+          component: () => import('@/views/admin/sach/SachListView.vue'),
+        },
+        {
+          path: 'sach/them-moi',
+          name: 'admin-sach-them',
+          component: () => import('@/views/admin/sach/SachFormView.vue'),
+        },
+        {
+          path: 'sach/:id/chinh-sua',
+          name: 'admin-sach-sua',
+          component: () => import('@/views/admin/sach/SachFormView.vue'),
+        },
+        {
+          path: 'cuon-sach',
+          name: 'cuon-sach',
+          component: () => import('@/views/admin/cuon-sach/CuonSachView.vue'),
+        },
+        {
+          path: 'doc-gia',
+          name: 'doc-gia',
+          component: () => import('@/views/admin/doc-gia/DocGiaView.vue'),
+        },
+        {
+          path: 'users',
+          redirect: '/admin/doc-gia',
+        },
+        {
+          path: 'dat-cho',
+          name: 'admin-dat-cho',
+          component: () => import('@/views/admin/dat-cho/DatChoView.vue'),
+        },
+        {
+          path: 'muon-sach',
+          name: 'muon-sach',
+          component: () => import('@/views/admin/muon-sach/MuonSachListView.vue'),
+        },
+        {
+          path: 'muon-sach/tao-moi',
+          name: 'tao-phieu-muon',
+          component: () => import('@/views/admin/muon-sach/TaoPhieuMuonView.vue'),
+        },
+        {
+          path: 'tra-sach',
+          name: 'tra-sach',
+          component: () => import('@/views/admin/tra-sach/TraSachView.vue'),
+        },
+        {
+          path: 'phat',
+          name: 'phat',
+          component: () => import('@/views/admin/phat/PhatView.vue'),
+        },
+      ],
+    },
+
+    // ===== ERROR PAGES =====
+    {
+      path: '/403',
+      name: 'forbidden',
+      component: () => import('@/views/KhongCoQuyenView.vue'),
+    },
+    {
+      path: '/404',
+      name: 'not-found-page',
+      component: () => import('@/views/KhongTimThayView.vue'),
+    },
+    { path: '/:pathMatch(.*)*', name: 'not-found', redirect: '/404' },
   ],
+})
+
+// ===== NAVIGATION GUARDS =====
+router.beforeEach((to) => {
+  // Add any global guard logic here if needed
 })
 
 export default router
