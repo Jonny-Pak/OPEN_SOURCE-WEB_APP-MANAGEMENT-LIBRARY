@@ -3,6 +3,7 @@ package com.hcmunre.library.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -118,11 +119,13 @@ public class SecurityConfig {
                     "/swagger-ui.html"
                 ).permitAll()
                 // Cho phép xem (GET) công khai cho một số API thông tin sách
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/sach/**").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/tac-gia/**").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/the-loai/**").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/nha-xuat-ban/**").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/hinh-anh-sach/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/sach/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/tac-gia/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/the-loai/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/nha-xuat-ban/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/hinh-anh-sach/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/cuon-sach/**").permitAll()
+                .requestMatchers("/api/v1/lien-he/**").permitAll()
                 // Tất cả request khác BẮT BUỘC phải đăng nhập (có token)
                 .anyRequest().authenticated()
             )

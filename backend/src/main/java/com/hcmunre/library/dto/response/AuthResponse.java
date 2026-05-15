@@ -15,8 +15,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AuthResponse {
 
+    /** Mã định danh người dùng */
+    private java.util.UUID maNguoiDung;
+
     /** JWT access token */
     private String accessToken;
+
+    /** JWT refresh token */
+    private String refreshToken;
 
     /** Loại token (luôn là "Bearer") */
     @Builder.Default

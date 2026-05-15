@@ -11,6 +11,10 @@ import com.hcmunre.library.service.PhieuMuonService;
 import com.hcmunre.library.service.PhieuPhatService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -109,8 +113,14 @@ public class PhieuMuonController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
-    public ResponseEntity<List<PhieuMuonResponse>> getAllPhieuMuon() {
-        return ResponseEntity.ok(phieuMuonService.getAllPhieuMuon());
+    public ResponseEntity<Page<PhieuMuonResponse>> getAllPhieuMuon(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "ngayMuon") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction) {
+        Sort sort = direction.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return ResponseEntity.ok(phieuMuonService.getAllPhieuMuon(pageable));
     }
 
     @GetMapping("/{maPhieuMuon}")
@@ -120,8 +130,15 @@ public class PhieuMuonController {
 
     @GetMapping("/nguoi-dung/{maNguoiDung}")
     @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN') or #maNguoiDung == authentication.principal.nguoiDung.maNguoiDung")
-    public ResponseEntity<List<PhieuMuonResponse>> getPhieuMuonByNguoiDung(@PathVariable UUID maNguoiDung) {
-        return ResponseEntity.ok(phieuMuonService.getPhieuMuonByNguoiDung(maNguoiDung));
+    public ResponseEntity<Page<PhieuMuonResponse>> getPhieuMuonByNguoiDung(
+            @PathVariable UUID maNguoiDung,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "ngayMuon") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction) {
+        Sort sort = direction.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return ResponseEntity.ok(phieuMuonService.getPhieuMuonByNguoiDung(maNguoiDung, pageable));
     }
 
     @GetMapping("/phieu-phat/nguoi-dung/{maNguoiDung}")

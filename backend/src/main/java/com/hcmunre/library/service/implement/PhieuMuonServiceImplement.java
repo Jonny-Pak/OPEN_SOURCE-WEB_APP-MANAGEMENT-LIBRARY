@@ -17,13 +17,13 @@ import com.hcmunre.library.repository.ChiTietPhieuMuonRepository;
 import com.hcmunre.library.repository.DatChoRepository;
 import com.hcmunre.library.repository.LichSuGiaHanRepository;
 import com.hcmunre.library.repository.PhieuMuonRepository;
-import com.hcmunre.library.service.NguoiDungService;
-import com.hcmunre.library.service.PhieuMuonService;
-import com.hcmunre.library.service.PhieuPhatService;
-import com.hcmunre.library.service.CuonSachService;
+import com.hcmunre.library.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -46,6 +46,7 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
     private final CuonSachService cuonSachService;
     private final PhieuPhatService phieuPhatService;
     private final DatChoRepository datChoRepository;
+    private final EmailOutboxService emailOutboxService;
 
     @Override
     @Transactional
@@ -74,12 +75,12 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
         int soSachDangGiu = chiTietPhieuMuonRepository.countByPhieuMuon_NguoiDung_MaNguoiDungAndTrangThaiChiTietPhieuMuonIn(
                 nguoiDung.getMaNguoiDung(), List.of(TrangThaiChiTietPhieuMuon.DANG_MUON, TrangThaiChiTietPhieuMuon.QUA_HAN));
 
-        if(soSachDangGiu + request.getDanhSachMaCuonSach().size() > SO_SACH_MUON_TOI_DA){
+        if(soSachDangGiu + request.getDanhSachMaSach().size() > SO_SACH_MUON_TOI_DA){
             throw new LibraryException(ErrorCode.VUOT_QUA_GIOI_HAN_MUON);
         }
 
-        for (Long maCuonSach : request.getDanhSachMaCuonSach()) {
-            CuonSach cuonSach = cuonSachService.getCuonSachAvailable(maCuonSach);
+        for (Long maSach : request.getDanhSachMaSach()) {
+            CuonSach cuonSach = cuonSachService.getCuonSachAvailable(maSach);
 
             List<DatCho> danhSachDatCho = datChoRepository.findByNguoiDung_MaNguoiDungAndSach_MaSachAndTrangThai(
                     request.getMaNguoiDung(), cuonSach.getSach().getMaSach(), TrangThaiDatCho.DANG_CHO);
@@ -90,11 +91,14 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
                 datChoRepository.save(datCho);
             }
 
+            Double donGiaPhat = cuonSach.getSach().getDonGiaPhatTheoNgay() != null
+                    ? cuonSach.getSach().getDonGiaPhatTheoNgay() : 0.0;
+
             ChiTietPhieuMuon chiTietPhieuMuon = ChiTietPhieuMuon.builder()
                     .phieuMuon(phieuMuon)
                     .cuonSach(cuonSach)
                     .tinhTrangLucMuon(cuonSach.getTinhTrangVatLy())
-                    .donGiaPhatApDung(cuonSach.getSach().getDonGiaPhatTheoNgay())
+                    .donGiaPhatApDung(donGiaPhat)
                     .trangThaiChiTietPhieuMuon(TrangThaiChiTietPhieuMuon.DANG_MUON)
                     .hanTraBanDau(hanTra)
                     .hanTraHienTai(hanTra)
@@ -102,12 +106,20 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
                     .build();
 
             danhSachChiTiet.add(chiTietPhieuMuon);
-            cuonSachService.updateTrangThaiCuonSach(maCuonSach, TrangThaiCuonSach.DANG_MUON);
+            cuonSachService.updateTrangThaiCuonSach(cuonSach.getMaCuonSach(), TrangThaiCuonSach.DANG_MUON);
         }
 
         phieuMuon.setDanhSachChiTietPhieuMuon(danhSachChiTiet);
         PhieuMuon saved = phieuMuonRepository.save(phieuMuon);
 
+        emailOutboxService.lenLichGuiEmail(
+                nguoiDung.getEmail(),
+                "[Thư Viện] Xác nhận mượn sách thành công",
+                "Chào " + nguoiDung.getHoTen() + ",<br><br>" +
+                        "Bạn vừa mượn thành công " + request.getDanhSachMaSach().size() + " cuốn sách. " +
+                        "Vui lòng trả đúng hạn để không bị phạt nhé.<br><br>" +
+                        "Trân trọng!"
+        );
         return toPhieuMuonResponse(saved);
     }
 
@@ -161,7 +173,9 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
         if (now.isAfter(chiTietPhieuMuon.getHanTraHienTai())) {
             chiTietPhieuMuon.setTrangThaiChiTietPhieuMuon(TrangThaiChiTietPhieuMuon.DA_TRA_TRE);
             Long soNgayTre = ChronoUnit.DAYS.between((chiTietPhieuMuon.getHanTraHienTai()), now);
-            double tienPhat = soNgayTre * chiTietPhieuMuon.getDonGiaPhatApDung();
+            double donGia = chiTietPhieuMuon.getDonGiaPhatApDung() != null
+                    ? chiTietPhieuMuon.getDonGiaPhatApDung() : 0.0;
+            double tienPhat = soNgayTre * donGia;
             phieuPhatService.createPhieuPhat(chiTietPhieuMuon.getMaChiTietPhieuMuon(), tienPhat,
                     "Trả trễ " + soNgayTre + " ngày");
         } else {
@@ -231,9 +245,8 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
     }
 
     @Override
-    public List<PhieuMuonResponse> getAllPhieuMuon() {
-        return phieuMuonRepository.findAll().stream().map(this::toPhieuMuonResponse)
-                .collect(Collectors.toList());
+    public Page<PhieuMuonResponse> getAllPhieuMuon(Pageable pageable) {
+        return phieuMuonRepository.findAll(pageable).map(this::toPhieuMuonResponse);
     }
 
     @Override
@@ -244,10 +257,9 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
     }
 
     @Override
-    public List<PhieuMuonResponse> getPhieuMuonByNguoiDung(UUID maNguoiDung) {
-        return phieuMuonRepository.findByNguoiDung_MaNguoiDungOrderByNgayMuonDesc(maNguoiDung)
-                .stream().map(this::toPhieuMuonResponse)
-                .collect(Collectors.toList());
+    public Page<PhieuMuonResponse> getPhieuMuonByNguoiDung(UUID maNguoiDung, Pageable pageable) {
+        return phieuMuonRepository.findByNguoiDung_MaNguoiDungOrderByNgayMuonDesc(maNguoiDung, pageable)
+                .map(this::toPhieuMuonResponse);
     }
 
     public boolean checkCuonSachQuaHan(UUID maNguoiDung){
@@ -312,6 +324,7 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
                         .maChiTietPhieuMuon(ct.getMaChiTietPhieuMuon())
                         .maCuonSach(ct.getCuonSach().getMaCuonSach())
                         .maVach(ct.getCuonSach().getMaVach())
+                        .tenSach(ct.getCuonSach().getSach().getTenSach())
                         .hanTraBanDau(ct.getHanTraBanDau())
                         .hanTraHienTai(ct.getHanTraHienTai())
                         .tinhTrangLucMuon(ct.getTinhTrangLucMuon())
@@ -338,6 +351,7 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
                 .maChiTietPhieuMuon(ct.getMaChiTietPhieuMuon())
                 .maCuonSach(ct.getCuonSach().getMaCuonSach())
                 .maVach(ct.getCuonSach().getMaVach())
+                .tenSach(ct.getCuonSach().getSach().getTenSach())
                 .hanTraBanDau(ct.getHanTraBanDau())
                 .hanTraHienTai(ct.getHanTraHienTai())
                 .ngayTraThucTe(ct.getNgayTraThucTe())
@@ -345,6 +359,7 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
                 .tinhTrangLucTra(ct.getTinhTrangLucTra())
                 .soLanGiaHan(ct.getSoLanGiaHan())
                 .donGiaPhatApDung(ct.getDonGiaPhatApDung())
+                .trangThaiChiTietPhieuMuon(ct.getTrangThaiChiTietPhieuMuon())
                 .build();
     }
 

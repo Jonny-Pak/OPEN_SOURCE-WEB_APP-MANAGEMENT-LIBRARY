@@ -87,6 +87,7 @@ public class DatChoServiceImplement implements DatChoService {
     }
 
     @Override
+    @Transactional
     public void cancelDatCho(UUID maDatCho, String ghiChuHuy) {
         DatCho datCho = datChoRepository.findById(maDatCho).orElseThrow(
                 () -> new LibraryException(ErrorCode.DAT_CHO_KHONG_TON_TAI));

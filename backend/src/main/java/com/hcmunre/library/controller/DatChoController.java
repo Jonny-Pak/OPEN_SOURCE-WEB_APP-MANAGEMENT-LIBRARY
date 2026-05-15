@@ -33,11 +33,13 @@ public class DatChoController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('DOC_GIA', 'THU_THU', 'QUAN_TRI_VIEN')")
     public ResponseEntity<DatChoResponse> create(@Valid @RequestBody DatChoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(datChoService.createDatCho(request));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
     public ResponseEntity<Void> cancel(@PathVariable UUID id, @RequestParam(required = false) String ghiChu) {
         datChoService.cancelDatCho(id, ghiChu);
         return ResponseEntity.noContent().build();

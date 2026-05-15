@@ -12,12 +12,15 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.hibernate.annotations.SQLRestriction;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Entity
+@SQLRestriction("ngay_xoa IS NULL")
 public class Sach extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
