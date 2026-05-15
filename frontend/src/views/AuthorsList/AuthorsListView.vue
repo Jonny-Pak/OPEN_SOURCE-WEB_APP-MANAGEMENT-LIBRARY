@@ -1,57 +1,41 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import Navbar from '../../components/Navbar/Navbar.vue'
 import Footer from '../../components/Footer/Footer.vue'
+import { tacGiaService } from '../../services/danhMucService'
 
 const searchQuery = ref('')
+const authors = ref<any[]>([])
+const isLoading = ref(true)
+const error = ref<string | null>(null)
 
-const authors = [
-  {
-    id: 1,
-    name: 'Dale Carnegie',
-    image: 'https://images.unsplash.com/photo-1544717297-fa95b3ee21f3?auto=format&fit=crop&q=80&w=300',
-    bio: 'Dale Carnegie là một nhà văn và diễn giả người Mỹ, người đã phát triển các khóa học nổi tiếng về tự cải thiện, bán hàng, huấn luyện doanh nghiệp, nói trước công chúng và kỹ năng giao tiếp.',
-    bookCount: 12
-  },
-  {
-    id: 2,
-    name: 'Paulo Coelho',
-    image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=300',
-    bio: 'Paulo Coelho là một tiểu thuyết gia và nhạc sĩ người Brazil. Ông được biết đến nhiều nhất với cuốn tiểu thuyết Nhà giả kim.',
-    bookCount: 30
-  },
-  {
-    id: 3,
-    name: 'Robert C. Martin',
-    image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=300',
-    bio: 'Robert Cecil Martin, thường được gọi là "Uncle Bob", là một kỹ sư phần mềm, tác giả và người hướng dẫn người Mỹ.',
-    bookCount: 15
-  },
-  {
-    id: 4,
-    name: 'Yuval Noah Harari',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300',
-    bio: 'Yuval Noah Harari là một nhà sử học người Israel và là giáo sư tại Khoa Lịch sử của Đại học Hebrew ở Jerusalem.',
-    bookCount: 8
-  },
-  {
-    id: 5,
-    name: 'J.K. Rowling',
-    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=300',
-    bio: 'Joanne Rowling, bút danh J. K. Rowling, là một nhà văn, nhà từ thiện, nhà sản xuất phim và truyền hình người Anh.',
-    bookCount: 25
-  },
-  {
-    id: 6,
-    name: 'Higashino Keigo',
-    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=300',
-    bio: 'Higashino Keigo là một nhà văn Nhật Bản được biết đến nhiều nhất với các tiểu thuyết trinh thám.',
-    bookCount: 80
+const fetchData = async () => {
+  isLoading.value = true
+  error.value = null
+  try {
+    const data = await tacGiaService.danhSach()
+    authors.value = (data as any[]).map(author => ({
+      id: author.maTacGia,
+      name: author.tenTacGia,
+      // Create a unique-ish avatar using ui-avatars if no image
+      image: `https://ui-avatars.com/api/?name=${encodeURIComponent(author.tenTacGia)}&background=random&size=300`,
+      bio: author.tieuSu || 'Thông tin về tác giả đang được cập nhật.',
+      bookCount: 0 // Backend currently doesn't provide this in list
+    }))
+  } catch (err: any) {
+    console.error('Failed to fetch authors:', err)
+    error.value = 'Không thể tải danh sách tác giả.'
+  } finally {
+    isLoading.value = false
   }
-]
+}
+
+onMounted(() => {
+  fetchData()
+})
 
 const filteredAuthors = computed(() => {
-  return authors.filter(author => 
+  return authors.value.filter(author => 
     author.name.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
 })
@@ -78,33 +62,46 @@ const filteredAuthors = computed(() => {
           </div>
         </header>
 
-        <div v-if="filteredAuthors.length === 0" class="no-results text-center">
-          <i class="fas fa-user-slash"></i>
-          <p>Không tìm thấy tác giả nào phù hợp với từ khóa "{{ searchQuery }}"</p>
+        <div v-if="isLoading" class="loading-state text-center py-5">
+          <div class="spinner"></div>
+          <p>Đang tải danh sách tác giả...</p>
         </div>
 
-        <div v-else class="author-grid">
-          <RouterLink 
-            v-for="author in filteredAuthors" 
-            :key="author.id" 
-            :to="`/author/${author.id}`"
-            class="author-card"
-          >
-            <div class="author-image">
-              <img :src="author.image" :alt="author.name" />
-            </div>
-            <div class="author-info">
-              <h3>{{ author.name }}</h3>
-              <p class="bio">{{ author.bio }}</p>
-              <div class="stats">
-                <span class="book-tag">
-                  <i class="fas fa-book"></i> {{ author.bookCount }} tác phẩm
-                </span>
-                <span class="view-btn">Xem chi tiết <i class="fas fa-arrow-right"></i></span>
-              </div>
-            </div>
-          </RouterLink>
+        <div v-else-if="error" class="error-state text-center py-5">
+          <i class="fas fa-exclamation-circle text-danger mb-3" style="font-size: 2rem;"></i>
+          <p>{{ error }}</p>
+          <button @click="fetchData" class="btn btn-outline">Thử lại</button>
         </div>
+
+        <template v-else>
+          <div v-if="filteredAuthors.length === 0" class="no-results text-center py-5">
+            <i class="fas fa-user-slash mb-3" style="font-size: 2rem;"></i>
+            <p>Không tìm thấy tác giả nào phù hợp với từ khóa "{{ searchQuery }}"</p>
+          </div>
+
+          <div v-else class="author-grid">
+            <RouterLink 
+              v-for="author in filteredAuthors" 
+              :key="author.id" 
+              :to="`/author/${author.id}`"
+              class="author-card"
+            >
+              <div class="author-image">
+                <img :src="author.image" :alt="author.name" />
+              </div>
+              <div class="author-info">
+                <h3>{{ author.name }}</h3>
+                <p class="bio">{{ author.bio }}</p>
+                <div class="stats">
+                  <span class="book-tag">
+                    <i class="fas fa-book"></i> {{ author.bookCount }} tác phẩm
+                  </span>
+                  <span class="view-btn">Xem chi tiết <i class="fas fa-arrow-right"></i></span>
+                </div>
+              </div>
+            </RouterLink>
+          </div>
+        </template>
       </div>
     </main>
     

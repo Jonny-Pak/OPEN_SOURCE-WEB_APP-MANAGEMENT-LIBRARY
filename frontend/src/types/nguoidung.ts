@@ -49,3 +49,8 @@ export interface TaoNguoiDungExcelRequest {
   khoa?: string
   email: string
 }
+export interface ChangePasswordRequest {
+  matKhauCu: string
+  matKhauMoi: string
+  xacNhanMatKhau: string
+}

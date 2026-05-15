@@ -1,73 +1,60 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import Navbar from '../../components/Navbar/Navbar.vue'
 import Footer from '../../components/Footer/Footer.vue'
 import BookCard from '../../components/BookCard/BookCard.vue'
+import { sachService } from '../../services/sachService'
+import { theLoaiService } from '../../services/danhMucService'
 
-const categories = [
-  { name: 'Tất cả', count: 120 },
-  { name: 'Kỹ năng sống', count: 25 },
-  { name: 'Văn học', count: 40 },
-  { name: 'Công nghệ', count: 15 },
-  { name: 'Kinh tế', count: 20 },
-  { name: 'Lịch sử', count: 12 },
-  { name: 'Nghệ thuật', count: 8 }
-]
-
-const books = ref([
-  {
-    id: 1,
-    title: 'Đắc Nhân Tâm',
-    author: 'Dale Carnegie',
-    category: 'Kỹ năng sống',
-    image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=400',
-    rating: 5
-  },
-  {
-    id: 2,
-    title: 'Nhà Giả Kim',
-    author: 'Paulo Coelho',
-    category: 'Văn học',
-    image: 'https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&q=80&w=400',
-    rating: 4
-  },
-  {
-    id: 3,
-    title: 'Clean Code',
-    author: 'Robert C. Martin',
-    category: 'Công nghệ',
-    image: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&q=80&w=400',
-    rating: 5
-  },
-  {
-    id: 4,
-    title: 'Sapiens',
-    author: 'Yuval Noah Harari',
-    category: 'Lịch sử',
-    image: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=400',
-    rating: 5
-  },
-  {
-    id: 5,
-    title: 'Tư duy nhanh và chậm',
-    author: 'Daniel Kahneman',
-    category: 'Kinh tế',
-    image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&q=80&w=400',
-    rating: 5
-  },
-  {
-    id: 6,
-    title: 'Code dạo ký sự',
-    author: 'Phạm Huy Hoàng',
-    category: 'Công nghệ',
-    image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=400',
-    rating: 4
-  }
-])
+const categories = ref<any[]>([{ name: 'Tất cả', count: 0 }])
+const books = ref<any[]>([])
+const isLoading = ref(true)
+const error = ref<string | null>(null)
 
 const activeCategory = ref('Tất cả')
 const searchQuery = ref('')
 const sortBy = ref('Mới nhất')
+
+const fetchData = async () => {
+  isLoading.value = true
+  error.value = null
+  try {
+    const [booksData, theLoaiData] = await Promise.all([
+      sachService.danhSach(),
+      theLoaiService.danhSach()
+    ])
+
+    // Map books
+    books.value = (booksData as any[]).map(book => ({
+      id: book.maSach,
+      title: book.tenSach,
+      author: book.tacGias?.[0]?.tenTacGia || 'Ẩn danh',
+      category: book.theLoais?.[0]?.tenTheLoai || 'Chưa phân loại',
+      image: book.anhBiaUrl || 'https://images.unsplash.com/photo-1543004629-ff56ec21d2e2?auto=format&fit=crop&q=80&w=400',
+      rating: 5
+    }))
+
+    // Map categories
+    const mappedCategories = (theLoaiData as any[]).map(tl => ({
+      name: tl.tenTheLoai,
+      count: books.value.filter(b => b.category === tl.tenTheLoai).length
+    }))
+    
+    categories.value = [
+      { name: 'Tất cả', count: books.value.length },
+      ...mappedCategories
+    ]
+  } catch (err: any) {
+    console.error('Failed to fetch books:', err)
+    error.value = 'Không thể tải danh sách sách. Vui lòng thử lại sau.'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchData()
+})
 
 const filteredBooks = computed(() => {
   return books.value.filter(book => {
@@ -90,7 +77,10 @@ const filteredBooks = computed(() => {
         <aside class="sidebar">
           <div class="filter-section">
             <h3>Thể loại</h3>
-            <ul class="category-list">
+            <div v-if="isLoading" class="loading-mini">
+              <div class="spinner-small"></div>
+            </div>
+            <ul v-else class="category-list">
               <li 
                 v-for="cat in categories" 
                 :key="cat.name"
@@ -140,34 +130,47 @@ const filteredBooks = computed(() => {
             </div>
           </div>
           
-          <div class="results-info">
-            <p>Tìm thấy <span>{{ filteredBooks.length }}</span> kết quả cho "{{ activeCategory }}"</p>
+          <div v-if="isLoading" class="loading-state">
+            <div class="spinner"></div>
+            <p>Đang tải danh sách sách...</p>
           </div>
-          
-          <div class="grid grid-cols-3">
-            <BookCard 
-              v-for="book in filteredBooks" 
-              :key="book.id"
-              v-bind="book"
-            />
+
+          <div v-else-if="error" class="error-state">
+            <i class="fas fa-exclamation-circle"></i>
+            <p>{{ error }}</p>
+            <button @click="fetchData" class="btn btn-outline">Thử lại</button>
           </div>
-          
-          <div v-if="filteredBooks.length === 0" class="no-results">
-            <div class="no-results-icon"><i class="fas fa-search"></i></div>
-            <h3>Không tìm thấy sách nào</h3>
-            <p>Hãy thử thay đổi từ khóa hoặc bộ lọc của bạn</p>
-            <button @click="activeCategory = 'Tất cả'; searchQuery = ''" class="btn btn-outline">Xóa bộ lọc</button>
-          </div>
-          
-          <div v-if="filteredBooks.length > 0" class="pagination">
-            <button class="btn btn-outline" disabled><i class="fas fa-chevron-left"></i> Trước</button>
-            <div class="pages">
-              <button class="page-btn active">1</button>
-              <button class="page-btn">2</button>
-              <button class="page-btn">3</button>
+
+          <template v-else>
+            <div class="results-info">
+              <p>Tìm thấy <span>{{ filteredBooks.length }}</span> kết quả cho "{{ activeCategory }}"</p>
             </div>
-            <button class="btn btn-outline">Sau <i class="fas fa-chevron-right"></i></button>
-          </div>
+            
+            <div class="grid grid-cols-3">
+              <BookCard 
+                v-for="book in filteredBooks" 
+                :key="book.id"
+                v-bind="book"
+              />
+            </div>
+            
+            <div v-if="filteredBooks.length === 0" class="no-results">
+              <div class="no-results-icon"><i class="fas fa-search"></i></div>
+              <h3>Không tìm thấy sách nào</h3>
+              <p>Hãy thử thay đổi từ khóa hoặc bộ lọc của bạn</p>
+              <button @click="activeCategory = 'Tất cả'; searchQuery = ''" class="btn btn-outline">Xóa bộ lọc</button>
+            </div>
+            
+            <div v-if="filteredBooks.length > 0" class="pagination">
+              <button class="btn btn-outline" disabled><i class="fas fa-chevron-left"></i> Trước</button>
+              <div class="pages">
+                <button class="page-btn active">1</button>
+                <button class="page-btn">2</button>
+                <button class="page-btn">3</button>
+              </div>
+              <button class="btn btn-outline">Sau <i class="fas fa-chevron-right"></i></button>
+            </div>
+          </template>
         </section>
       </div>
     </main>

@@ -11,6 +11,7 @@ import com.hcmunre.library.enums.TrangThaiChiTietPhieuMuon;
 import com.hcmunre.library.enums.TrangThaiCuonSach;
 import com.hcmunre.library.enums.TrangThaiDatCho;
 import com.hcmunre.library.enums.TrangThaiPhieuMuon;
+import com.hcmunre.library.enums.LoaiHinhAnh;
 import com.hcmunre.library.exception.LibraryException;
 import com.hcmunre.library.exception.ErrorCode;
 import com.hcmunre.library.repository.ChiTietPhieuMuonRepository;
@@ -316,6 +317,13 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
                         .hanTraHienTai(ct.getHanTraHienTai())
                         .tinhTrangLucMuon(ct.getTinhTrangLucMuon())
                         .tinhTrangLucTra(ct.getTinhTrangLucTra())
+                        .tenSach(ct.getCuonSach().getSach().getTenSach())
+                        .anhBiaUrl(ct.getCuonSach().getSach().getDanhSachHinhAnh() != null ? 
+                                ct.getCuonSach().getSach().getDanhSachHinhAnh().stream()
+                                .filter(img -> img.getLoaiHinhAnh() == LoaiHinhAnh.BIA_TRUOC)
+                                .findFirst()
+                                .map(HinhAnhSach::getDuongDan)
+                                .orElse(null) : null)
                         .soLanGiaHan(ct.getSoLanGiaHan())
                         .donGiaPhatApDung(ct.getDonGiaPhatApDung())
                         .trangThaiChiTietPhieuMuon(ct.getTrangThaiChiTietPhieuMuon())
@@ -343,8 +351,16 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
                 .ngayTraThucTe(ct.getNgayTraThucTe())
                 .tinhTrangLucMuon(ct.getTinhTrangLucMuon())
                 .tinhTrangLucTra(ct.getTinhTrangLucTra())
+                .tenSach(ct.getCuonSach().getSach().getTenSach())
+                .anhBiaUrl(ct.getCuonSach().getSach().getDanhSachHinhAnh() != null ? 
+                        ct.getCuonSach().getSach().getDanhSachHinhAnh().stream()
+                        .filter(img -> img.getLoaiHinhAnh() == LoaiHinhAnh.BIA_TRUOC)
+                        .findFirst()
+                        .map(HinhAnhSach::getDuongDan)
+                        .orElse(null) : null)
                 .soLanGiaHan(ct.getSoLanGiaHan())
                 .donGiaPhatApDung(ct.getDonGiaPhatApDung())
+                .trangThaiChiTietPhieuMuon(ct.getTrangThaiChiTietPhieuMuon())
                 .build();
     }
 

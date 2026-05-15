@@ -4,26 +4,32 @@
 import type { NguoiDung } from './nguoidung'
 import type { TinhTrangVatLy } from './sach'
 
-export type TrangThaiPhieuMuon = 'DANG_MUON' | 'DA_TRA' | 'QUA_HAN'
+export type TrangThaiPhieuMuon = 'CHUA_HOAN_TAT' | 'DA_HOAN_TAT' | 'DA_HUY'
+export type TrangThaiChiTietPhieuMuon = 'DANG_MUON' | 'DA_TRA' | 'DA_TRA_TRE' | 'QUA_HAN' | 'MAT_SACH' | 'DA_HUY'
 
 export interface ChiTietPhieuMuon {
-  maChiTiet: number
-  maBarcodeVatLy: string
+  maChiTietPhieuMuon: string
+  maCuonSach: number
+  maVach: string
   tenSach: string
-  hanTra: string
-  ngayTra?: string
-  tinhTrangTraSach?: TinhTrangVatLy
-  quaHan: boolean
+  anhBiaUrl?: string
+  hanTraBanDau: string
+  hanTraHienTai: string
+  ngayTraThucTe?: string
+  tinhTrangLucMuon: TinhTrangVatLy
+  tinhTrangLucTra?: TinhTrangVatLy
+  trangThaiChiTietPhieuMuon: TrangThaiChiTietPhieuMuon
+  soLanGiaHan: number
+  donGiaPhatApDung: number
 }
 
 export interface PhieuMuon {
-  maPhieuMuon: number
-  nguoiDung: Pick<NguoiDung, 'maNguoiDung' | 'hoDem' | 'ten' | 'email'>
+  maPhieuMuon: string
+  maNguoiDung: string
+  tenDocGia: string
   ngayMuon: string
-  hanTra: string
-  trangThai: TrangThaiPhieuMuon
-  soLuongCuon: number
-  chiTietList: ChiTietPhieuMuon[]
+  trangThaiPhieu: TrangThaiPhieuMuon
+  danhSachChiTiet: ChiTietPhieuMuon[]
 }
 
 export interface TaoPhieuMuonRequest {

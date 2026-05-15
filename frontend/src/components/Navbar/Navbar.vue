@@ -3,12 +3,22 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useCartStore } from '../../stores/cart'
 import { useWishlistStore } from '../../stores/wishlist'
 
+import { useAuthStore } from '../../stores/auth'
+import { useRouter } from 'vue-router'
+
 const cart = useCartStore()
 const wishlist = useWishlistStore()
+const authStore = useAuthStore()
+const router = useRouter()
 const isScrolled = ref(false)
 
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 20
+}
+
+const handleLogout = () => {
+  authStore.xoaXacThuc()
+  router.push('/login')
 }
 
 onMounted(() => {
@@ -46,10 +56,46 @@ onUnmounted(() => {
           <i class="fas fa-shopping-basket"></i>
           <span v-if="cart.itemCount > 0" class="cart-badge">{{ cart.itemCount }}</span>
         </RouterLink>
-        <RouterLink to="/profile" class="user-profile-link">
-          <span class="user-avatar-small"><i class="fas fa-user"></i></span>
-        </RouterLink>
-        <RouterLink to="/login" class="btn btn-primary">Đăng nhập</RouterLink>
+        <template v-if="authStore.daXacThuc">
+          <div class="user-menu-container">
+            <div class="user-profile-trigger">
+              <span class="user-name-small">{{ authStore.tenDayDu }}</span>
+              <span class="user-avatar-small"><i class="fas fa-user"></i></span>
+              <i class="fas fa-chevron-down chevron-icon"></i>
+            </div>
+            
+            <div class="user-dropdown">
+              <div class="dropdown-header">
+                <p class="user-email">{{ authStore.thongTinNguoiDung?.email }}</p>
+                <span class="user-role-badge">{{ authStore.thongTinNguoiDung?.vaiTro }}</span>
+              </div>
+              
+              <div class="dropdown-menu-list">
+                <RouterLink to="/profile" class="dropdown-item">
+                  <span class="item-icon"><i class="far fa-user-circle"></i></span>
+                  Trang cá nhân
+                </RouterLink>
+                
+                <RouterLink 
+                  v-if="authStore.isAdmin || authStore.isLibrarian" 
+                  to="/admin" 
+                  class="dropdown-item"
+                >
+                  <span class="item-icon"><i class="fas fa-cog"></i></span>
+                  Quản trị
+                </RouterLink>
+                
+                <div class="dropdown-divider"></div>
+                
+                <button @click="handleLogout" class="dropdown-item logout-item">
+                  <span class="item-icon"><i class="fas fa-sign-out-alt"></i></span>
+                  Đăng xuất
+                </button>
+              </div>
+            </div>
+          </div>
+        </template>
+        <RouterLink v-else to="/login" class="btn btn-primary">Đăng nhập</RouterLink>
       </div>
     </div>
   </nav>

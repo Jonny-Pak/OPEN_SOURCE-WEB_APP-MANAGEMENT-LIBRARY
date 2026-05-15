@@ -1,20 +1,41 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import Navbar from '../../components/Navbar/Navbar.vue'
 import Footer from '../../components/Footer/Footer.vue'
+import * as authService from '../../services/authService'
+import { useAuthStore } from '../../stores/auth'
+
+const router = useRouter()
+const authStore = useAuthStore()
 
 const email = ref('')
 const password = ref('')
 const rememberMe = ref(false)
+const isLoading = ref(false)
+const errorMessage = ref('')
 
-const handleLogin = () => {
-  // Logic for login will go here
-  console.log('Logging in:', {
-    email: email.value,
-    password: password.value,
-    rememberMe: rememberMe.value
-  })
-  alert('Đăng nhập thành công! (Demo)')
+const handleLogin = async () => {
+  isLoading.value = true
+  errorMessage.value = ''
+  
+  try {
+    const response = await authService.dangNhap({
+      email: email.value,
+      matKhau: password.value
+    })
+    
+    // Lưu thông tin vào store
+    authStore.luuXacThuc(response)
+    
+    // Điều hướng về trang chủ
+    router.push('/')
+  } catch (err: any) {
+    console.error('Login failed:', err)
+    errorMessage.value = err.message || 'Email hoặc mật khẩu không chính xác'
+  } finally {
+    isLoading.value = false
+  }
 }
 
 </script>
@@ -42,6 +63,11 @@ const handleLogin = () => {
             </div>
             
             <form @submit.prevent="handleLogin" class="auth-form">
+              <div v-if="errorMessage" class="error-alert">
+                <i class="fas fa-exclamation-circle"></i>
+                {{ errorMessage }}
+              </div>
+
               <div class="form-group">
                 <label for="email">Email</label>
                 <div class="input-wrapper">
@@ -51,6 +77,7 @@ const handleLogin = () => {
                     type="email" 
                     placeholder="Nhập địa chỉ email" 
                     required 
+                    :disabled="isLoading"
                   />
                 </div>
               </div>
@@ -64,22 +91,24 @@ const handleLogin = () => {
                     type="password" 
                     placeholder="Nhập mật khẩu" 
                     required 
+                    :disabled="isLoading"
                   />
                 </div>
               </div>
               
               <div class="form-options">
                 <label class="checkbox-container">
-                  <input type="checkbox" v-model="rememberMe" />
+                  <input type="checkbox" v-model="rememberMe" :disabled="isLoading" />
                   <span class="checkmark"></span>
                   Ghi nhớ đăng nhập
                 </label>
                 <a href="#" class="link forgot-password">Quên mật khẩu?</a>
               </div>
               
-              <button type="submit" class="btn btn-primary btn-block">Đăng nhập</button>
-              
-
+              <button type="submit" class="btn btn-primary btn-block" :disabled="isLoading">
+                <span v-if="isLoading" class="spinner-small"></span>
+                {{ isLoading ? 'Đang đăng nhập...' : 'Đăng nhập' }}
+              </button>
             </form>
           </div>
         </div>
