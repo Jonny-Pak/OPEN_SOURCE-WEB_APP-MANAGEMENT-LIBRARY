@@ -31,6 +31,7 @@ public class PhieuMuonResponse {
         private UUID maChiTietPhieuMuon;
         private Long maCuonSach;
         private String maVach;
+        private String tenSach;
         private LocalDateTime hanTraBanDau;
         private LocalDateTime hanTraHienTai;
         private LocalDateTime ngayTraThucTe;

@@ -7,6 +7,9 @@ import com.hcmunre.library.dto.request.TraToanBoRequest;
 import com.hcmunre.library.dto.response.GiaHanResponse;
 import com.hcmunre.library.dto.response.PhieuMuonResponse;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -14,11 +17,11 @@ public interface PhieuMuonService {
     // Queries
     List<GiaHanResponse> getLichSuGiaHanByChiTiet(UUID maChiTietPhieuMuon);
 
-    List<PhieuMuonResponse> getAllPhieuMuon();
+    Page<PhieuMuonResponse> getAllPhieuMuon(Pageable pageable);
 
     PhieuMuonResponse getPhieuMuonById(UUID maPhieuMuon);
 
-    List<PhieuMuonResponse> getPhieuMuonByNguoiDung(UUID maNguoiDung);
+    Page<PhieuMuonResponse> getPhieuMuonByNguoiDung(UUID maNguoiDung, Pageable pageable);
 
     boolean checkCuonSachQuaHan(UUID maNguoiDung);
 

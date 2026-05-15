@@ -51,4 +51,13 @@ public class AuthController {
         AuthResponse response = authService.dangKy(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    /**
+     * API cấp lại access token từ refresh token.
+     */
+    @PostMapping("/refresh-token")
+    public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody com.hcmunre.library.dto.request.RefreshTokenRequest request) {
+        AuthResponse response = authService.refreshToken(request);
+        return ResponseEntity.ok(response);
+    }
 }

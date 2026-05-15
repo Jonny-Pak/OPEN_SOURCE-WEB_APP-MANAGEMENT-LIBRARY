@@ -16,6 +16,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
 @RestController
 @RequestMapping("/api/v1/nguoi-dung")
 @RequiredArgsConstructor
@@ -48,8 +53,14 @@ public class NguoiDungController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'THU_THU')")
-    public ResponseEntity<List<NguoiDungResponse>> getAll() {
-        return ResponseEntity.ok(nguoiDungService.getAllNguoiDung());
+    public ResponseEntity<Page<NguoiDungResponse>> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "maNguoiDung") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction) {
+        Sort sort = direction.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return ResponseEntity.ok(nguoiDungService.getAllNguoiDung(pageable));
     }
 
     @PatchMapping("/{id}/trang-thai")

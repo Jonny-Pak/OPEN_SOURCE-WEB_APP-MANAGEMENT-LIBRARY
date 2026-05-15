@@ -72,4 +72,8 @@ public class NguoiDung extends BaseEntity {
 
     @OneToMany(mappedBy = "nguoiDung")
     private List<DatCho> danhSachDatCho;
+
+    public String getHoTen(){
+        return this.hoDem + " " + this.getTen();
+    }
 }
