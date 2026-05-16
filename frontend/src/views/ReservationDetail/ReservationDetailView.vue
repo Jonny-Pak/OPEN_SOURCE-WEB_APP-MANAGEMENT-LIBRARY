@@ -1,35 +1,49 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import Navbar from '../../components/Navbar/Navbar.vue'
 import Footer from '../../components/Footer/Footer.vue'
+import { phieuMuonService } from '@/services/phieuMuonService'
 
 const router = useRouter()
+const route = useRoute()
+const isLoading = ref(true)
 
-// Mock reservation data (In reality, this would come from an API or a store)
-const reservation = ref({
-  id: 'RES-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
-  userName: 'Nguyễn Văn A',
-  userId: 'SV2024001',
-  bookingTime: new Date().toLocaleString('vi-VN'),
-  expiryTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleString('vi-VN'),
-  status: 'Pending',
-  books: [
-    {
-      id: 1,
-      title: 'Đắc Nhân Tâm',
-      author: 'Dale Carnegie',
-      image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=200',
-      category: 'Kỹ năng sống'
-    },
-    {
-      id: 2,
-      title: 'Nhà Giả Kim',
-      author: 'Paulo Coelho',
-      image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=200',
-      category: 'Văn học'
+// Mock reservation data (Initially empty, will be filled from API)
+const reservation = ref<any>(null)
+
+const fetchReservation = async () => {
+  const id = route.params.id as string
+  if (!id) return
+  
+  isLoading.value = true
+  try {
+    const data = await phieuMuonService.getById(id)
+    // Map backend response to the structure used in template
+    reservation.value = {
+      id: data.maPhieuMuon,
+      userName: data.tenNguoiDung,
+      userId: data.maNguoiDung,
+      bookingTime: new Date(data.ngayMuon).toLocaleString('vi-VN'),
+      expiryTime: new Date(new Date(data.ngayMuon).getTime() + 24 * 60 * 60 * 1000).toLocaleString('vi-VN'),
+      status: data.trangThaiPhieu,
+      books: data.danhSachChiTiet.map((ct: any) => ({
+        id: ct.maSach,
+        title: ct.tenSach,
+        author: ct.tacGia || 'Đang cập nhật',
+        image: ct.anhBiaUrl || 'https://via.placeholder.com/200x300?text=No+Image',
+        category: ct.theLoai || 'Chưa phân loại'
+      }))
     }
-  ]
+  } catch (error) {
+    console.error('Lỗi khi tải thông tin phiếu mượn:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchReservation()
 })
 
 const printTicket = () => {
@@ -44,7 +58,19 @@ const printTicket = () => {
     
     <main class="main-content">
       <div class="container small-container">
-        <div class="reservation-ticket">
+        <div v-if="isLoading" class="loading-state text-center" style="padding: 100px 0;">
+          <div class="spinner"></div>
+          <p>Đang tải thông tin phiếu mượn...</p>
+        </div>
+
+        <div v-else-if="!reservation" class="error-state text-center" style="padding: 100px 0;">
+          <i class="fas fa-exclamation-circle fa-3x" style="color: var(--danger-color); margin-bottom: 20px;"></i>
+          <h2>Không tìm thấy thông tin phiếu mượn</h2>
+          <p>Phiếu mượn có thể không tồn tại hoặc bạn không có quyền xem.</p>
+          <button @click="router.push('/profile')" class="btn btn-primary" style="margin-top: 20px;">Về trang cá nhân</button>
+        </div>
+
+        <div v-else class="reservation-ticket">
           <header class="ticket-header text-center">
             <div class="success-badge">
               <i class="fas fa-check-circle"></i>

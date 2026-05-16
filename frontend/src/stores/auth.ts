@@ -112,6 +112,7 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('accessToken', response.accessToken)
 
     const userInfo: ThongTinNguoiDung = {
+      maNguoiDung: response.maNguoiDung,
       hoDem: response.hoDem,
       ten: response.ten,
       email: response.email,

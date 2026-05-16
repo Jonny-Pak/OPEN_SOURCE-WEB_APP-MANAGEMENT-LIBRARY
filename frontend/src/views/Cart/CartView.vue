@@ -11,16 +11,13 @@ const router = useRouter()
 const isSubmitting = ref(false)
 const isSuccess = ref(false)
 
-const handleConfirm = () => {
+const handleConfirm = async () => {
   if (cart.items.length === 0) return
   
-  isSubmitting.value = true
-  setTimeout(() => {
-    isSubmitting.value = false
-    const mockId = 'RES-' + Math.random().toString(36).substr(2, 9).toUpperCase()
-    cart.clearCart()
-    router.push(`/reservation/${mockId}`)
-  }, 1500)
+  const response = await cart.checkout()
+  if (response && response.maPhieuMuon) {
+    router.push(`/reservation/${response.maPhieuMuon}`)
+  }
 }
 
 const dueDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('vi-VN')

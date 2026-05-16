@@ -1,7 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import Navbar from '../../components/Navbar/Navbar.vue'
 import Footer from '../../components/Footer/Footer.vue'
+import { useAuthStore } from '../../stores/auth'
+import { lienHeService } from '../../services/lienHeService'
+
+const authStore = useAuthStore()
 
 const form = ref({
   name: '',
@@ -10,17 +14,35 @@ const form = ref({
   message: ''
 })
 
+onMounted(() => {
+  if (authStore.daXacThuc && authStore.thongTinNguoiDung) {
+    form.value.name = `${authStore.thongTinNguoiDung.hoDem} ${authStore.thongTinNguoiDung.ten}`
+    form.value.email = authStore.thongTinNguoiDung.email
+  }
+})
+
 const isSubmitting = ref(false)
 const isSuccess = ref(false)
+const errorMessage = ref<string | null>(null)
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   isSubmitting.value = true
-  // Simulate API call
-  setTimeout(() => {
-    isSubmitting.value = false
+  errorMessage.value = null
+  try {
+    await lienHeService.guiLienHe({
+      hoTen: form.value.name,
+      email: form.value.email,
+      tieuDe: form.value.subject,
+      noiDung: form.value.message
+    })
     isSuccess.value = true
     form.value = { name: '', email: '', subject: '', message: '' }
-  }, 1500)
+  } catch (err: any) {
+    console.error('Failed to send contact:', err)
+    errorMessage.value = err.message || (err.errors ? Object.values(err.errors)[0] : null) || 'Đã có lỗi xảy ra. Vui lòng thử lại sau.'
+  } finally {
+    isSubmitting.value = false
+  }
 }
 
 const contactInfo = [
@@ -92,15 +114,20 @@ const contactInfo = [
               <button @click="isSuccess = false" class="btn btn-primary">Gửi tin nhắn mới</button>
             </div>
 
-            <form v-else @submit.prevent="handleSubmit" class="contact-form">
+            <div v-else class="contact-form-container">
+              <div v-if="errorMessage" class="error-message-alert">
+                <i class="fas fa-exclamation-triangle"></i>
+                {{ errorMessage }}
+              </div>
+              <form @submit.prevent="handleSubmit" class="contact-form">
               <div class="form-row">
                 <div class="form-group">
                   <label>Họ và tên</label>
-                  <input v-model="form.name" type="text" placeholder="Nhập tên của bạn" required />
+                  <input v-model="form.name" type="text" placeholder="Nhập tên của bạn" required :readonly="authStore.daXacThuc" :class="{ 'input-disabled': authStore.daXacThuc }" />
                 </div>
                 <div class="form-group">
-                  <label>Email học sinh</label>
-                  <input v-model="form.email" type="email" placeholder="example@school.edu.vn" required />
+                  <label>Email</label>
+                  <input v-model="form.email" type="email" placeholder="example@school.edu.vn" required :readonly="authStore.daXacThuc" :class="{ 'input-disabled': authStore.daXacThuc }" />
                 </div>
               </div>
               <div class="form-group">
@@ -115,7 +142,8 @@ const contactInfo = [
                 <i v-if="isSubmitting" class="fas fa-spinner fa-spin"></i>
                 <span v-else>Gửi tin nhắn</span>
               </button>
-            </form>
+              </form>
+            </div>
           </section>
         </div>
       </div>

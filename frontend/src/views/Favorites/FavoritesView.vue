@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Navbar from '../../components/Navbar/Navbar.vue'
 import Footer from '../../components/Footer/Footer.vue'
@@ -7,6 +8,10 @@ import { useWishlistStore } from '../../stores/wishlist'
 
 const wishlist = useWishlistStore()
 const router = useRouter()
+
+onMounted(() => {
+  wishlist.fetchWishlist()
+})
 
 </script>
 

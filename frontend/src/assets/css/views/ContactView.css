@@ -169,6 +169,13 @@
   box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.1);
 }
 
+.input-disabled {
+  background-color: #f1f5f9 !important;
+  color: #64748b;
+  cursor: not-allowed;
+  border-color: #e2e8f0 !important;
+}
+
 .submit-btn {
   padding: 1.25rem;
   font-size: 1.1rem;
@@ -179,6 +186,25 @@
 .success-message {
   text-align: center;
   padding: 2rem 0;
+}
+
+.error-message-alert {
+  background-color: #fee2e2;
+  border: 1px solid #ef4444;
+  color: #b91c1c;
+  padding: 1rem;
+  border-radius: var(--radius);
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .success-icon {

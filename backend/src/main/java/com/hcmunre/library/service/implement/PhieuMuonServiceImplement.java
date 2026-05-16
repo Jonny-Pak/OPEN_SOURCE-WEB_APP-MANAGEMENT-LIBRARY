@@ -39,6 +39,7 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
     private static final int SO_NGAY_MUON_MAC_DINH = 14;
     private static final int SO_LAN_GIA_HAN_TOI_DA = 2;
     private static final int SO_NGAY_GIA_HAN = 7;
+    private static final int SO_SACH_MUON_TOI_DA = 5;
 
     private final PhieuMuonRepository phieuMuonRepository;
     private final ChiTietPhieuMuonRepository chiTietPhieuMuonRepository;
@@ -72,7 +73,6 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
         List<ChiTietPhieuMuon> danhSachChiTiet = new ArrayList<>();
         LocalDateTime hanTra = now.plusDays(SO_NGAY_MUON_MAC_DINH);
 
-        int SO_SACH_MUON_TOI_DA = 5;
         int soSachDangGiu = chiTietPhieuMuonRepository.countByPhieuMuon_NguoiDung_MaNguoiDungAndTrangThaiChiTietPhieuMuonIn(
                 nguoiDung.getMaNguoiDung(), List.of(TrangThaiChiTietPhieuMuon.DANG_MUON, TrangThaiChiTietPhieuMuon.QUA_HAN));
 
@@ -214,8 +214,12 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
             throw new LibraryException(ErrorCode.CHI_TIET_DA_TRA);
         }
 
-        if (chiTietPhieuMuon.getSoLanGiaHan() >= SO_LAN_GIA_HAN_TOI_DA) {
+        if (LocalDateTime.now().isAfter(chiTietPhieuMuon.getHanTraHienTai())) {
             throw new LibraryException(ErrorCode.KHONG_THE_GIA_HAN_QUA_HAN);
+        }
+
+        if (chiTietPhieuMuon.getSoLanGiaHan() >= SO_LAN_GIA_HAN_TOI_DA) {
+            throw new LibraryException(ErrorCode.VUOT_QUA_SO_LAN_GIA_HAN);
         }
 
         LocalDateTime hanTraCu = chiTietPhieuMuon.getHanTraHienTai();
@@ -284,7 +288,9 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
 
         cuonSachService.updateTrangThaiCuonSach(chiTietPhieuMuon.getCuonSach().getMaCuonSach(), TrangThaiCuonSach.DA_MAT);
 
-        double tienPhat = chiTietPhieuMuon.getCuonSach().getSach().getGiaTien() * 1.5;
+        double giaTien = chiTietPhieuMuon.getCuonSach().getSach().getGiaTien() != null 
+                ? chiTietPhieuMuon.getCuonSach().getSach().getGiaTien() : 0.0;
+        double tienPhat = giaTien * 1.5;
         phieuPhatService.createPhieuPhat(chiTietPhieuMuon.getMaChiTietPhieuMuon(), tienPhat, "Đền bù làm mất sách");
 
         PhieuMuon phieuMuon = chiTietPhieuMuon.getPhieuMuon();
@@ -328,9 +334,9 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
                         .tenSach(ct.getCuonSach().getSach().getTenSach())
                         .hanTraBanDau(ct.getHanTraBanDau())
                         .hanTraHienTai(ct.getHanTraHienTai())
+                        .ngayTraThucTe(ct.getNgayTraThucTe())
                         .tinhTrangLucMuon(ct.getTinhTrangLucMuon())
                         .tinhTrangLucTra(ct.getTinhTrangLucTra())
-                        .tenSach(ct.getCuonSach().getSach().getTenSach())
                         .anhBiaUrl(ct.getCuonSach().getSach().getDanhSachHinhAnh() != null ? 
                                 ct.getCuonSach().getSach().getDanhSachHinhAnh().stream()
                                 .filter(img -> img.getLoaiHinhAnh() == LoaiHinhAnh.BIA_TRUOC)
@@ -347,7 +353,7 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
         return PhieuMuonResponse.builder()
                 .maPhieuMuon(phieuMuon.getMaPhieuMuon())
                 .maNguoiDung(nguoiDung.getMaNguoiDung())
-                .tenDocGia(nguoiDung.getHoDem() + " " + nguoiDung.getTen())
+                .tenDocGia(nguoiDung.getHoTen())
                 .ngayMuon(phieuMuon.getNgayMuon())
                 .trangThaiPhieu(phieuMuon.getTrangThaiPhieu())
                 .danhSachChiTiet(chitietList)
@@ -365,7 +371,6 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
                 .ngayTraThucTe(ct.getNgayTraThucTe())
                 .tinhTrangLucMuon(ct.getTinhTrangLucMuon())
                 .tinhTrangLucTra(ct.getTinhTrangLucTra())
-                .tenSach(ct.getCuonSach().getSach().getTenSach())
                 .anhBiaUrl(ct.getCuonSach().getSach().getDanhSachHinhAnh() != null ? 
                         ct.getCuonSach().getSach().getDanhSachHinhAnh().stream()
                         .filter(img -> img.getLoaiHinhAnh() == LoaiHinhAnh.BIA_TRUOC)
@@ -385,7 +390,7 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
                 .hanTraCu(ls.getHanTraCu())
                 .hanTraMoi(ls.getHanTraMoi())
                 .lyDo(ls.getLyDo())
-                .tenNguoiThucHien(ls.getNguoiThucHien() != null ? ls.getNguoiThucHien().getHoDem() + " " + ls.getNguoiThucHien().getTen() : null)
+                .tenNguoiThucHien(ls.getNguoiThucHien() != null ? ls.getNguoiThucHien().getHoTen() : null)
                 .build();
     }
 

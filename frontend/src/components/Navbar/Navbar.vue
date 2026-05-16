@@ -17,12 +17,16 @@ const handleScroll = () => {
 }
 
 const handleLogout = () => {
+  wishlist.clearWishlist()
   authStore.xoaXacThuc()
   router.push('/login')
 }
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
+  if (authStore.daXacThuc) {
+    wishlist.fetchWishlist()
+  }
 })
 
 onUnmounted(() => {

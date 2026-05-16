@@ -32,7 +32,7 @@ public class PhieuMuonController {
     private final PhieuPhatService phieuPhatService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN') or (#request.maNguoiDung == authentication.principal.nguoiDung.maNguoiDung)")
     public ResponseEntity<PhieuMuonResponse> createPhieuMuon(
             @Valid @RequestBody MuonSachRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)

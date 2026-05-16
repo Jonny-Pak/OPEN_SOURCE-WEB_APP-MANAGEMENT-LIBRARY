@@ -24,6 +24,7 @@ export interface DangKyRequest {
 
 /** Thông tin cơ bản của người dùng (lưu trong store) */
 export interface ThongTinNguoiDung {
+  maNguoiDung: string
   hoDem: string
   ten: string
   email: string
@@ -33,6 +34,7 @@ export interface ThongTinNguoiDung {
 
 /** Response trả về sau khi đăng nhập / đăng ký thành công */
 export interface AuthResponse {
+  maNguoiDung: string
   accessToken: string
   tokenType: string
   hoDem: string

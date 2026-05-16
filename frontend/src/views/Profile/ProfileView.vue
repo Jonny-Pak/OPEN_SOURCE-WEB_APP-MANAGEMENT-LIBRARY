@@ -62,8 +62,8 @@ const fetchData = async () => {
       soDienThoai: userData.soDienThoai
     }
     
-    const loansData = await muonSachService.getLichSuMuon(userData.maNguoiDung)
-    allLoans.value = loansData
+    const loansResponse = await muonSachService.getLichSuMuon(userData.maNguoiDung)
+    allLoans.value = (loansResponse as any).content || []
   } catch (err: any) {
     console.error('Failed to fetch profile data:', err)
     error.value = 'Không thể tải thông tin tài khoản. Vui lòng đăng nhập lại.'
