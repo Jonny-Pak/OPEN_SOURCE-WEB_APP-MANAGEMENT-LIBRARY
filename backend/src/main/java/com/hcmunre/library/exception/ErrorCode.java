@@ -47,7 +47,18 @@ public enum ErrorCode {
     MAT_KHAU_CU_SAI(HttpStatus.BAD_REQUEST, "Mật khẩu cũ không chính xác"),
 
     SACH_DA_CO_TRONG_YEU_THICH(HttpStatus.BAD_REQUEST, "Cuốn sách này đã có trong danh sách yêu thích của bạn"),
-    THONG_BAO_KHONG_TON_TAI(HttpStatus.NOT_FOUND, "Không tìm thấy thông báo này"),
+
+    OTP_KHONG_HOP_LE(HttpStatus.BAD_REQUEST, "Mã OTP không hợp lệ hoặc đã hết hạn"),
+    OTP_DA_HET_HAN(HttpStatus.BAD_REQUEST, "Mã OTP đã hết hạn, vui lòng yêu cầu mã mới"),
+
+    FILE_EXCEL_KHONG_HOP_LE(HttpStatus.BAD_REQUEST, "File không đúng định dạng Excel (.xlsx)"),
+    LOI_DOC_FILE_EXCEL(HttpStatus.BAD_REQUEST, "Có lỗi xảy ra khi đọc file Excel"),
+    EXCEL_THIEU_HO_DEM(HttpStatus.BAD_REQUEST, "Họ đệm không được để trống"),
+    EXCEL_THIEU_TEN(HttpStatus.BAD_REQUEST, "Tên không được để trống"),
+    EXCEL_THIEU_EMAIL(HttpStatus.BAD_REQUEST, "Email không được để trống"),
+    EXCEL_THIEU_SDT(HttpStatus.BAD_REQUEST, "Số điện thoại không được để trống"),
+    EXCEL_NGAY_SINH_SAI_FORMAT(HttpStatus.BAD_REQUEST, "Ngày sinh không đúng định dạng dd/MM/yyyy"),
+    EXCEL_GIOI_TINH_KHONG_HOP_LE(HttpStatus.BAD_REQUEST, "Giới tính không hợp lệ (NAM hoặc NU)"),
 
     /** 401 - Unauthorized */
     CHUA_DANG_NHAP(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn"),
@@ -58,6 +69,7 @@ public enum ErrorCode {
 
     /** 404 - Not Found */
     NGUOI_DUNG_KHONG_TON_TAI(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng"),
+    THONG_BAO_KHONG_TON_TAI(HttpStatus.NOT_FOUND, "Không tìm thấy thông báo này"),
 
     /** 409 - Conflict */
     ISBN_DA_TON_TAI(HttpStatus.CONFLICT, "Mã ISBN này đã được sử dụng bởi một đầu sách khác"),

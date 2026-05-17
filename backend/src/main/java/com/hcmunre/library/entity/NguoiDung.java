@@ -62,6 +62,8 @@ public class NguoiDung extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private VaiTro vaiTro;
 
+    private String avatar;
+
     @Enumerated(EnumType.STRING)
     private TrangThaiNguoiDung trangThai;
 

@@ -6,7 +6,6 @@ import com.hcmunre.library.dto.response.NguoiDungResponse;
 import com.hcmunre.library.entity.NguoiDung;
 import com.hcmunre.library.enums.TrangThaiNguoiDung;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -15,12 +14,15 @@ import org.springframework.data.domain.Pageable;
 public interface NguoiDungService {
     // Queries
     NguoiDung getNguoiDungActive(UUID maNugoiDung);
-    Page<NguoiDungResponse> getAllNguoiDung(Pageable pageable);
-    NguoiDungResponse getMyProfile(UUID maNguoiDung);
 
+    Page<NguoiDungResponse> getAllNguoiDung(Pageable pageable);
+
+    NguoiDungResponse getMyProfile(UUID maNguoiDung);
 
     // Commands
     NguoiDungResponse updateProfile(UUID maNguoiDung, UpdateProfileRequest request);
+
     void changePassword(UUID maNguoiDung, ChangePasswordRequest request);
+
     void toggleUserStatus(UUID targetUserId, TrangThaiNguoiDung newTrangThai);
 }

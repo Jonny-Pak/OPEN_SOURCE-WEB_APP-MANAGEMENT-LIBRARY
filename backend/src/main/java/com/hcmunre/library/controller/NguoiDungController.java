@@ -2,9 +2,11 @@ package com.hcmunre.library.controller;
 
 import com.hcmunre.library.dto.request.ChangePasswordRequest;
 import com.hcmunre.library.dto.request.UpdateProfileRequest;
+import com.hcmunre.library.dto.response.ImportExcelResponse;
 import com.hcmunre.library.dto.response.NguoiDungResponse;
 import com.hcmunre.library.enums.TrangThaiNguoiDung;
 import com.hcmunre.library.security.CustomUserDetails;
+import com.hcmunre.library.service.ImportExcelService;
 import com.hcmunre.library.service.NguoiDungService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -12,8 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -27,6 +29,7 @@ import org.springframework.data.domain.Sort;
 public class NguoiDungController {
 
     private final NguoiDungService nguoiDungService;
+    private final ImportExcelService importExcelService;
 
     // Xem profile cá nhân (Lấy ID từ Token qua @AuthenticationPrincipal)
     @GetMapping("/me")
@@ -70,5 +73,18 @@ public class NguoiDungController {
             @RequestParam TrangThaiNguoiDung trangThai) {
         nguoiDungService.toggleUserStatus(id, trangThai);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Import danh sách người dùng từ file Excel (.xlsx).
+     * Chỉ QUAN_TRI_VIEN và THU_THU mới có quyền.
+     *
+     * @param file file Excel (.xlsx)
+     * @return kết quả import chi tiết
+     */
+    @PostMapping("/import-excel")
+    @PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'THU_THU')")
+    public ResponseEntity<ImportExcelResponse> importFromExcel(@RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(importExcelService.importNguoiDung(file));
     }
 }
