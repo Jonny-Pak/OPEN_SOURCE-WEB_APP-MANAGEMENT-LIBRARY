@@ -12,6 +12,8 @@ public interface PhieuPhatService {
     boolean hasPhieuPhatUnpaid(UUID maNguoiDung);
 
     List<PhieuPhatResponse> getPhieuPhatByNguoiDung(UUID maNguoiDung);
+    
+    org.springframework.data.domain.Page<PhieuPhatResponse> getAllPhieuPhat(org.springframework.data.domain.Pageable pageable);
     // Commands
     PhieuPhatResponse createPhieuPhat(UUID maChiTietPhieuMuon, Double tienPhat, String lyDoPhat);
     PhieuPhatResponse createPhieuPhat(TaoPhieuPhatRequest request);

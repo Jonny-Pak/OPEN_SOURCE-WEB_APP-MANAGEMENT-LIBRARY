@@ -3,11 +3,15 @@
 -->
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { traSachService, giaHanService } from '@/services/traSachService'
 import { muonSachService } from '@/services/muonSachService'
 import { usePagination } from '@/composables/usePagination'
 import { useToast } from '@/composables/useToast'
 import type { PhieuMuon, TraSachChiTietItem } from '@/types/muonsach'
+
+const route = useRoute()
+const router = useRouter()
 import type { LichSuGiaHan, TrangThaiGiaHan } from '@/types/giahan'
 import type { TinhTrangVatLy } from '@/types/sach'
 import ModalDialog from '@/components/admin/shared/ModalDialog.vue'
@@ -23,8 +27,9 @@ const tabHienTai = ref<'tra' | 'giahan'>('tra')
 const tuKhoaPhieu = ref('')
 const phieuDaTim = ref<PhieuMuon | null>(null)
 const dangTimPhieu = ref(false)
-const tinhTrangTra = ref<Record<number, TinhTrangVatLy>>({})
+const tinhTrangTra = ref<Record<number, TinhTrangVatLy | 'MAT'>>({})
 const dangTra = ref(false)
+const barcodeScan = ref('')
 
 function formatNgay(s: string) { return new Date(s).toLocaleDateString('vi-VN') }
 
@@ -33,34 +38,58 @@ function laQuaHan(hanTra: string): boolean {
 }
 
 async function timPhieuMuon() {
-  if (!tuKhoaPhieu.value.trim()) return
+  const query = tuKhoaPhieu.value.trim()
+  if (!query) return
   dangTimPhieu.value = true
   phieuDaTim.value = null
   tinhTrangTra.value = {}
   try {
-    const id = parseInt(tuKhoaPhieu.value)
-    if (!isNaN(id)) {
-      const phieu = await muonSachService.layChiTiet(id)
-      phieuDaTim.value = phieu
-      // Khởi tạo tình trạng trả mặc định là TOT
-      phieu.chiTietList.forEach(ct => {
-        tinhTrangTra.value[ct.maChiTiet] = 'TOT'
-      })
-    } else { toast.canhBao('Vui lòng nhập mã phiếu mượn (số)') }
+    const phieu = await muonSachService.layChiTiet(query)
+    phieuDaTim.value = phieu
+    // Khởi tạo tình trạng trả mặc định là TOT
+    const chiTietList = phieu?.chiTietList || []
+    chiTietList.forEach(ct => {
+      tinhTrangTra.value[ct.maChiTiet] = 'TOT'
+    })
   } catch { toast.loi('Không tìm thấy phiếu mượn') }
   finally { dangTimPhieu.value = false }
 }
 
-async function xacNhanTra() {
-  if (!phieuDaTim.value) return
-  const chiTietList: TraSachChiTietItem[] = phieuDaTim.value.chiTietList.map(ct => ({
-    chiTietId: ct.maChiTiet,
-    tinhTrangTraSach: tinhTrangTra.value[ct.maChiTiet] ?? 'TOT',
-  }))
+async function traTheoMaVach() {
+  const ma = barcodeScan.value.trim()
+  if (!ma || !phieuDaTim.value) return
+  
+  const ct = phieuDaTim.value.chiTietList.find(x => x.maBarcodeVatLy === ma)
+  if (!ct) {
+    toast.canhBao('Mã vạch không thuộc phiếu mượn này!')
+    return
+  }
+
+  const tinhTrang = tinhTrangTra.value[ct.maChiTiet] || 'TOT'
   dangTra.value = true
   try {
-    await traSachService.traSach(phieuDaTim.value.maPhieuMuon, { chiTietList })
-    toast.thanhCong('Trả sách thành công! Hệ thống sẽ tự sinh phiếu phạt nếu cần.')
+    if (tinhTrang === 'MAT') {
+      await traSachService.baoMatSach(String(ct.maChiTiet))
+      toast.thanhCong('Đã báo mất sách thành công')
+    } else {
+      await traSachService.traCuonSach({ maChiTietPhieuMuon: String(ct.maChiTiet), tinhTrangVatLyKhiTra: tinhTrang })
+      toast.thanhCong('Đã trả cuốn sách: ' + ma)
+    }
+    barcodeScan.value = ''
+    await timPhieuMuon() // Reload list
+  } catch (err: any) {
+    toast.loi(err?.message || 'Trả sách thất bại')
+  } finally {
+    dangTra.value = false
+  }
+}
+
+async function xacNhanTraToanBo() {
+  if (!phieuDaTim.value) return
+  dangTra.value = true
+  try {
+    await traSachService.traToanBo({ maPhieuMuon: String(phieuDaTim.value.maPhieuMuon), ghiChu: 'Trả toàn bộ, trạng thái mặc định: Tốt' })
+    toast.thanhCong('Trả toàn bộ sách thành công!')
     phieuDaTim.value = null
     tuKhoaPhieu.value = ''
   } catch { toast.loi('Trả sách thất bại') }
@@ -132,7 +161,13 @@ watch(danhSachGHLoc, (val) => {
   phanTrang.capNhatTong(val.length)
 }, { immediate: true })
 watch(tabHienTai, (tab) => { if (tab === 'giahan') taiGiaHan() })
-onMounted(() => { /* Tab 1 mặc định, không cần load */ })
+onMounted(async () => {
+  const qPhieu = route.query.maPhieuMuon as string
+  if (qPhieu) {
+    tuKhoaPhieu.value = qPhieu
+    await timPhieuMuon()
+  }
+})
 </script>
 
 <template>
@@ -149,7 +184,7 @@ onMounted(() => { /* Tab 1 mặc định, không cần load */ })
         <div class="form-group">
           <label>Nhập mã phiếu mượn để tìm kiếm</label>
           <div class="input-ket-hop">
-            <input v-model="tuKhoaPhieu" class="form-input" placeholder="VD: 42" @keyup.enter="timPhieuMuon" />
+            <input v-model="tuKhoaPhieu" class="form-input" placeholder="Nhập mã phiếu mượn (UUID)..." @keyup.enter="timPhieuMuon" />
             <button class="nut-tim" :disabled="dangTimPhieu" @click="timPhieuMuon">
               {{ dangTimPhieu ? '...' : '🔍 Tìm' }}
             </button>
@@ -161,8 +196,8 @@ onMounted(() => { /* Tab 1 mặc định, không cần load */ })
       <div v-if="phieuDaTim" class="ket-qua-phieu">
         <!-- Thông tin độc giả -->
         <div class="thong-tin-nguoi-muon">
-          <div class="info-item"><span class="label">Độc giả:</span> <strong>{{ phieuDaTim.nguoiDung.hoDem }} {{ phieuDaTim.nguoiDung.ten }}</strong></div>
-          <div class="info-item"><span class="label">Email:</span> {{ phieuDaTim.nguoiDung.email }}</div>
+          <div class="info-item"><span class="label">Độc giả:</span> <strong>{{ phieuDaTim.nguoiDung?.hoDem || '' }} {{ phieuDaTim.nguoiDung?.ten || '' }}</strong></div>
+          <div class="info-item"><span class="label">Email:</span> {{ phieuDaTim.nguoiDung?.email || 'N/A' }}</div>
           <div class="info-item"><span class="label">Ngày mượn:</span> {{ formatNgay(phieuDaTim.ngayMuon) }}</div>
           <div class="info-item"><span class="label">Hạn trả:</span>
             <span :class="{ 'text-do': laQuaHan(phieuDaTim.hanTra) }">{{ formatNgay(phieuDaTim.hanTra) }}</span>
@@ -170,9 +205,14 @@ onMounted(() => { /* Tab 1 mặc định, không cần load */ })
         </div>
 
         <!-- Danh sách sách đang mượn -->
-        <h4 class="tieu-de-danh-sach">Danh sách sách cần trả ({{ phieuDaTim.chiTietList.length }} cuốn)</h4>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.75rem;">
+          <h4 class="tieu-de-danh-sach" style="margin-bottom:0">Danh sách sách cần trả ({{ (phieuDaTim?.chiTietList || []).length }} cuốn)</h4>
+          <div class="input-ket-hop" style="width: 250px;">
+            <input v-model="barcodeScan" class="form-input" style="padding:0.4rem 0.8rem;font-size:0.85rem;" placeholder="Quét mã vạch trả lẻ..." @keyup.enter="traTheoMaVach" />
+          </div>
+        </div>
         <div class="danh-sach-tra">
-          <div v-for="ct in phieuDaTim.chiTietList" :key="ct.maChiTiet" class="item-tra" :class="{ 'item-tra--qua-han': laQuaHan(ct.hanTra) }">
+          <div v-for="ct in (phieuDaTim?.chiTietList || [])" :key="ct.maChiTiet" class="item-tra" :class="{ 'item-tra--qua-han': laQuaHan(ct.hanTra) }">
             <div class="item-tra-info">
               <div class="ten-sach-tra">{{ ct.tenSach }}</div>
               <div class="ma-vach-tra">
@@ -180,21 +220,29 @@ onMounted(() => { /* Tab 1 mặc định, không cần load */ })
                 <span v-if="laQuaHan(ct.hanTra)" class="tag-qua-han">⚠️ Quá hạn ({{ formatNgay(ct.hanTra) }})</span>
               </div>
             </div>
-            <div class="item-tra-tinh-trang">
+            <div class="item-tra-tinh-trang" style="align-items: flex-end;">
               <label style="font-size:0.8rem;color:var(--mau-chu-mo)">Tình trạng trả:</label>
               <select v-model="tinhTrangTra[ct.maChiTiet]" class="select-tinh-trang">
                 <option value="TOT">Tốt</option>
                 <option value="HU_HONG">Hư hỏng</option>
                 <option value="MAT">Mất</option>
               </select>
+              <button 
+                v-if="laQuaHan(ct.hanTra)" 
+                class="nut-phat-qua-han"
+                @click="router.push(`/admin/phat?maChiTietPhieuMuon=${ct.maChiTiet}`)"
+                style="margin-top: 5px; padding: 0.25rem 0.5rem; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px; color: #ef4444; cursor: pointer; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 3px;"
+              >
+                ⚠️ Phạt quá hạn
+              </button>
             </div>
           </div>
         </div>
 
         <div class="nhom-nut">
           <button class="nut-huy" @click="phieuDaTim = null">Hủy</button>
-          <button class="nut-chinh" :disabled="dangTra" @click="xacNhanTra">
-            {{ dangTra ? 'Đang xử lý...' : '✅ Xác nhận trả sách' }}
+          <button class="nut-chinh" :disabled="dangTra" @click="xacNhanTraToanBo">
+            {{ dangTra ? 'Đang xử lý...' : '✅ Trả toàn bộ (Mặc định: Tốt)' }}
           </button>
         </div>
       </div>
@@ -225,7 +273,7 @@ onMounted(() => { /* Tab 1 mặc định, không cần load */ })
             </thead>
             <tbody>
               <tr v-for="item in danhSachGHHienThi" :key="item.maGiaHan">
-                <td>{{ item.nguoiDung.hoDem }} {{ item.nguoiDung.ten }}</td>
+                <td>{{ item.nguoiDung?.hoDem || '' }} {{ item.nguoiDung?.ten || '' }}</td>
                 <td><div style="font-size:0.85rem">{{ item.tenSach }}</div><code style="font-size:0.75rem;color:var(--mau-chu-mo)">{{ item.maBarcodeVatLy }}</code></td>
                 <td :class="{ 'text-do': laQuaHan(item.hanTraHienTai) }">{{ formatNgay(item.hanTraHienTai) }}</td>
                 <td>{{ formatNgay(item.hanTraXinGiaHan) }}</td>
@@ -306,12 +354,12 @@ onMounted(() => { /* Tab 1 mặc định, không cần load */ })
 .tag-qua-han { color:#ff6b6b; font-size:0.75rem; }
 .item-tra-tinh-trang { display:flex; flex-direction:column; gap:0.25rem; flex-shrink:0; }
 .select-tinh-trang { padding:0.4rem 0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:var(--mau-chu); font-family:inherit; cursor:pointer; }
-.select-tinh-trang option { background:#1a1a2e; }
+.select-tinh-trang option { background:#1a1a2e; color:#ffffff; }
 
 /* Tab gia hạn */
 .thanh-filter { margin-bottom:1rem; }
 .select-filter { padding:0.65rem 1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu); font-family:inherit; cursor:pointer; }
-.select-filter option { background:#1a1a2e; }
+.select-filter option { background:#1a1a2e; color:#ffffff; }
 .bang-container { background:var(--glass-nen); border:1px solid var(--glass-vien); border-radius:12px; overflow:hidden; padding:1rem; }
 .bang { width:100%; border-collapse:collapse; }
 .bang th { padding:0.75rem 1rem; text-align:left; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--mau-chu-mo); border-bottom:1px solid rgba(255,255,255,0.08); }

@@ -40,8 +40,16 @@ public class AuthServiceImplement implements AuthService {
                 NguoiDung nguoiDung = nguoiDungRepository.findByEmail(request.getEmail())
                                 .orElseThrow(() -> new LibraryException(ErrorCode.DANG_NHAP_THAT_BAI));
 
+                if (nguoiDung.getNgayXoa() != null) {
+                        throw new LibraryException(ErrorCode.DANG_NHAP_THAT_BAI);
+                }
+
                 if (nguoiDung.getTrangThai() == TrangThaiNguoiDung.KHOA) {
                         throw new LibraryException(ErrorCode.TAI_KHOAN_BI_KHOA);
+                }
+
+                if (nguoiDung.getTrangThai() == TrangThaiNguoiDung.CHUA_KICH_HOAT) {
+                        throw new LibraryException(ErrorCode.TAI_KHOAN_CHUA_KICH_HOAT);
                 }
 
                 try {

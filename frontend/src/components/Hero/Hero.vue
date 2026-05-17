@@ -15,7 +15,7 @@ const searchQuery = ref('')
         
         <div class="search-container">
           <div class="search-box">
-            <span class="search-icon"><i class="fas fa-search"></i></span>
+            <span class="search-icon"><font-awesome-icon icon="fa-solid fa-magnifying-glass" /></span>
             <input 
               v-model="searchQuery" 
               type="text" 

@@ -13,11 +13,10 @@ import type { NguoiDung } from '@/types/nguoidung'
 const router = useRouter()
 const toast = useToast()
 
-const buocHienTai = ref<1 | 2>(1)
+const buocHienTai = ref(1) // Keep for transition, though only 1 step now
 const dangGui = ref(false)
-const phieuMuonId = ref<number | null>(null)
 
-// === BƯỚC 1 ===
+// === THÔNG TIN ĐỘC GIẢ ===
 const tuKhoaDocGia = ref('')
 const danhSachTatCaDocGia = ref<NguoiDung[]>([])
 const danhSachDocGia = ref<NguoiDung[]>([])
@@ -26,11 +25,6 @@ const hanTra = ref('')
 const dangTimKiem = ref(false)
 let boDem: ReturnType<typeof setTimeout> | null = null
 
-// Ngày tối thiểu = ngày mai
-const ngayNgayMai = new Date()
-ngayNgayMai.setDate(ngayNgayMai.getDate() + 1)
-const hanTraToiThieu = ngayNgayMai.toISOString().split('T')[0]
-
 async function timKiemDocGia() {
   if (boDem) clearTimeout(boDem)
   if (!tuKhoaDocGia.value.trim()) { danhSachDocGia.value = []; return }
@@ -38,7 +32,8 @@ async function timKiemDocGia() {
     dangTimKiem.value = true
     try {
       if (danhSachTatCaDocGia.value.length === 0) {
-        danhSachTatCaDocGia.value = await docGiaService.danhSach()
+        const response = await docGiaService.danhSach()
+        danhSachTatCaDocGia.value = response.content
       }
       const kw = tuKhoaDocGia.value.trim().toLowerCase()
       danhSachDocGia.value = danhSachTatCaDocGia.value
@@ -62,23 +57,9 @@ function chonDocGia(nd: NguoiDung) {
   danhSachDocGia.value = []
 }
 
-async function buoc1TiepTheo() {
-  if (!docGiaDaChon.value) return toast.canhBao('Vui lòng chọn độc giả')
-  if (!hanTra.value) return toast.canhBao('Vui lòng chọn hạn trả')
-  dangGui.value = true
-  try {
-    const phieu = await muonSachService.taoCai({ nguoiDungId: docGiaDaChon.value.maNguoiDung, hanTra: hanTra.value })
-    phieuMuonId.value = phieu.maPhieuMuon
-    buocHienTai.value = 2
-    toast.thanhCong('Đã tạo phiếu mượn, tiếp tục thêm sách')
-  } catch { toast.loi('Không thể tạo phiếu mượn') }
-  finally { dangGui.value = false }
-}
-
-// === BƯỚC 2 ===
+// === MÃ VẠCH SÁCH ===
 const inputMaVach = ref('')
 const danhSachDaQue = ref<string[]>([])
-const dangThemSach = ref(false)
 
 async function themMaVach() {
   const ma = inputMaVach.value.trim()
@@ -88,18 +69,26 @@ async function themMaVach() {
   inputMaVach.value = ''
 }
 
+function xoaMaVach(ma: string) { danhSachDaQue.value = danhSachDaQue.value.filter(m => m !== ma) }
+
 async function hoanTat() {
-  if (!phieuMuonId.value || danhSachDaQue.value.length === 0) return toast.canhBao('Vui lòng quét ít nhất 1 cuốn sách')
-  dangThemSach.value = true
+  if (!docGiaDaChon.value) return toast.canhBao('Vui lòng chọn độc giả')
+  if (danhSachDaQue.value.length === 0) return toast.canhBao('Vui lòng quét ít nhất 1 cuốn sách')
+  
+  dangGui.value = true
   try {
-    await muonSachService.themChiTiet(phieuMuonId.value, { maBarcodeList: danhSachDaQue.value })
+    await muonSachService.taoCai({ 
+      maNguoiDung: docGiaDaChon.value.maNguoiDung, 
+      danhSachMaBarcodeVatLy: danhSachDaQue.value 
+    })
     toast.thanhCong('Tạo phiếu mượn thành công!')
     router.push('/admin/muon-sach')
-  } catch { toast.loi('Thêm sách vào phiếu thất bại, kiểm tra lại mã vạch') }
-  finally { dangThemSach.value = false }
+  } catch (err: any) { 
+    toast.loi(err?.message || 'Không thể tạo phiếu mượn, kiểm tra lại điều kiện mượn') 
+  } finally { 
+    dangGui.value = false 
+  }
 }
-
-function xoaMaVach(ma: string) { danhSachDaQue.value = danhSachDaQue.value.filter(m => m !== ma) }
 </script>
 
 <template>
@@ -109,22 +98,9 @@ function xoaMaVach(ma: string) { danhSachDaQue.value = danhSachDaQue.value.filte
       <h2>Tạo phiếu mượn sách</h2>
     </div>
 
-    <!-- Chỉ báo bước -->
-    <div class="chi-bao-buoc">
-      <div class="buoc" :class="buocHienTai >= 1 ? 'buoc--active' : ''">
-        <span class="so-buoc">{{ buocHienTai > 1 ? '✓' : '1' }}</span>
-        <span>Thông tin phiếu</span>
-      </div>
-      <div class="duong-noi" :class="buocHienTai >= 2 ? 'duong--done' : ''"></div>
-      <div class="buoc" :class="buocHienTai >= 2 ? 'buoc--active' : ''">
-        <span class="so-buoc">2</span>
-        <span>Thêm sách qua mã vạch</span>
-      </div>
-    </div>
-
-    <!-- ===== BƯỚC 1 ===== -->
-    <div v-if="buocHienTai === 1" class="the-buoc">
-      <h3 class="tieu-de-buoc">Bước 1: Chọn độc giả và thời hạn</h3>
+    <!-- ===== TẠO PHIẾU DUY NHẤT ===== -->
+    <div class="the-buoc">
+      <h3 class="tieu-de-buoc">Thông tin độc giả</h3>
 
       <div class="form-group">
         <label>Tìm và chọn độc giả *</label>
@@ -154,28 +130,8 @@ function xoaMaVach(ma: string) { danhSachDaQue.value = danhSachDaQue.value.filte
         </div>
       </div>
 
-      <div class="form-group">
-        <label>Hạn trả *</label>
-        <input v-model="hanTra" type="date" class="form-input" :min="hanTraToiThieu" />
-      </div>
-
-      <div class="nhom-nut">
-        <button class="nut-huy" @click="router.push('/admin/muon-sach')">Hủy</button>
-        <button class="nut-chinh" :disabled="dangGui" @click="buoc1TiepTheo">
-          {{ dangGui ? 'Đang tạo...' : 'Tiếp theo →' }}
-        </button>
-      </div>
-    </div>
-
-    <!-- ===== BƯỚC 2 ===== -->
-    <div v-else class="the-buoc">
-      <div class="thong-tin-phieu">
-        <span>📋 Phiếu <strong>#{{ phieuMuonId }}</strong></span>
-        <span>👤 <strong>{{ docGiaDaChon?.hoDem }} {{ docGiaDaChon?.ten }}</strong></span>
-        <span>📅 Hạn trả: <strong>{{ new Date(hanTra).toLocaleDateString('vi-VN') }}</strong></span>
-      </div>
-
-      <h3 class="tieu-de-buoc">Bước 2: Quét mã vạch cuốn sách</h3>
+      <hr class="duong-chia" />
+      <h3 class="tieu-de-buoc mt-4">Quét mã vạch cuốn sách</h3>
 
       <div class="form-group">
         <label>Mã vạch cuốn sách (nhấn Enter để thêm)</label>
@@ -205,9 +161,9 @@ function xoaMaVach(ma: string) { danhSachDaQue.value = danhSachDaQue.value.filte
       </div>
 
       <div class="nhom-nut">
-        <button class="nut-huy" @click="buocHienTai = 1">← Quay lại</button>
-        <button class="nut-chinh" :disabled="dangThemSach || danhSachDaQue.length === 0" @click="hoanTat">
-          {{ dangThemSach ? 'Đang xử lý...' : `✅ Hoàn tất (${danhSachDaQue.length} cuốn)` }}
+        <button class="nut-huy" @click="router.push('/admin/muon-sach')">Hủy bỏ</button>
+        <button class="nut-chinh" :disabled="dangGui || danhSachDaQue.length === 0 || !docGiaDaChon" @click="hoanTat">
+          {{ dangGui ? 'Đang xử lý...' : `✅ Tạo phiếu mượn (${danhSachDaQue.length} cuốn)` }}
         </button>
       </div>
     </div>
@@ -221,18 +177,11 @@ function xoaMaVach(ma: string) { danhSachDaQue.value = danhSachDaQue.value.filte
 .nut-quay-lai { background:none; border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu-mo); cursor:pointer; padding:0.5rem 1rem; font-family:inherit; font-size:0.875rem; transition:all 0.2s; }
 .nut-quay-lai:hover { background:rgba(255,255,255,0.06); color:var(--mau-chu); }
 
-/* Chỉ báo bước */
-.chi-bao-buoc { display:flex; align-items:center; margin-bottom:2rem; gap:0; }
-.buoc { display:flex; align-items:center; gap:0.6rem; font-size:0.875rem; color:var(--mau-chu-mo); }
-.so-buoc { width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:700; flex-shrink:0; }
-.buoc--active { color:var(--mau-chinh); }
-.buoc--active .so-buoc { background:var(--color-primary); border-color:transparent; color:white; }
-.duong-noi { flex:1; height:2px; background:rgba(255,255,255,0.08); margin:0 1rem; }
-.duong--done { background:var(--color-primary); }
-
 /* Card bước */
 .the-buoc { background:var(--glass-nen); border:1px solid var(--glass-vien); border-radius:16px; padding:2rem; }
 .tieu-de-buoc { font-size:1rem; font-weight:700; color:var(--mau-chinh); margin-bottom:1.5rem; }
+.mt-4 { margin-top: 1.5rem; }
+.duong-chia { border:0; border-top:1px solid rgba(255,255,255,0.08); margin:1.5rem 0; }
 
 /* Form */
 .form-group { margin-bottom:1.25rem; display:flex; flex-direction:column; gap:0.375rem; }

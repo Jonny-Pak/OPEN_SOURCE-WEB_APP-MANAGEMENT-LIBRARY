@@ -75,12 +75,15 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
         int soSachDangGiu = chiTietPhieuMuonRepository.countByPhieuMuon_NguoiDung_MaNguoiDungAndTrangThaiChiTietPhieuMuonIn(
                 nguoiDung.getMaNguoiDung(), List.of(TrangThaiChiTietPhieuMuon.DANG_MUON, TrangThaiChiTietPhieuMuon.QUA_HAN));
 
-        if(soSachDangGiu + request.getDanhSachMaSach().size() > SO_SACH_MUON_TOI_DA){
+        if(soSachDangGiu + request.getDanhSachMaVach().size() > SO_SACH_MUON_TOI_DA){
             throw new LibraryException(ErrorCode.VUOT_QUA_GIOI_HAN_MUON);
         }
 
-        for (Long maSach : request.getDanhSachMaSach()) {
-            CuonSach cuonSach = cuonSachService.getCuonSachAvailable(maSach);
+        for (String maVach : request.getDanhSachMaVach()) {
+            CuonSach cuonSach = cuonSachService.getCuonSachByMaVach(maVach);
+            if (cuonSach.getTrangThai() != TrangThaiCuonSach.SAN_SANG) {
+                throw new LibraryException(ErrorCode.CUON_SACH_KHONG_SAN_SANG);
+            }
 
             List<DatCho> danhSachDatCho = datChoRepository.findByNguoiDung_MaNguoiDungAndSach_MaSachAndTrangThai(
                     request.getMaNguoiDung(), cuonSach.getSach().getMaSach(), TrangThaiDatCho.DANG_CHO);
@@ -116,7 +119,7 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
                 nguoiDung.getEmail(),
                 "[Thư Viện] Xác nhận mượn sách thành công",
                 "Chào " + nguoiDung.getHoTen() + ",<br><br>" +
-                        "Bạn vừa mượn thành công " + request.getDanhSachMaSach().size() + " cuốn sách. " +
+                        "Bạn vừa mượn thành công " + request.getDanhSachMaVach().size() + " cuốn sách. " +
                         "Vui lòng trả đúng hạn để không bị phạt nhé.<br><br>" +
                         "Trân trọng!"
         );
@@ -170,6 +173,15 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
         cuonSachService.updateTrangThaiCuonSach(chiTietPhieuMuon.getCuonSach().getMaCuonSach(),
                 TrangThaiCuonSach.SAN_SANG);
 
+        // Update reservation status when book is returned
+        List<DatCho> reservations = datChoRepository.findBySach_MaSachAndTrangThaiOrderByThoiGianDatChoAsc(
+                chiTietPhieuMuon.getCuonSach().getSach().getMaSach(), TrangThaiDatCho.DANG_CHO);
+        if (!reservations.isEmpty()) {
+            DatCho oldestReservation = reservations.get(0);
+            oldestReservation.setHanGiuCho(LocalDateTime.now().plusDays(1));
+            datChoRepository.save(oldestReservation);
+        }
+
         if (now.isAfter(chiTietPhieuMuon.getHanTraHienTai())) {
             chiTietPhieuMuon.setTrangThaiChiTietPhieuMuon(TrangThaiChiTietPhieuMuon.DA_TRA_TRE);
             Long soNgayTre = ChronoUnit.DAYS.between((chiTietPhieuMuon.getHanTraHienTai()), now);
@@ -214,7 +226,7 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
         }
 
         if (chiTietPhieuMuon.getSoLanGiaHan() >= SO_LAN_GIA_HAN_TOI_DA) {
-            throw new LibraryException(ErrorCode.KHONG_THE_GIA_HAN_QUA_HAN);
+            throw new LibraryException(ErrorCode.VUOT_QUA_SO_LAN_GIA_HAN);
         }
 
         LocalDateTime hanTraCu = chiTietPhieuMuon.getHanTraHienTai();

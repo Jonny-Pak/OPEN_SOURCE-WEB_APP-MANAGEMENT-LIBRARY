@@ -11,16 +11,25 @@ const router = useRouter()
 const isSubmitting = ref(false)
 const isSuccess = ref(false)
 
-const handleConfirm = () => {
+import { useToast } from '../../composables/useToast'
+
+const toast = useToast()
+
+const handleConfirm = async () => {
   if (cart.items.length === 0) return
   
   isSubmitting.value = true
-  setTimeout(() => {
+  try {
+    await cart.borrowAll()
+    isSuccess.value = true
+    toast.success('Yêu cầu mượn sách thành công!')
+  } catch (error: any) {
+    const errorMsg = typeof error === 'string' ? error : (error?.message || 'Có lỗi xảy ra khi thực hiện mượn sách. Vui lòng thử lại.')
+    toast.error(errorMsg)
+    console.error(error)
+  } finally {
     isSubmitting.value = false
-    const mockId = 'RES-' + Math.random().toString(36).substr(2, 9).toUpperCase()
-    cart.clearCart()
-    router.push(`/reservation/${mockId}`)
-  }, 1500)
+  }
 }
 
 const dueDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('vi-VN')
@@ -40,7 +49,7 @@ const removeItem = (id: number) => {
         <!-- Success State -->
         <div v-if="isSuccess" class="success-card text-center">
           <div class="success-icon">
-            <i class="fas fa-check-circle"></i>
+            <font-awesome-icon icon="fa-solid fa-circle-check" />
           </div>
           <h1>Yêu cầu mượn thành công!</h1>
           <p>Yêu cầu mượn các cuốn sách đã chọn đã được gửi đến hệ thống. Vui lòng đến thư viện trong vòng 24h để nhận sách.</p>
@@ -60,7 +69,7 @@ const removeItem = (id: number) => {
 
           <div v-if="cart.items.length === 0" class="empty-cart text-center">
             <div class="empty-icon">
-              <i class="fas fa-shopping-basket"></i>
+              <font-awesome-icon icon="fa-solid fa-book-bookmark" />
             </div>
             <h3>Danh sách mượn đang trống</h3>
             <p>Hãy khám phá kho sách và thêm những cuốn bạn yêu thích vào đây.</p>
@@ -77,7 +86,7 @@ const removeItem = (id: number) => {
                   <span class="badge">{{ book.category }}</span>
                 </div>
                 <button @click="removeItem(book.id)" class="remove-btn" title="Xóa khỏi danh sách">
-                  <i class="fas fa-trash-alt"></i>
+                  <font-awesome-icon icon="fa-solid fa-trash-can" />
                 </button>
               </div>
             </div>
@@ -96,7 +105,7 @@ const removeItem = (id: number) => {
               </div>
               
               <div class="notice">
-                <i class="fas fa-info-circle"></i>
+                <font-awesome-icon icon="fa-solid fa-circle-info" />
                 <p>Bằng cách nhấn xác nhận, bạn đồng ý tuân thủ nội quy mượn trả của thư viện.</p>
               </div>
 
@@ -105,7 +114,7 @@ const removeItem = (id: number) => {
                 class="btn btn-primary btn-lg btn-block"
                 :disabled="isSubmitting"
               >
-                <i v-if="isSubmitting" class="fas fa-spinner fa-spin"></i>
+                <font-awesome-icon v-if="isSubmitting" icon="fa-solid fa-spinner" class="fa-spin" />
                 <span v-else>Xác nhận đặt chỗ</span>
               </button>
             </div>

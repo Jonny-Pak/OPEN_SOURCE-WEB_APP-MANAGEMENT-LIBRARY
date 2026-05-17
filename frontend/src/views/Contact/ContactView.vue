@@ -25,22 +25,22 @@ const handleSubmit = () => {
 
 const contactInfo = [
   {
-    icon: 'fa-map-marker-alt',
+    icon: 'fa-solid fa-location-dot',
     title: 'Địa chỉ',
     content: 'Số 123, Đường Tri Thức, Quận Cầu Giấy, Hà Nội'
   },
   {
-    icon: 'fa-phone-alt',
+    icon: 'fa-solid fa-phone',
     title: 'Điện thoại',
     content: '(024) 3456 7890'
   },
   {
-    icon: 'fa-envelope',
+    icon: 'fa-solid fa-envelope',
     title: 'Email',
     content: 'thuvien@school.edu.vn'
   },
   {
-    icon: 'fa-clock',
+    icon: 'fa-solid fa-clock',
     title: 'Giờ làm việc',
     content: 'Thứ 2 - Thứ 7: 07:30 - 21:00'
   }
@@ -64,7 +64,7 @@ const contactInfo = [
           <aside class="contact-info">
             <div v-for="info in contactInfo" :key="info.title" class="info-card">
               <div class="info-icon">
-                <i :class="['fas', info.icon]"></i>
+                <font-awesome-icon :icon="info.icon" />
               </div>
               <div class="info-content">
                 <h3>{{ info.title }}</h3>
@@ -75,7 +75,7 @@ const contactInfo = [
             <div class="map-placeholder">
               <img src="https://images.unsplash.com/photo-1524666041070-9d87656c25bb?auto=format&fit=crop&q=80&w=600" alt="Map Location" />
               <div class="map-overlay">
-                <i class="fas fa-map-marked-alt"></i>
+                <font-awesome-icon icon="fa-solid fa-location-dot" />
                 <span>Xem trên bản đồ</span>
               </div>
             </div>
@@ -85,7 +85,7 @@ const contactInfo = [
           <section class="contact-form-section">
             <div v-if="isSuccess" class="success-message">
               <div class="success-icon">
-                <i class="fas fa-check-circle"></i>
+                <font-awesome-icon icon="fa-solid fa-circle-check" />
               </div>
               <h2>Cảm ơn bạn đã liên hệ!</h2>
               <p>Chúng tôi đã nhận được tin nhắn và sẽ phản hồi sớm nhất có thể.</p>
@@ -112,7 +112,7 @@ const contactInfo = [
                 <textarea v-model="form.message" rows="6" placeholder="Nhập nội dung chi tiết..." required></textarea>
               </div>
               <button type="submit" class="btn btn-primary submit-btn" :disabled="isSubmitting">
-                <i v-if="isSubmitting" class="fas fa-spinner fa-spin"></i>
+                <font-awesome-icon v-if="isSubmitting" icon="fa-solid fa-spinner" class="fa-spin" />
                 <span v-else>Gửi tin nhắn</span>
               </button>
             </form>

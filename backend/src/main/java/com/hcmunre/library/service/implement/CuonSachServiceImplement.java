@@ -108,6 +108,15 @@ public class CuonSachServiceImplement implements CuonSachService {
     }
 
     @Override
+    public CuonSach getCuonSachByMaVach(String maVach) {
+        CuonSach cuonSach = cuonSachRepository.findByMaVach(maVach);
+        if (cuonSach == null) {
+            throw new LibraryException(ErrorCode.CUON_SACH_KHONG_TON_TAI);
+        }
+        return cuonSach;
+    }
+
+    @Override
     @Transactional
     public void updateTrangThaiCuonSach(Long maCuonSach, TrangThaiCuonSach trangThai) {
         CuonSach cuonSach = cuonSachRepository.findById(maCuonSach)

@@ -179,6 +179,10 @@ public class SachServiceImplement implements SachService {
         List<String> hinhAnhs = sach.getDanhSachHinhAnh() == null ? Collections.emptyList()
                 : sach.getDanhSachHinhAnh().stream().map(HinhAnhSach::getDuongDan).collect(Collectors.toList());
 
+        long countCoSan = cuonSachRepository.countBySach_MaSachAndTrangThai(
+                sach.getMaSach(), com.hcmunre.library.enums.TrangThaiCuonSach.SAN_SANG);
+        long countTong = cuonSachRepository.countBySach_MaSach(sach.getMaSach());
+
         return SachResponse.builder()
                 .maSach(sach.getMaSach())
                 .tenSach(sach.getTenSach())
@@ -195,8 +199,9 @@ public class SachServiceImplement implements SachService {
                 .danhSachTacGia(tacGias)
                 .danhSachTheLoai(theLoais)
                 .danhSachHinhAnhUrl(hinhAnhs)
-                .soLuongCoSan(cuonSachRepository.countBySach_MaSachAndTrangThai(
-                        sach.getMaSach(), com.hcmunre.library.enums.TrangThaiCuonSach.SAN_SANG))
+                .soLuongCoSan(countCoSan)
+                .soLuongKho(countTong)
+                .tongSoLuong(countTong)
                 .build();
     }
 }

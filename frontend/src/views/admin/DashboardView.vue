@@ -3,45 +3,34 @@
 -->
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-// import { layThongKe, type ThongKeDashboard } from '@/services/dashboardService'
+import { dashboardService, type ThongKeDashboard } from '@/services/dashboardService'
 import SkeletonLoader from '@/components/admin/shared/SkeletonLoader.vue'
 import { useToast } from '@/composables/useToast'
 
 const toast = useToast()
 const dangTai = ref(false)
-// const thongKe = ref<ThongKeDashboard | null>(null)
-const hienThi = ref({ soBanDangMuon: 0, soSachQuaHan: 0, tongTienPhat: 0, tongNguoiDung: 0 })
-
-function demLen(key: keyof typeof hienThi.value, soMucTieu: number): void {
-  const buoc = 60
-  let i = 0
-  const iv = setInterval(() => {
-    i++
-    const t = 1 - Math.pow(1 - i / buoc, 3)
-    hienThi.value[key] = Math.round(soMucTieu * t)
-    if (i >= buoc) clearInterval(iv)
-  }, 1200 / buoc)
-}
+const hienThi = ref<ThongKeDashboard>({
+  soBanDangMuon: 0,
+  soSachQuaHan: 0,
+  tongTienPhat: 0,
+  tongNguoiDung: 0
+})
 
 async function taiThongKe(): Promise<void> {
   dangTai.value = true
   try {
-    // TODO: Implement dashboard endpoint on backend at /api/v1/admin/dashboard/thong-ke
-    toast.loi('Tính năng thống kê chưa được triển khai trên máy chủ')
-    // thongKe.value = await layThongKe()
-    // demLen('soBanDangMuon', thongKe.value.soBanDangMuon)
-    // demLen('soSachQuaHan', thongKe.value.soSachQuaHan)
-    // demLen('tongTienPhat', thongKe.value.tongTienPhat)
-    // demLen('tongNguoiDung', thongKe.value.tongNguoiDung)
-  } catch { toast.loi('Không thể tải dữ liệu thống kê') }
-  finally { dangTai.value = false }
+    const data = await dashboardService.getStats()
+    if (data) {
+      hienThi.value = data
+    }
+  } catch (err) {
+    toast.loi('Không thể tải dữ liệu thống kê')
+  } finally {
+    dangTai.value = false
+  }
 }
 
-function formatTien(so: number): string {
-  return new Intl.NumberFormat('vi-VN').format(so) + ' ₫'
-}
-
-// onMounted(taiThongKe)
+onMounted(taiThongKe)
 </script>
 
 <template>
@@ -52,7 +41,7 @@ function formatTien(so: number): string {
         <p class="mo-ta">Theo dõi hoạt động thư viện theo thời gian thực</p>
       </div>
       <button class="nut-lam-moi" @click="taiThongKe" :disabled="dangTai">
-        <i class="fas fa-rotate" :style="{ animation: dangTai ? 'spin 1s linear infinite' : 'none' }"></i>
+        <font-awesome-icon icon="fa-solid fa-rotate" :style="{ animation: dangTai ? 'spin 1s linear infinite' : 'none' }" />
         Làm mới
       </button>
     </div>
@@ -63,31 +52,31 @@ function formatTien(so: number): string {
       </template>
       <template v-else>
         <div class="kpi-card kpi-card--xanh-duong">
-          <i class="kpi-icon fas fa-book"></i>
+          <font-awesome-icon icon="fa-solid fa-book-open-reader" class="kpi-icon" />
           <div>
             <div class="kpi-so">{{ hienThi.soBanDangMuon.toLocaleString('vi-VN') }}</div>
-            <div class="kpi-nhan">Sách đang mượn</div>
+            <div class="kpi-nhan">Đang mượn</div>
           </div>
         </div>
-        <div class="kpi-card" :class="hienThi.soSachQuaHan > 0 ? 'kpi-card--do' : 'kpi-card--xam'">
-          <i class="kpi-icon fas fa-exclamation-triangle"></i>
+        <div class="kpi-card kpi-card--do">
+          <font-awesome-icon icon="fa-solid fa-circle-exclamation" class="kpi-icon" />
           <div>
             <div class="kpi-so">{{ hienThi.soSachQuaHan.toLocaleString('vi-VN') }}</div>
             <div class="kpi-nhan">Sách quá hạn</div>
           </div>
         </div>
         <div class="kpi-card kpi-card--vang">
-          <i class="kpi-icon fas fa-money-bill"></i>
+          <font-awesome-icon icon="fa-solid fa-money-bill-wave" class="kpi-icon" />
           <div>
-            <div class="kpi-so" style="font-size:1.3rem">{{ formatTien(hienThi.tongTienPhat) }}</div>
+            <div class="kpi-so">{{ hienThi.tongTienPhat.toLocaleString('vi-VN') }}đ</div>
             <div class="kpi-nhan">Tổng tiền phạt</div>
           </div>
         </div>
         <div class="kpi-card kpi-card--xanh">
-          <i class="kpi-icon fas fa-users"></i>
+          <font-awesome-icon icon="fa-solid fa-users" class="kpi-icon" />
           <div>
             <div class="kpi-so">{{ hienThi.tongNguoiDung.toLocaleString('vi-VN') }}</div>
-            <div class="kpi-nhan">Tổng người dùng</div>
+            <div class="kpi-nhan">Người dùng</div>
           </div>
         </div>
       </template>

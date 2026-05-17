@@ -24,4 +24,6 @@ public class SachResponse {
     private List<TheLoaiResponse> danhSachTheLoai;
     private List<String> danhSachHinhAnhUrl;
     private Long soLuongCoSan;
+    private Long soLuongKho;
+    private Long tongSoLuong;
 }

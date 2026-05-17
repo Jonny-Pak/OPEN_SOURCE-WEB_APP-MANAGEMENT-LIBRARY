@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import * as XLSX from 'xlsx'
 import { docGiaService } from '@/services/docGiaService'
 import { useSearch } from '@/composables/useSearch'
 import { usePagination } from '@/composables/usePagination'
@@ -13,16 +12,7 @@ import Pagination from '@/components/admin/shared/Pagination.vue'
 import SkeletonLoader from '@/components/admin/shared/SkeletonLoader.vue'
 import EmptyState from '@/components/admin/shared/EmptyState.vue'
 import StatusBadge from '@/components/admin/shared/StatusBadge.vue'
-
-interface ExcelPreviewRow {
-  mssv: string
-  hoTen: string
-  lop: string
-  khoa: string
-  email: string
-  valid: boolean
-  error?: string
-}
+import ImportDocGiaExcelModal from '@/components/admin/shared/ImportDocGiaExcelModal.vue'
 
 interface ImportResult {
   thanhCong: number
@@ -49,37 +39,12 @@ const dangXuLyTrangThai = ref(false)
 const formThem = ref({ hoDem: '', ten: '', email: '', matKhau: '123', soDienThoai: '' })
 const formSua = ref({ hoDem: '', ten: '', soDienThoai: '' })
 
+const showImportModal = ref(false)
 const fileInputRef = ref<HTMLInputElement | null>(null)
-const excelRows = ref<ExcelPreviewRow[]>([])
+const fileToImport = ref<File | null>(null)
 const fileName = ref('')
 const dangImport = ref(false)
 const ketQuaImport = ref<ImportResult | null>(null)
-
-const danhSachLoc = computed(() => {
-  const keyword = tuKhoaDebounced.value.trim().toLowerCase()
-  return danhSach.value.filter((item) => {
-    const trangThai = chuanHoaTrangThai(item.trangThai)
-    const hopFilter = filterTrangThai.value === 'all' || filterTrangThai.value === trangThai
-    if (!hopFilter) return false
-
-    if (!keyword) return true
-    const fullName = `${item.hoDem} ${item.ten}`.toLowerCase()
-    return (
-      fullName.includes(keyword) ||
-      item.email.toLowerCase().includes(keyword) ||
-      item.soDienThoai.toLowerCase().includes(keyword) ||
-      item.maNguoiDung.toLowerCase().includes(keyword)
-    )
-  })
-})
-
-const danhSachTrang = computed(() => {
-  const start = phanTrang.trangHienTai.value * phanTrang.kichThuocTrang.value
-  const end = start + phanTrang.kichThuocTrang.value
-  return danhSachLoc.value.slice(start, end)
-})
-
-const soBanGhiHopLe = computed(() => excelRows.value.filter((r) => r.valid).length)
 
 function chuanHoaTrangThai(status: TrangThaiNguoiDung): 'chua_kich_hoat' | 'da_kich_hoat' | 'bi_khoa' {
   if (status === 'chua_kich_hoat' || status === 'CHUA_KICH_HOAT') return 'chua_kich_hoat'
@@ -104,7 +69,13 @@ function loaiBadgeTrangThai(status: TrangThaiNguoiDung): 'xam' | 'xanh-duong' | 
 async function taiDanhSach() {
   dangTai.value = true
   try {
-    danhSach.value = await docGiaService.danhSach()
+    const response = await docGiaService.danhSach(
+      phanTrang.trangHienTai.value,
+      phanTrang.kichThuocTrang.value,
+      tuKhoaDebounced.value
+    )
+    danhSach.value = response.content
+    phanTrang.capNhatTong(response.totalElements)
   } catch {
     toast.loi('Khong the tai danh sach doc gia')
   } finally {
@@ -129,7 +100,7 @@ async function luuThem() {
     await docGiaService.taoCai({
       ...f,
       vaiTro: 'DOC_GIA',
-      trangThai: 'chua_kich_hoat',
+      trangThai: 'CHUA_KICH_HOAT',
       isDefaultPassword: true,
       matKhau: f.matKhau || '123',
     })
@@ -223,131 +194,15 @@ function tachHoTen(hoTen: string): { hoDem: string; ten: string } {
   return { hoDem: parts.join(' '), ten }
 }
 
-function moNhapExcel() {
-  fileInputRef.value?.click()
-}
-
-function taoEmailTuMssv(mssv: string): string {
-  return `${mssv.toLowerCase()}@sv.hcmunre.edu.vn`
-}
-
-function mapRow(raw: Record<string, unknown>): ExcelPreviewRow {
-  const mssv = String(raw.MSSV ?? raw.mssv ?? raw['Ma SV'] ?? raw['ma_sv'] ?? '').trim()
-  const hoTen = String(raw['Ho ten'] ?? raw['Họ tên'] ?? raw.hoTen ?? raw.hoten ?? '').trim()
-  const lop = String(raw.Lop ?? raw['Lớp'] ?? raw.lop ?? '').trim()
-  const khoa = String(raw.Khoa ?? raw.khoa ?? '').trim()
-
-  if (!mssv) {
-    return { mssv: '', hoTen, lop, khoa, email: '', valid: false, error: 'Thieu MSSV' }
-  }
-  if (!hoTen) {
-    return { mssv, hoTen: '', lop, khoa, email: taoEmailTuMssv(mssv), valid: false, error: 'Thieu ho ten' }
-  }
-
-  return { mssv, hoTen, lop, khoa, email: taoEmailTuMssv(mssv), valid: true }
-}
-
-function xuLyFileExcel(e: Event) {
-  ketQuaImport.value = null
-  const input = e.target as HTMLInputElement
-  const file = input.files?.[0]
-  if (!file) return
-
-  fileName.value = file.name
-  const reader = new FileReader()
-  reader.onload = (ev) => {
-    try {
-      const data = ev.target?.result
-      if (!(data instanceof ArrayBuffer)) {
-        toast.loi('Khong doc duoc file Excel')
-        return
-      }
-
-      const workbook = XLSX.read(data, { type: 'array' })
-      const firstSheetName = workbook.SheetNames[0]
-      if (!firstSheetName) {
-        toast.canhBao('File Excel khong co sheet du lieu')
-        return
-      }
-      const firstSheet = workbook.Sheets[firstSheetName]
-      if (!firstSheet) {
-        toast.canhBao('Khong doc duoc sheet dau tien trong file Excel')
-        return
-      }
-      const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet, { defval: '' })
-      excelRows.value = json.map(mapRow)
-      if (excelRows.value.length === 0) {
-        toast.canhBao('File Excel khong co du lieu')
-        return
-      }
-      modal.moModalThem()
-    } catch {
-      toast.loi('File Excel khong hop le')
-    }
-  }
-  reader.readAsArrayBuffer(file)
-}
-
-function dongModalImport() {
-  excelRows.value = []
-  fileName.value = ''
-  ketQuaImport.value = null
-  modal.dongModal()
-}
-
-function toPayload(rows: ExcelPreviewRow[]): TaoNguoiDungExcelRequest[] {
-  return rows
-    .filter((r) => r.valid)
-    .map((r) => {
-      const tach = tachHoTen(r.hoTen)
-      return {
-        mssv: r.mssv,
-        hoDem: tach.hoDem,
-        ten: tach.ten,
-        lop: r.lop,
-        khoa: r.khoa,
-        email: r.email,
-      }
-    })
-}
-
-async function importExcel() {
-  const payload = toPayload(excelRows.value)
-  if (payload.length === 0) {
-    toast.canhBao('Khong co dong hop le de import')
-    return
-  }
-
+async function handleExcelImport(file: File) {
   dangImport.value = true
   try {
-    try {
-      ketQuaImport.value = await docGiaService.taoHangLoat(payload)
-    } catch {
-      const failures: Array<{ email: string; message: string }> = []
-      let success = 0
-      for (const item of payload) {
-        const matKhau = '123'
-        try {
-          await docGiaService.taoCai({
-            hoDem: item.hoDem,
-            ten: item.ten,
-            email: item.email,
-            soDienThoai: '',
-            matKhau,
-            vaiTro: 'DOC_GIA',
-            trangThai: 'chua_kich_hoat',
-            isDefaultPassword: true,
-          })
-          success += 1
-        } catch {
-          failures.push({ email: item.email, message: 'Email trung hoac du lieu khong hop le' })
-        }
-      }
-      ketQuaImport.value = { thanhCong: success, thatBai: failures.length, loi: failures }
-    }
-
+    const res = await docGiaService.importExcel(file)
+    ketQuaImport.value = res
     await taiDanhSach()
-    toast.thanhCong('Import doc gia hoan tat')
+    toast.thanhCong(`Import hoàn tất! Thành công: ${res.thanhCong}, Thất bại: ${res.thatBai}`)
+  } catch (err: any) {
+    toast.loi(err?.message || 'Có lỗi xảy ra khi import Excel')
   } finally {
     dangImport.value = false
   }
@@ -355,11 +210,10 @@ async function importExcel() {
 
 watch([tuKhoaDebounced, filterTrangThai], () => {
   phanTrang.datLaiTrang()
+  taiDanhSach()
 })
 
-watch(danhSachLoc, (val) => {
-  phanTrang.capNhatTong(val.length)
-}, { immediate: true })
+watch(() => phanTrang.trangHienTai.value, taiDanhSach)
 
 onMounted(taiDanhSach)
 </script>
@@ -374,7 +228,9 @@ onMounted(taiDanhSach)
         <option value="da_kich_hoat">Da kich hoat</option>
         <option value="bi_khoa">Bi khoa</option>
       </select>
-      <button class="nut-phu" @click="moNhapExcel">Nhap tu Excel</button>
+      <button class="nut-them nut-import" @click="showImportModal = true">
+        <font-awesome-icon icon="fa-solid fa-file-excel" /> Import Excel
+      </button>
       <button
         class="nut-them"
         @click="() => {
@@ -384,19 +240,34 @@ onMounted(taiDanhSach)
       >
         + Them doc gia
       </button>
-      <input
-        ref="fileInputRef"
-        type="file"
-        accept=".xlsx,.xls"
-        class="an-input-file"
-        @change="xuLyFileExcel"
-      />
+    </div>
+    
+    <!-- Kết quả import Excel -->
+    <div v-if="ketQuaImport" class="ket-qua-import" style="margin-bottom: 1rem;">
+      <div class="import-head">
+        <h4 style="margin: 0; font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+          <font-awesome-icon icon="fa-solid fa-file-excel" /> Kết quả import Excel
+        </h4>
+        <button class="nut-huy" style="padding: 0.25rem 0.75rem; font-size: 0.8rem; border-radius: 6px;" @click="ketQuaImport = null">Đóng</button>
+      </div>
+      <div style="display: flex; gap: 1.5rem; font-size: 0.9rem; margin-top: 0.75rem; margin-bottom: 0.75rem;">
+        <span style="color: #16a34a; font-weight: 600;">✅ Thành công: {{ ketQuaImport.thanhCong }}</span>
+        <span style="color: #dc2626; font-weight: 600;">❌ Thất bại: {{ ketQuaImport.thatBai }}</span>
+      </div>
+      <div v-if="ketQuaImport.loi.length > 0" class="loi-import-list">
+        <div v-for="(err, idx) in ketQuaImport.loi" :key="idx" style="margin-top: 0.35rem; display: flex; gap: 0.25rem;">
+          <span>•</span>
+          <div>
+            <strong style="color: #374151;">{{ err.email }}</strong>: <span style="color: #dc2626;">{{ err.message }}</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="bang-container">
       <SkeletonLoader v-if="dangTai" :rows="7" height="56px" />
       <template v-else>
-        <EmptyState v-if="danhSachLoc.length === 0" thong-diep="Khong tim thay doc gia nao" />
+        <EmptyState v-if="danhSach.length === 0" thong-diep="Khong tim thay doc gia nao" />
         <table v-else class="bang">
           <thead>
             <tr>
@@ -408,7 +279,7 @@ onMounted(taiDanhSach)
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in danhSachTrang" :key="item.maNguoiDung">
+            <tr v-for="item in danhSach" :key="item.maNguoiDung">
               <td>
                 <div class="ten-nguoi-dung">
                   <div class="avatar">{{ kyTuDau(item) }}</div>
@@ -446,7 +317,7 @@ onMounted(taiDanhSach)
       </template>
     </div>
 
-    <ModalDialog :dang-mo="modal.dangMo.value && modal.dangThem() && excelRows.length === 0" tieu-de="Them doc gia moi" @dong="modal.dongModal()">
+    <ModalDialog :dang-mo="modal.dangMo.value && modal.dangThem() && !fileToImport" tieu-de="Them doc gia moi" @dong="modal.dongModal()">
       <div class="form-modal">
         <div class="hang-doi">
           <div class="form-group">
@@ -491,63 +362,12 @@ onMounted(taiDanhSach)
       </template>
     </ModalDialog>
 
-    <ModalDialog
-      :dang-mo="modal.dangMo.value && modal.dangThem() && excelRows.length > 0"
-      tieu-de="Preview import Excel"
-      chieu-rong="980px"
-      @dong="dongModalImport"
-    >
-      <div class="import-head">
-        <div>
-          <strong>File:</strong> {{ fileName }}
-        </div>
-        <div>
-          Hop le: <strong>{{ soBanGhiHopLe }}</strong> / {{ excelRows.length }}
-        </div>
-      </div>
-
-      <div class="preview-table-wrap">
-        <table class="bang bang-preview">
-          <thead>
-            <tr>
-              <th>MSSV</th>
-              <th>Ho ten</th>
-              <th>Lop</th>
-              <th>Khoa</th>
-              <th>Email tao</th>
-              <th>Trang thai</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(row, idx) in excelRows" :key="`${row.mssv}-${idx}`">
-              <td>{{ row.mssv || '--' }}</td>
-              <td>{{ row.hoTen || '--' }}</td>
-              <td>{{ row.lop || '--' }}</td>
-              <td>{{ row.khoa || '--' }}</td>
-              <td>{{ row.email || '--' }}</td>
-              <td>
-                <StatusBadge :nhan-hien="row.valid ? 'Hop le' : row.error || 'Loi'" :loai="row.valid ? 'xanh-duong' : 'do'" />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div v-if="ketQuaImport" class="ket-qua-import">
-        <div>Thanh cong: <strong>{{ ketQuaImport.thanhCong }}</strong></div>
-        <div>That bai: <strong>{{ ketQuaImport.thatBai }}</strong></div>
-        <div v-if="ketQuaImport.loi.length > 0" class="loi-import-list">
-          <div v-for="(err, index) in ketQuaImport.loi" :key="`${err.email}-${index}`">{{ err.email }} - {{ err.message }}</div>
-        </div>
-      </div>
-
-      <template #footer>
-        <button class="nut-huy" @click="dongModalImport">Dong</button>
-        <button class="nut-luu" :disabled="dangImport || soBanGhiHopLe === 0" @click="importExcel">
-          {{ dangImport ? 'Dang import...' : 'Xac nhan import' }}
-        </button>
-      </template>
-    </ModalDialog>
+    <!-- Import Excel Modal -->
+    <ImportDocGiaExcelModal
+      v-if="showImportModal"
+      @close="showImportModal = false"
+      @imported="handleExcelImport"
+    />
 
     <ConfirmDialog
       :dang-mo="thaoTacItem !== null"
@@ -610,10 +430,15 @@ onMounted(taiDanhSach)
   color: #374151;
   cursor: pointer;
 }
-.nut-phu {
-  border: 1px solid var(--color-primary);
-  color: var(--color-primary);
-  background: rgba(6, 182, 212, 0.06);
+.nut-import {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #16a34a;
+  color: #fff;
+}
+.nut-import:hover {
+  background: #15803d;
 }
 .bang-container {
   background: #fff;

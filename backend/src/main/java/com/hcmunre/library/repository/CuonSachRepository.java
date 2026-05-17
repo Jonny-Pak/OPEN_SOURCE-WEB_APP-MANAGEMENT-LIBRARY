@@ -24,6 +24,9 @@ public interface CuonSachRepository extends JpaRepository<CuonSach, Long> {
     // Đếm số lượng cuốn đang sẵn sàng (SAN_SANG) của một đầu sách
     long countBySach_MaSachAndTrangThai(Long maSach, TrangThaiCuonSach trangThai);
 
+    // Đếm tổng số lượng cuốn sách của một đầu sách
+    long countBySach_MaSach(Long maSach);
+
     // Lấy danh sách cuốn theo đầu sách và trạng thái
     List<CuonSach> findBySach_MaSachAndTrangThai(Long maSach, TrangThaiCuonSach trangThai);
 }

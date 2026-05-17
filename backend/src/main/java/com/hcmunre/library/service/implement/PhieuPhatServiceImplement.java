@@ -1,5 +1,6 @@
 package com.hcmunre.library.service.implement;
 
+import com.hcmunre.library.dto.response.NguoiDungResponse;
 import com.hcmunre.library.dto.response.PhieuPhatResponse;
 import com.hcmunre.library.entity.ChiTietPhieuMuon;
 import com.hcmunre.library.entity.PhieuPhat;
@@ -11,6 +12,7 @@ import com.hcmunre.library.repository.PhieuPhatRepository;
 import com.hcmunre.library.service.PhieuPhatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,6 +20,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class PhieuPhatServiceImplement implements PhieuPhatService {
     private final ChiTietPhieuMuonRepository chiTietPhieuMuonRepository;
@@ -96,15 +99,40 @@ public class PhieuPhatServiceImplement implements PhieuPhatService {
                 .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
+    @Override
+    public org.springframework.data.domain.Page<PhieuPhatResponse> getAllPhieuPhat(org.springframework.data.domain.Pageable pageable) {
+        return phieuPhatRepository.findAll(pageable).map(this::toResponse);
+    }
+
     private PhieuPhatResponse toResponse(PhieuPhat pp) {
+        ChiTietPhieuMuon ct = pp.getChiTietPhieuMuon();
+        com.hcmunre.library.entity.PhieuMuon pm = ct != null ? ct.getPhieuMuon() : null;
+        com.hcmunre.library.entity.NguoiDung nd = pm != null ? pm.getNguoiDung() : null;
+
+        NguoiDungResponse ndResp = null;
+        if (nd != null) {
+            ndResp = NguoiDungResponse.builder()
+                    .maNguoiDung(nd.getMaNguoiDung())
+                    .hoDem(nd.getHoDem())
+                    .ten(nd.getTen())
+                    .email(nd.getEmail())
+                    .soDienThoai(nd.getSoDienThoai())
+                    .ngayTao(nd.getNgayTao())
+                    .build();
+        }
+
         return PhieuPhatResponse.builder()
                 .maPhieuPhat(pp.getMaPhieuPhat())
-                .maChiTietPhieuMuon(pp.getChiTietPhieuMuon().getMaChiTietPhieuMuon())
+                .maChiTietPhieuMuon(ct != null ? ct.getMaChiTietPhieuMuon() : null)
                 .soTienPhat(pp.getSoTienPhat())
                 .lyDoPhat(pp.getLyDoPhat())
                 .trangThaiThanhToan(pp.getTrangThaiThanhToan())
                 .ngayThanhToan(pp.getNgayThanhToan())
                 .ngayTao(pp.getNgayTao())
+                .nguoiDung(ndResp)
+                .maPhieuMuon(pm != null ? pm.getMaPhieuMuon() : null)
+                .lyDo(pp.getLyDoPhat())
+                .trangThai(pp.getTrangThaiThanhToan() != null ? pp.getTrangThaiThanhToan().name() : null)
                 .build();
     }
 }

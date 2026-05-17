@@ -1,100 +1,133 @@
-// /**
-//  * cuonSachService.ts — Service quản lý Cuốn sách (bản sao vật lý).
-//  */
-// import apiClient from './apiClient'
-// import type { PageResponse } from '@/types/common'
-// import type { CuonSach, TaoCuonSachRequest, SuaCuonSachRequest, TrangThaiCuonSach } from '@/types/sach'
-
-// export const cuonSachService = {
-//   danhSach: () =>
-//     apiClient.get<CuonSach[]>('/api/v1/cuon-sach'),
-
-//   taoCai: (body: TaoCuonSachRequest) =>
-//     apiClient.post<CuonSach>('/api/v1/cuon-sach', body),
-
-//   capNhat: (id: number, body: SuaCuonSachRequest) =>
-//     apiClient.put<CuonSach>(`/api/v1/cuon-sach/${id}`, body),
-
-//   xoa: (id: number) =>
-//     apiClient.delete<void>(`/api/v1/cuon-sach/${id}`),
-
-//   /** Lấy mã vạch SVG/PNG của cuốn sách */
-//   layMaVach: (id: number): string =>
-//     `http://localhost:8080/api/v1/cuon-sach/${id}/ma-vach`,
-// }
 /**
- * cuonSachService.ts — (MOCK DATA) Service quản lý Cuốn sách (bản sao vật lý).
+ * cuonSachService.ts — Service quản lý Cuốn sách (bản sao vật lý).
  */
-import type { CuonSach, TaoCuonSachRequest, SuaCuonSachRequest } from '@/types/sach'
+import apiClient from './apiClient'
+import type { CuonSach, TaoCuonSachRequest, SuaCuonSachRequest, TinhTrangVatLy, TrangThaiCuonSach } from '@/types/sach'
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+interface BackendCuonSachResponse {
+  maCuonSach: number
+  maSach: number
+  tenSach: string
+  maVach: string
+  viTriKe: string
+  trangThai: string
+  tinhTrangVatLy: string
+  ghiChuBaoTri: string
+}
 
-let mockCuonSach: CuonSach[] = [
-  {
-    maCuonSach: 1,
-    maBarcodeVatLy: 'KVH-001',
-    viTriKe: 'Kệ A - Tầng 1',
-    tinhTrangVatLy: 'TOT',
-    trangThai: 'TRONG',
-    sach: { maSach: 1, tenSach: 'Kính Vạn Hoa - Tập 1', isbn: '978-604-2-22874-5' }
-  },
-  {
-    maCuonSach: 2,
-    maBarcodeVatLy: 'KVH-002',
-    viTriKe: 'Kệ A - Tầng 1',
-    tinhTrangVatLy: 'HU_HONG',
-    trangThai: 'BAO_TRI',
-    sach: { maSach: 1, tenSach: 'Kính Vạn Hoa - Tập 1', isbn: '978-604-2-22874-5' }
-  },
-  {
-    maCuonSach: 3,
-    maBarcodeVatLy: 'HP-001',
-    viTriKe: 'Kệ C - Tầng 2',
-    tinhTrangVatLy: 'TOT',
-    trangThai: 'DA_MUON',
-    sach: { maSach: 2, tenSach: 'Harry Potter và Hòn Đá Phù Thủy', isbn: '978-604-1-15525-7' }
+function mapToCuonSach(item: BackendCuonSachResponse): CuonSach {
+  let tinhTrangVatLy: TinhTrangVatLy = 'TOT'
+  if (item.tinhTrangVatLy === 'BINH_THUONG' || item.tinhTrangVatLy === 'TOT') {
+    tinhTrangVatLy = 'TOT'
+  } else if (
+    item.tinhTrangVatLy === 'RACH_TRANG' ||
+    item.tinhTrangVatLy === 'MAT_BIA' ||
+    item.tinhTrangVatLy === 'HONG_NANG' ||
+    item.tinhTrangVatLy === 'HU_HONG'
+  ) {
+    tinhTrangVatLy = 'HU_HONG'
+  } else if (item.tinhTrangVatLy === 'DA_MAT' || item.tinhTrangVatLy === 'MAT') {
+    tinhTrangVatLy = 'MAT'
   }
-]
+
+  let trangThai: TrangThaiCuonSach = 'SAN_SANG'
+  if (item.trangThai === 'SAN_SANG') {
+    trangThai = 'SAN_SANG'
+  } else if (item.trangThai === 'DANG_MUON') {
+    trangThai = 'DANG_MUON'
+  } else if (item.trangThai === 'BAO_TRI' || item.trangThai === 'CHO_MUON') {
+    trangThai = 'CHO_MUON'
+  } else if (item.trangThai === 'DA_MAT' || item.trangThai === 'BAO_MAT') {
+    trangThai = 'BAO_MAT'
+  }
+
+  return {
+    maCuonSach: item.maCuonSach,
+    maBarcodeVatLy: item.maVach || '',
+    viTriKe: item.viTriKe || '',
+    tinhTrangVatLy,
+    trangThai,
+    sach: {
+      maSach: item.maSach || 0,
+      tenSach: item.tenSach || 'Chưa rõ',
+      maIsbn: ''
+    }
+  }
+}
 
 export const cuonSachService = {
-  danhSach: async () => { await delay(500); return [...mockCuonSach] },
+  // Existing methods
+  danhSach: async (): Promise<CuonSach[]> => {
+    const list = await apiClient.get<BackendCuonSachResponse[]>('/api/v1/cuon-sach')
+    return list.map(mapToCuonSach)
+  },
 
-  taoCai: async (body: TaoCuonSachRequest) => {
-    await delay(600)
-    const newId = mockCuonSach.length ? Math.max(...mockCuonSach.map(c => c.maCuonSach)) + 1 : 1
-    const newItem: CuonSach = {
-      maCuonSach: newId,
-      maBarcodeVatLy: `MOCK-${newId}`,
+  taoCai: async (body: TaoCuonSachRequest): Promise<CuonSach> => {
+    let tinhTrangVatLy = 'BINH_THUONG'
+    if (body.tinhTrangVatLy === 'HU_HONG') tinhTrangVatLy = 'RACH_TRANG'
+    else if (body.tinhTrangVatLy === 'MAT') tinhTrangVatLy = 'DA_MAT'
+
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000)
+    const maVach = `CS-${body.sachId}-${randomSuffix}`
+
+    const backendBody = {
+      maSach: body.sachId,
       viTriKe: body.viTriKe,
-      tinhTrangVatLy: body.tinhTrangVatLy,
-      trangThai: 'TRONG',
-      sach: { maSach: body.sachId, tenSach: 'Sách Mock', isbn: 'MOCK-ISBN' }
+      tinhTrangVatLy: tinhTrangVatLy,
+      trangThai: 'SAN_SANG',
+      maVach: maVach,
+      ghiChuBaoTri: ''
     }
-    mockCuonSach.push(newItem)
-    return newItem
+
+    const res = await apiClient.post<BackendCuonSachResponse>('/api/v1/cuon-sach', backendBody)
+    return mapToCuonSach(res)
   },
 
-  capNhat: async (id: number, body: SuaCuonSachRequest) => {
-    await delay(500)
-    const index = mockCuonSach.findIndex(c => c.maCuonSach === id)
+  capNhat: async (id: number, body: SuaCuonSachRequest): Promise<CuonSach> => {
+    let tinhTrangVatLy = 'BINH_THUONG'
+    if (body.tinhTrangVatLy === 'HU_HONG') tinhTrangVatLy = 'RACH_TRANG'
+    else if (body.tinhTrangVatLy === 'MAT') tinhTrangVatLy = 'DA_MAT'
 
-    if (index !== -1) {
-      const cuonSachToUpdate = mockCuonSach[index]
-      if (cuonSachToUpdate) {
-        cuonSachToUpdate.viTriKe = body.viTriKe
-        cuonSachToUpdate.tinhTrangVatLy = body.tinhTrangVatLy
-      }
+    const existing = await apiClient.get<BackendCuonSachResponse>(`/api/v1/cuon-sach/${id}`)
+
+    const backendBody = {
+      maSach: existing.maSach,
+      viTriKe: body.viTriKe,
+      tinhTrangVatLy: tinhTrangVatLy,
+      trangThai: existing.trangThai,
+      maVach: existing.maVach,
+      ghiChuBaoTri: existing.ghiChuBaoTri || ''
     }
-    return mockCuonSach[index]
+
+    const res = await apiClient.put<BackendCuonSachResponse>(`/api/v1/cuon-sach/${id}`, backendBody)
+    return mapToCuonSach(res)
   },
 
-  xoa: async (id: number) => {
-    await delay(400)
-    mockCuonSach = mockCuonSach.filter(c => c.maCuonSach !== id)
+  xoa: (id: number) =>
+    apiClient.delete<void>(`/api/v1/cuon-sach/${id}`),
+
+  layMaVach: (id: number): string =>
+    `http://localhost:8080/api/v1/cuon-sach/${id}/ma-vach`,
+
+  // Requested English methods
+  getBySach: async (sachId: number): Promise<CuonSach[]> => {
+    const list = await apiClient.get<BackendCuonSachResponse[]>(`/api/v1/cuon-sach/sach/${sachId}`)
+    return list.map(mapToCuonSach)
   },
 
-  layMaVach: (id: number): string => {
-    // Trả về một link ảnh mã vạch ngẫu nhiên dùng để test UI
-    return `https://barcode.tec-it.com/barcode.ashx?data=MOCK-${id}&code=Code128&dpi=96`
-  },
+  updateStatus: async (cuonSachId: number, status: string): Promise<CuonSach> => {
+    const existing = await apiClient.get<BackendCuonSachResponse>(`/api/v1/cuon-sach/${cuonSachId}`)
+    const backendBody = {
+      maSach: existing.maSach,
+      viTriKe: existing.viTriKe,
+      tinhTrangVatLy: existing.tinhTrangVatLy,
+      trangThai: status,
+      maVach: existing.maVach,
+      ghiChuBaoTri: existing.ghiChuBaoTri || ''
+    }
+    const res = await apiClient.put<BackendCuonSachResponse>(`/api/v1/cuon-sach/${cuonSachId}`, backendBody)
+    return mapToCuonSach(res)
+  }
 }
+
+export default cuonSachService

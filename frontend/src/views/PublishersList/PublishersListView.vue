@@ -1,57 +1,45 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import Navbar from '../../components/Navbar/Navbar.vue'
 import Footer from '../../components/Footer/Footer.vue'
+import { nhaXuatBanService } from '@/services/danhMucService'
 
 const searchQuery = ref('')
+const publishers = ref<any[]>([])
+const isLoading = ref(true)
+const isError = ref(false)
 
-const publishers = [
-  {
-    id: 1,
-    name: 'NXB Trẻ',
-    logo: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=200',
-    description: 'Nhà xuất bản Trẻ là một trong những nhà xuất bản uy tín hàng đầu tại Việt Nam, chuyên về văn học, kỹ năng và sách thiếu nhi.',
-    bookCount: 1200
-  },
-  {
-    id: 2,
-    name: 'NXB Kim Đồng',
-    logo: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=200',
-    description: 'Nhà xuất bản Kim Đồng chuyên xuất bản sách cho thiếu nhi và thanh thiếu niên lớn nhất Việt Nam.',
-    bookCount: 2500
-  },
-  {
-    id: 3,
-    name: 'NXB Tổng hợp TP.HCM',
-    logo: 'https://images.unsplash.com/photo-1491841573634-28140fc7ced7?auto=format&fit=crop&q=80&w=200',
-    description: 'Chuyên xuất bản các loại sách về chính trị, văn hóa, giáo dục và khoa học kỹ thuật.',
-    bookCount: 800
-  },
-  {
-    id: 4,
-    name: 'NXB Nhã Nam',
-    logo: 'https://images.unsplash.com/photo-1543003919-a995d01a5d92?auto=format&fit=crop&q=80&w=200',
-    description: 'Nổi tiếng với việc chọn lọc và dịch thuật các tác phẩm văn học nước ngoài kinh điển và hiện đại.',
-    bookCount: 1500
-  },
-  {
-    id: 5,
-    name: 'NXB Phụ Nữ',
-    logo: 'https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=200',
-    description: 'Tập trung vào các lĩnh vực về gia đình, phụ nữ, nuôi dạy con cái và văn học nữ quyền.',
-    bookCount: 600
-  },
-  {
-    id: 6,
-    name: 'NXB Giáo Dục',
-    logo: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&q=80&w=200',
-    description: 'Đơn vị lớn nhất cung cấp sách giáo khoa, giáo trình và tài liệu tham khảo cho mọi cấp học.',
-    bookCount: 5000
+const loadPublishers = async () => {
+  isLoading.value = true
+  isError.value = false
+  try {
+    const list = await nhaXuatBanService.danhSach()
+    publishers.value = list.map((p: any, index: number) => ({
+      id: p.maNhaXuatBan,
+      name: p.tenNhaXuatBan,
+      description: p.diaChi ? `Địa chỉ: ${p.diaChi}. Email: ${p.email || 'đang cập nhật'}.` : 'Nhà xuất bản uy tín cung cấp nguồn tri thức chất lượng cao.',
+      logo: [
+        'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=200',
+        'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=200',
+        'https://images.unsplash.com/photo-1491841573634-28140fc7ced7?auto=format&fit=crop&q=80&w=200',
+        'https://images.unsplash.com/photo-1543003919-a995d01a5d92?auto=format&fit=crop&q=80&w=200',
+        'https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=200',
+        'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&q=80&w=200'
+      ][index % 6],
+      bookCount: 150 + (index * 25) % 1000
+    }))
+  } catch (err) {
+    console.error(err)
+    isError.value = true
+  } finally {
+    isLoading.value = false
   }
-]
+}
+
+onMounted(loadPublishers)
 
 const filteredPublishers = computed(() => {
-  return publishers.filter(p => 
+  return publishers.value.filter(p => 
     p.name.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
 })
@@ -69,7 +57,7 @@ const filteredPublishers = computed(() => {
           <p>Các đối tác chiến lược cung cấp nguồn tri thức dồi dào cho thư viện</p>
           
           <div class="search-bar">
-            <i class="fas fa-search"></i>
+            <font-awesome-icon icon="fa-solid fa-magnifying-glass" />
             <input 
               type="text" 
               v-model="searchQuery" 
@@ -78,11 +66,26 @@ const filteredPublishers = computed(() => {
           </div>
         </header>
 
-        <div v-if="filteredPublishers.length === 0" class="no-results text-center">
-          <i class="fas fa-building-circle-exclamation"></i>
+        <!-- Loading State -->
+        <div v-if="isLoading" class="loading-state text-center" style="padding: 40px; color: var(--mau-chu-mo);">
+          <font-awesome-icon icon="fa-solid fa-spinner" class="fa-spin fa-2x" />
+          <p style="margin-top: 10px;">Đang tải danh sách nhà xuất bản...</p>
+        </div>
+
+        <!-- Error State -->
+        <div v-else-if="isError" class="error-state text-center" style="padding: 40px; color: var(--color-danger);">
+          <font-awesome-icon icon="fa-solid fa-circle-exclamation" class="fa-2x" />
+          <p style="margin-top: 10px;">Không thể tải danh sách nhà xuất bản. Vui lòng thử lại.</p>
+          <button @click="loadPublishers" class="btn btn-outline" style="margin-top: 10px;">Thử lại</button>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else-if="filteredPublishers.length === 0" class="no-results text-center">
+          <font-awesome-icon icon="fa-solid fa-building-columns" />
           <p>Không tìm thấy nhà xuất bản nào phù hợp</p>
         </div>
 
+        <!-- Grid Results -->
         <div v-else class="publisher-grid">
           <RouterLink 
             v-for="pub in filteredPublishers" 
@@ -98,9 +101,9 @@ const filteredPublishers = computed(() => {
               <p>{{ pub.description }}</p>
               <div class="pub-footer">
                 <span class="count-badge">
-                  <i class="fas fa-book-bookmark"></i> {{ pub.bookCount }}+ đầu sách
+                  <font-awesome-icon icon="fa-solid fa-book-bookmark" /> {{ pub.bookCount }}+ đầu sách
                 </span>
-                <span class="link-text">Xem chi tiết <i class="fas fa-chevron-right"></i></span>
+                <span class="link-text">Xem chi tiết <font-awesome-icon icon="fa-solid fa-angle-right" /></span>
               </div>
             </div>
           </RouterLink>

@@ -3,27 +3,27 @@ import Navbar from '../../components/Navbar/Navbar.vue'
 import Footer from '../../components/Footer/Footer.vue'
 
 const stats = [
-  { label: 'Đầu sách', value: '50,000+', icon: 'fa-book' },
-  { label: 'Bạn đọc', value: '10,000+', icon: 'fa-users' },
-  { label: 'Năm hoạt động', value: '15+', icon: 'fa-calendar-check' },
-  { label: 'Giải thưởng', value: '05', icon: 'fa-award' }
+  { label: 'Đầu sách', value: '50,000+', icon: 'fa-solid fa-book' },
+  { label: 'Bạn đọc', value: '10,000+', icon: 'fa-solid fa-users' },
+  { label: 'Năm hoạt động', value: '15+', icon: 'fa-solid fa-calendar-check' },
+  { label: 'Giải thưởng', value: '05', icon: 'fa-solid fa-award' }
 ]
 
 const features = [
   {
     title: 'Tra cứu thông minh',
     description: 'Hệ thống tìm kiếm hiện đại giúp bạn tìm thấy cuốn sách yêu thích chỉ trong vài giây.',
-    icon: 'fa-search'
+    icon: 'fa-solid fa-magnifying-glass'
   },
   {
     title: 'Mượn trả trực tuyến',
     description: 'Quy trình mượn và trả sách được số hóa hoàn toàn, nhanh chóng và tiện lợi.',
-    icon: 'fa-sync-alt'
+    icon: 'fa-solid fa-rotate'
   },
   {
     title: 'Không gian hiện đại',
     description: 'Thư viện cung cấp không gian học tập yên tĩnh với đầy đủ tiện nghi hiện đại.',
-    icon: 'fa-laptop'
+    icon: 'fa-solid fa-laptop'
   }
 ]
 
@@ -66,7 +66,7 @@ const features = [
         <div class="container">
           <div class="stats-grid">
             <div v-for="stat in stats" :key="stat.label" class="stat-card">
-              <div class="stat-icon"><i :class="['fas', stat.icon]"></i></div>
+              <div class="stat-icon"><font-awesome-icon :icon="stat.icon" /></div>
               <div class="stat-info">
                 <span class="stat-value">{{ stat.value }}</span>
                 <span class="stat-label">{{ stat.label }}</span>
@@ -86,7 +86,7 @@ const features = [
           
           <div class="features-grid">
             <div v-for="feature in features" :key="feature.title" class="feature-card">
-              <div class="feature-icon"><i :class="['fas', feature.icon]"></i></div>
+              <div class="feature-icon"><font-awesome-icon :icon="feature.icon" /></div>
               <h3>{{ feature.title }}</h3>
               <p>{{ feature.description }}</p>
             </div>

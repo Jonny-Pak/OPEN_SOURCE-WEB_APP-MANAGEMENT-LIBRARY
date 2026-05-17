@@ -18,7 +18,7 @@ const emit = defineEmits<{ xacNhan: []; huy: [] }>()
       <div v-if="dangMo" class="overlay" @click.self="emit('huy')">
         <div class="confirm" role="alertdialog">
           <div class="confirm__bieu-tuong" :class="loai ?? 'nguy-hiem'">
-            <i :class="loai === 'canh-bao' ? 'fas fa-triangle-exclamation' : 'fas fa-trash'"></i>
+            <font-awesome-icon :icon="loai === 'canh-bao' ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-trash-can'" />
           </div>
           <h3 class="confirm__tieu-de">{{ tieuDe ?? 'Xác nhận thao tác' }}</h3>
           <p class="confirm__thong-diep">{{ thongDiep }}</p>

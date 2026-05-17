@@ -1,135 +1,147 @@
-// /**
-//  * sachService.ts — Service quản lý Đầu sách.
-//  */
-// import apiClient from './apiClient'
-// import type { PageResponse } from '@/types/common'
-// import type { Sach, TaoSachRequest } from '@/types/sach'
-
-// export const sachService = {
-//   danhSach: () =>
-//     apiClient.get<Sach[]>('/api/v1/sach'),
-
-//   layMotCuon: (id: number) =>
-//     apiClient.get<Sach>(`/api/v1/sach/${id}`),
-
-//   taoCai: (body: TaoSachRequest) =>
-//     apiClient.post<Sach>('/api/v1/sach', body),
-
-//   capNhat: (id: number, body: TaoSachRequest) =>
-//     apiClient.put<Sach>(`/api/v1/sach/${id}`, body),
-
-//   xoa: (id: number) =>
-//     apiClient.delete<void>(`/api/v1/sach/${id}`),
-
-//   /** Upload ảnh bìa sách */
-//   uploadAnhBia: (id: number, file: File) => {
-//     const formData = new FormData()
-//     formData.append('file', file)
-//     return apiClient.upload<{ anhBiaUrl: string }>(`/api/v1/sach/${id}/anh-bia`, formData)
-//   },
-
-//   /** Xóa ảnh bìa sách */
-//   xoaAnhBia: (id: number) =>
-//     apiClient.delete<void>(`/api/v1/sach/${id}/anh-bia`),
-// }
-
 /**
- * sachService.ts — (MOCK DATA) Service quản lý Đầu sách.
+ * sachService.ts — Service quản lý Đầu sách.
  */
+import apiClient from './apiClient'
+import type { PageResponse } from '@/types/common'
 import type { Sach, TaoSachRequest } from '@/types/sach'
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
-let mockSach: Sach[] = [
-  {
-    maSach: 1,
-    tenSach: 'Kính Vạn Hoa - Tập 1',
-    isbn: '978-604-2-22874-5',
-    namXuatBan: 2021,
-    moTa: 'Truyện thiếu nhi kinh điển',
-    anhBiaUrl: '',
-    nhaXuatBan: { maNXB: 2, tenNXB: 'Kim Đồng' },
-    tacGias: [{ maTacGia: 1, tenTacGia: 'Nguyễn Nhật Ánh' }],
-    theLoais: [{ maTheLoai: 1, tenTheLoai: 'Văn học trong nước' }]
-  },
-  {
-    maSach: 2,
-    tenSach: 'Harry Potter và Hòn Đá Phù Thủy',
-    isbn: '978-604-1-15525-7',
-    namXuatBan: 2020,
-    moTa: 'Bản dịch tiếng Việt',
-    anhBiaUrl: '',
-    nhaXuatBan: { maNXB: 1, tenNXB: 'NXB Trẻ' },
-    tacGias: [{ maTacGia: 2, tenTacGia: 'J.K. Rowling' }],
-    theLoais: [{ maTheLoai: 1, tenTheLoai: 'Văn học nước ngoài' }]
+function formatSachHinhAnh(sach: Sach): Sach {
+  if (!sach) return sach
+  if (sach.danhSachHinhAnhUrl && Array.isArray(sach.danhSachHinhAnhUrl)) {
+    sach.danhSachHinhAnhUrl = sach.danhSachHinhAnhUrl.map((url: string) => {
+      if (url && url.startsWith('/api/v1/files/')) {
+        return `${baseUrl}${url}`
+      }
+      return url
+    })
   }
-]
+  return sach
+}
+
+function formatPageHinhAnh(page: PageResponse<Sach>): PageResponse<Sach> {
+  if (page && page.content && Array.isArray(page.content)) {
+    page.content = page.content.map(formatSachHinhAnh)
+  }
+  return page
+}
 
 export const sachService = {
-  danhSach: async () => { await delay(500); return [...mockSach] },
+  // Original methods
+  danhSach: async (page: number = 0, size: number = 10, keyword: string = '', sortBy: string = '', direction: string = '') => {
+    const params = new URLSearchParams()
+    params.append('page', page.toString())
+    params.append('size', size.toString())
+    if (keyword) params.append('keyword', keyword)
+    if (sortBy) params.append('sortBy', sortBy)
+    if (direction) params.append('direction', direction)
+    const res = await apiClient.get<PageResponse<Sach>>(`/api/v1/sach?${params.toString()}`)
+    return formatPageHinhAnh(res)
+  },
 
   layMotCuon: async (id: number) => {
-    await delay(300)
-    const sach = mockSach.find(s => s.maSach === id)
-    if (!sach) throw new Error('Không tìm thấy sách')
-    return sach
+    const res = await apiClient.get<Sach>(`/api/v1/sach/${id}`)
+    return formatSachHinhAnh(res)
   },
 
   taoCai: async (body: TaoSachRequest) => {
-    await delay(600)
-    const newId = mockSach.length ? Math.max(...mockSach.map(s => s.maSach)) + 1 : 1
-    const newSach: Sach = {
-      maSach: newId,
-      tenSach: body.tenSach,
-      isbn: body.isbn,
-      namXuatBan: body.namXuatBan,
-      moTa: body.moTa,
-      anhBiaUrl: '',
-      // Dùng dữ liệu giả định vì payload chỉ gửi Ids
-      nhaXuatBan: { maNXB: body.nhaXuatBanId, tenNXB: 'NXB Mock' },
-      tacGias: body.tacGiaIds.map(id => ({ maTacGia: id, tenTacGia: 'Tác giả Mock' })),
-      theLoais: body.theLoaiIds.map(id => ({ maTheLoai: id, tenTheLoai: 'Thể loại Mock' }))
-    }
-    mockSach.push(newSach)
-    return newSach
+    const res = await apiClient.post<Sach>('/api/v1/sach', body)
+    return formatSachHinhAnh(res)
   },
 
   capNhat: async (id: number, body: TaoSachRequest) => {
-    await delay(600)
-    const index = mockSach.findIndex(s => s.maSach === id)
-
-    if (index !== -1) {
-      const sachToUpdate = mockSach[index]
-      if (sachToUpdate) {
-        sachToUpdate.tenSach = body.tenSach
-        sachToUpdate.isbn = body.isbn
-        sachToUpdate.namXuatBan = body.namXuatBan
-        sachToUpdate.moTa = body.moTa
-      }
-    }
-    return mockSach[index]
+    const res = await apiClient.put<Sach>(`/api/v1/sach/${id}`, body)
+    return formatSachHinhAnh(res)
   },
 
-  xoa: async (id: number) => {
-    await delay(400)
-    mockSach = mockSach.filter(s => s.maSach !== id)
-  },
+  xoa: (id: number) =>
+    apiClient.delete<void>(`/api/v1/sach/${id}`),
 
   uploadAnhBia: async (id: number, file: File) => {
-    await delay(800)
-    // Trả về một ảnh placeholder làm mock
-    return { anhBiaUrl: 'https://via.placeholder.com/150' }
+    // 1. Delete any existing cover images first to avoid duplicates
+    try {
+      const list = await apiClient.get<any[]>(`/api/v1/hinh-anh-sach/sach/${id}`)
+      if (list && list.length > 0) {
+        for (const img of list) {
+          if (img.maHinhAnh) {
+            await apiClient.delete(`/api/v1/hinh-anh-sach/${img.maHinhAnh}`)
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Could not clear existing covers:', err)
+    }
+
+    // 2. Upload the new file to /api/v1/files/upload
+    const formData = new FormData()
+    formData.append('file', file)
+    const uploadRes = await apiClient.upload<{ url: string }>('/api/v1/files/upload', formData)
+    const fileUrl = uploadRes.url
+
+    // 3. Register the new cover image as BIA_TRUOC
+    return apiClient.post<any>('/api/v1/hinh-anh-sach', {
+      duongDan: fileUrl,
+      loaiHinhAnh: 'BIA_TRUOC',
+      thuTuHienThi: 0,
+      maSach: id
+    })
   },
 
   xoaAnhBia: async (id: number) => {
-    await delay(400)
-    const index = mockSach.findIndex(s => s.maSach === id)
-
-    if (index !== -1) {
-      const sachToUpdate = mockSach[index]
-      if (sachToUpdate) {
-        sachToUpdate.anhBiaUrl = ''
+    // Fetch all cover images associated with the book
+    const list = await apiClient.get<any[]>(`/api/v1/hinh-anh-sach/sach/${id}`)
+    if (list && list.length > 0) {
+      for (const img of list) {
+        if (img.maHinhAnh) {
+          await apiClient.delete<void>(`/api/v1/hinh-anh-sach/${img.maHinhAnh}`)
+        }
       }
     }
   },
+
+  /** Advanced search & filter */
+  advancedSearch: async (params: { page?: number; size?: number; keyword?: string; maTheLoai?: number; sortBy?: string; direction?: string }) => {
+    const p = new URLSearchParams()
+    if (params.page !== undefined) p.append('page', params.page.toString())
+    if (params.size !== undefined) p.append('size', params.size.toString())
+    if (params.keyword) p.append('keyword', params.keyword)
+    if (params.maTheLoai) p.append('maTheLoai', params.maTheLoai.toString())
+    if (params.sortBy) p.append('sortBy', params.sortBy)
+    if (params.direction) p.append('direction', params.direction)
+    const res = await apiClient.get<PageResponse<Sach>>(`/api/v1/sach/search?${p.toString()}`)
+    return formatPageHinhAnh(res)
+  },
+
+  // Requested English interface
+  getAll: async (params?: any) => {
+    const res = await apiClient.get<PageResponse<Sach>>('/api/v1/sach', { params })
+    return formatPageHinhAnh(res)
+  },
+
+  getById: async (id: number) => {
+    const res = await apiClient.get<Sach>(`/api/v1/sach/${id}`)
+    return formatSachHinhAnh(res)
+  },
+
+  create: async (body: TaoSachRequest) => {
+    const res = await apiClient.post<Sach>('/api/v1/sach', body)
+    return formatSachHinhAnh(res)
+  },
+
+  update: async (id: number, body: TaoSachRequest) => {
+    const res = await apiClient.put<Sach>(`/api/v1/sach/${id}`, body)
+    return formatSachHinhAnh(res)
+  },
+
+  delete: (id: number) => {
+    return apiClient.delete<void>(`/api/v1/sach/${id}`)
+  },
+
+  search: async (keyword: string, page: number = 0, size: number = 10) => {
+    const res = await apiClient.get<PageResponse<Sach>>('/api/v1/sach', { params: { keyword, page, size } })
+    return formatPageHinhAnh(res)
+  }
 }
+
+export default sachService

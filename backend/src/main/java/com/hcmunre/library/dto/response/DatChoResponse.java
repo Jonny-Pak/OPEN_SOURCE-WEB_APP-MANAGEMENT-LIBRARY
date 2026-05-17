@@ -13,8 +13,11 @@ public class DatChoResponse {
     private UUID maDatCho;
     private Long maSach;
     private String tenSach;
+    private String maIsbn;
     private UUID maNguoiDung;
+    private String hoDemNguoiDung;
     private String tenNguoiDung;
+    private String emailNguoiDung;
     private LocalDateTime thoiGianDatCho;
     private LocalDateTime hanGiuCho;
     private TrangThaiDatCho trangThaiDatCho;

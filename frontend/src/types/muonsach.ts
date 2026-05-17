@@ -4,7 +4,7 @@
 import type { NguoiDung } from './nguoidung'
 import type { TinhTrangVatLy } from './sach'
 
-export type TrangThaiPhieuMuon = 'DANG_MUON' | 'DA_TRA' | 'QUA_HAN'
+export type TrangThaiPhieuMuon = 'DANG_MUON' | 'DA_TRA' | 'QUA_HAN' | 'DA_HUY'
 
 export interface ChiTietPhieuMuon {
   maChiTiet: number
@@ -27,8 +27,8 @@ export interface PhieuMuon {
 }
 
 export interface TaoPhieuMuonRequest {
-  nguoiDungId: string
-  hanTra: string
+  maNguoiDung: string
+  danhSachMaBarcodeVatLy: string[]
 }
 
 export interface ThemChiTietRequest {
@@ -42,4 +42,15 @@ export interface TraSachChiTietItem {
 
 export interface TraSachRequest {
   chiTietList: TraSachChiTietItem[]
+}
+
+export interface TraToanBoRequest {
+  maPhieuMuon: string;
+  ghiChu?: string;
+}
+
+export interface TraCuonSachRequest {
+  maChiTietPhieuMuon: string;
+  tinhTrangVatLyKhiTra: TinhTrangVatLy;
+  ghiChu?: string;
 }

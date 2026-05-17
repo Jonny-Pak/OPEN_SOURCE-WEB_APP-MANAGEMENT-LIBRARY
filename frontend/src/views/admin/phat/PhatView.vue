@@ -3,11 +3,13 @@
 -->
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { phatService } from '@/services/phatService'
-import { muonSachService } from '@/services/muonSachService'
 import { usePagination } from '@/composables/usePagination'
 import { useToast } from '@/composables/useToast'
 import type { PhieuPhat, TrangThaiPhieuPhat, LyDoPhat, PhuongThucThanhToan } from '@/types/phat'
+
+const route = useRoute()
 import ModalDialog from '@/components/admin/shared/ModalDialog.vue'
 import Pagination from '@/components/admin/shared/Pagination.vue'
 import SkeletonLoader from '@/components/admin/shared/SkeletonLoader.vue'
@@ -24,7 +26,7 @@ const dangXuLy = ref(false)
 
 // Modal tạo phiếu phạt
 const modalTao = ref(false)
-const formTao = ref({ phieuMuonId: 0, lyDo: 'TRA_TRE' as LyDoPhat, soTienPhat: 0 })
+const formTao = ref({ maChiTietPhieuMuon: '', lyDo: 'TRA_TRE' as LyDoPhat, soTienPhat: 0 })
 const soTienHienThi = ref('')
 
 // Modal thanh toán
@@ -45,37 +47,55 @@ function onSoTienNhap(e: Event) {
 async function taiDanhSach() {
   dangTai.value = true
   try {
-    danhSach.value = await phatService.danhSach()
-    phanTrang.capNhatTong(danhSach.value.length)
+    const rs = await phatService.danhSach(phanTrang.trangHienTai.value, phanTrang.kichThuocTrang.value)
+    danhSach.value = rs.content
+    phanTrang.capNhatTong(rs.totalElements)
   } catch { toast.loi('Không thể tải danh sách phiếu phạt') }
   finally { dangTai.value = false }
 }
 
 async function taoPhieuPhat() {
-  if (!formTao.value.phieuMuonId) return toast.canhBao('Vui lòng nhập mã phiếu mượn')
+  if (!formTao.value.maChiTietPhieuMuon.trim()) return toast.canhBao('Vui lòng nhập mã chi tiết phiếu mượn (UUID)')
   if (formTao.value.soTienPhat <= 0) return toast.canhBao('Số tiền phạt phải lớn hơn 0')
   dangXuLy.value = true
   try {
-    await phatService.taoCai(formTao.value)
+    const payload = {
+      maChiTietPhieuMuon: formTao.value.maChiTietPhieuMuon,
+      soTienPhat: formTao.value.soTienPhat,
+      lyDoPhat: formTao.value.lyDo
+    }
+    await phatService.taoCai(payload as any)
     toast.thanhCong('Tạo phiếu phạt thành công')
     modalTao.value = false
     taiDanhSach()
-  } catch { toast.loi('Tạo phiếu phạt thất bại') } finally { dangXuLy.value = false }
+  } catch (err: any) { toast.loi(err?.message || 'Tạo phiếu phạt thất bại (Kiểm tra lại UUID)') } finally { dangXuLy.value = false }
 }
 
 async function xacNhanThanhToan() {
   if (!modalThanhToan.value) return
   dangXuLy.value = true
   try {
-    await phatService.thanhToan(modalThanhToan.value.maPhieuPhat, { phuongThucThanhToan: phuongThucTT.value })
+    await phatService.thanhToan(String(modalThanhToan.value.maPhieuPhat), { phuongThucThanhToan: phuongThucTT.value })
     toast.thanhCong('Đã cập nhật thanh toán')
     modalThanhToan.value = null
     taiDanhSach()
   } catch { toast.loi('Thanh toán thất bại') } finally { dangXuLy.value = false }
 }
 
-watch([filterTrangThai, () => phanTrang.trangHienTai.value], () => { phanTrang.datLaiTrang(); taiDanhSach() })
-onMounted(taiDanhSach)
+watch(() => phanTrang.trangHienTai.value, taiDanhSach)
+onMounted(() => {
+  taiDanhSach()
+  const maChiTiet = route.query.maChiTietPhieuMuon as string
+  if (maChiTiet) {
+    modalTao.value = true
+    formTao.value = {
+      maChiTietPhieuMuon: maChiTiet,
+      lyDo: 'TRA_TRE',
+      soTienPhat: 50000
+    }
+    soTienHienThi.value = '50.000'
+  }
+})
 </script>
 
 <template>
@@ -86,7 +106,7 @@ onMounted(taiDanhSach)
         <option value="CHUA_THANH_TOAN">Chưa thanh toán</option>
         <option value="DA_THANH_TOAN">Đã thanh toán</option>
       </select>
-      <button class="nut-them" @click="() => { modalTao = true; formTao = { phieuMuonId: 0, lyDo: 'TRA_TRE', soTienPhat: 0 }; soTienHienThi = '' }">
+      <button class="nut-them" @click="() => { modalTao = true; formTao = { maChiTietPhieuMuon: '', lyDo: 'TRA_TRE', soTienPhat: 0 }; soTienHienThi = '' }">
         + Tạo phiếu phạt
       </button>
     </div>
@@ -105,11 +125,11 @@ onMounted(taiDanhSach)
           <tbody>
             <tr v-for="item in danhSach" :key="item.maPhieuPhat">
               <td>
-                <div class="ten-nguoi">{{ item.nguoiDung.hoDem }} {{ item.nguoiDung.ten }}</div>
-                <div class="email-mo">{{ item.nguoiDung.email }}</div>
+                <div class="ten-nguoi">{{ item.nguoiDung?.hoDem || '' }} {{ item.nguoiDung?.ten || '' }}</div>
+                <div class="email-mo">{{ item.nguoiDung?.email || '' }}</div>
               </td>
               <td><code class="ma-phieu">#{{ item.maPhieuMuon }}</code></td>
-              <td>{{ LY_DO_LABEL[item.lyDo] }}</td>
+              <td>{{ LY_DO_LABEL[item.lyDo] || item.lyDo || '—' }}</td>
               <td class="so-tien">{{ formatTien(item.soTienPhat) }}</td>
               <td>{{ formatNgay(item.ngayTao) }}</td>
               <td>
@@ -145,8 +165,8 @@ onMounted(taiDanhSach)
     <ModalDialog :dang-mo="modalTao" tieu-de="Tạo phiếu phạt thủ công" @dong="modalTao = false">
       <div class="form-modal">
         <div class="form-group">
-          <label>Mã phiếu mượn *</label>
-          <input v-model.number="formTao.phieuMuonId" type="number" class="form-input" placeholder="VD: 42" />
+          <label>Mã chi tiết phiếu mượn (UUID) *</label>
+          <input v-model="formTao.maChiTietPhieuMuon" type="text" class="form-input" placeholder="VD: 550e8400-e29b-41d4-a716-446655440000" />
         </div>
         <div class="form-group">
           <label>Lý do phạt *</label>
@@ -179,7 +199,7 @@ onMounted(taiDanhSach)
     <ModalDialog :dang-mo="modalThanhToan !== null" tieu-de="Xác nhận thanh toán" @dong="modalThanhToan = null">
       <div class="form-modal">
         <div class="thong-tin-phat">
-          <div class="info-phat"><span>Độc giả:</span> <strong>{{ modalThanhToan?.nguoiDung.hoDem }} {{ modalThanhToan?.nguoiDung.ten }}</strong></div>
+          <div class="info-phat"><span>Độc giả:</span> <strong>{{ modalThanhToan?.nguoiDung?.hoDem || '' }} {{ modalThanhToan?.nguoiDung?.ten || '' }}</strong></div>
           <div class="info-phat"><span>Lý do:</span> <strong>{{ modalThanhToan ? LY_DO_LABEL[modalThanhToan.lyDo] : '' }}</strong></div>
           <div class="info-phat so-tien-lon"><span>Số tiền:</span> <strong>{{ modalThanhToan ? formatTien(modalThanhToan.soTienPhat) : '' }}</strong></div>
         </div>
@@ -209,7 +229,7 @@ onMounted(taiDanhSach)
 .phat-view { animation:fadeInUp 0.4s ease; }
 .thanh-cong-cu { display:flex; gap:0.75rem; margin-bottom:1rem; }
 .select-filter { padding:0.65rem 1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu); font-family:inherit; cursor:pointer; }
-.select-filter option { background:#1a1a2e; }
+.select-filter option { background:#1a1a2e; color:#ffffff; }
 .nut-them { padding:0.65rem 1.25rem; background:var(--color-primary); border:none; border-radius:8px; color:white; cursor:pointer; font-family:inherit; font-size:0.875rem; font-weight:600; margin-left:auto; }
 .bang-container { background:var(--glass-nen); border:1px solid var(--glass-vien); border-radius:12px; overflow:hidden; padding:1rem; }
 .bang { width:100%; border-collapse:collapse; }
@@ -231,7 +251,7 @@ onMounted(taiDanhSach)
 .form-group label { font-size:0.825rem; font-weight:600; color:var(--mau-chu); }
 .form-input { padding:0.7rem 1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu); font-family:inherit; font-size:0.875rem; outline:none; }
 .form-input:focus { border-color:var(--mau-chinh); }
-.form-input option { background:#1a1a2e; }
+.form-input option { background:#1a1a2e; color:#ffffff; }
 .ghi-chu-tien { font-size:0.8rem; color:var(--mau-chinh); }
 
 /* Thông tin phạt */

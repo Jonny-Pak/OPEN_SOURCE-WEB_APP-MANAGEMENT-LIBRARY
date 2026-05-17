@@ -18,7 +18,12 @@ const isEdit = computed(() => !!route.params.id)
 const sachId = computed(() => Number(route.params.id))
 
 // Dữ liệu form
-const form = ref({ tenSach: '', isbn: '', namXuatBan: new Date().getFullYear(), moTa: '', nhaXuatBanId: 0, tacGiaIds: [] as number[], theLoaiIds: [] as number[] })
+const form = ref({
+  tenSach: '', maIsbn: '', namXuatBan: new Date().getFullYear(), moTa: '',
+  maNhaXuatBan: 0, maTacGias: [] as number[], maTheLoais: [] as number[],
+  lanTaiBan: 1, soTrang: 100, giaTien: 100000, donGiaPhatTheoNgay: 5000,
+  kichThuoc: '', dichGia: ''
+})
 const danhSachNXB = ref<NhaXuatBan[]>([])
 const danhSachTacGia = ref<TacGia[]>([])
 const danhSachTheLoai = ref<TheLoai[]>([])
@@ -58,13 +63,24 @@ async function taiDuLieu() {
 
     if (isEdit.value) {
       const sach = await sachService.layMotCuon(sachId.value)
+      // Chú ý: Backend chưa trả về lanTaiBan, soTrang, giaTien trong SachResponse?
+      // Ta lấy tạm mặc định nếu thiếu.
       form.value = {
-        tenSach: sach.tenSach, isbn: sach.isbn, namXuatBan: sach.namXuatBan,
-        moTa: sach.moTa ?? '', nhaXuatBanId: sach.nhaXuatBan.maNXB,
-        tacGiaIds: sach.tacGias.map(t => t.maTacGia),
-        theLoaiIds: sach.theLoais.map(t => t.maTheLoai),
+        tenSach: sach.tenSach,
+        maIsbn: sach.maIsbn || '',
+        namXuatBan: sach.namXuatBan,
+        moTa: sach.moTa ?? '',
+        maNhaXuatBan: sach.nhaXuatBan?.maNhaXuatBan || 0,
+        maTacGias: sach.danhSachTacGia?.map(t => t.maTacGia) || [],
+        maTheLoais: sach.danhSachTheLoai?.map(t => t.maTheLoai) || [],
+        lanTaiBan: sach.lanTaiBan || 1,
+        soTrang: sach.soTrang || 100,
+        giaTien: sach.giaTien || 100000,
+        donGiaPhatTheoNgay: sach.donGiaPhatTheoNgay || 5000,
+        kichThuoc: (sach as any).kichThuoc || '',
+        dichGia: (sach as any).dichGia || ''
       }
-      anhBiaCu.value = sach.anhBiaUrl ?? ''
+      anhBiaCu.value = sach.danhSachHinhAnhUrl?.[0] || ''
     }
   } catch { toast.loi('Không thể tải dữ liệu') }
   finally { dangTai.value = false }
@@ -78,9 +94,18 @@ function toggleId(arr: number[], id: number) {
 
 async function luuSach() {
   if (!form.value.tenSach.trim()) return toast.canhBao('Tên sách không được để trống')
-  if (!form.value.isbn.trim()) return toast.canhBao('ISBN không được để trống')
-  if (!form.value.nhaXuatBanId) return toast.canhBao('Vui lòng chọn nhà xuất bản')
-  if (form.value.tacGiaIds.length === 0) return toast.canhBao('Vui lòng chọn ít nhất 1 tác giả')
+  if (!form.value.maIsbn.trim()) return toast.canhBao('ISBN không được để trống')
+
+  // Normalize ISBN by removing all non-alphanumeric characters and converting to uppercase
+  const normalizedIsbn = form.value.maIsbn.replace(/[^0-9xX]/g, '').toUpperCase()
+  if (!/^(\d{9}[0-9X]|\d{13})$/.test(normalizedIsbn)) {
+    return toast.canhBao('Mã ISBN phải là ISBN-10 (10 ký tự) hoặc ISBN-13 (13 chữ số)')
+  }
+  form.value.maIsbn = normalizedIsbn
+
+  if (!form.value.maNhaXuatBan) return toast.canhBao('Vui lòng chọn nhà xuất bản')
+  if (form.value.maTacGias.length === 0) return toast.canhBao('Vui lòng chọn ít nhất 1 tác giả')
+  if (form.value.maTheLoais.length === 0) return toast.canhBao('Vui lòng chọn ít nhất 1 thể loại')
 
   dangGui.value = true
   try {
@@ -95,7 +120,14 @@ async function luuSach() {
     }
     await uploadAnhBia(id)
     router.push('/admin/sach')
-  } catch { toast.loi('Lưu thất bại, vui lòng kiểm tra lại') }
+  } catch (err: any) {
+    if (err && err.details) {
+      const detailsText = Object.values(err.details).join(', ')
+      toast.loi(`Lỗi: ${detailsText}`)
+    } else {
+      toast.loi(err?.message || 'Lưu thất bại, vui lòng kiểm tra lại')
+    }
+  }
   finally { dangGui.value = false }
 }
 
@@ -124,7 +156,7 @@ onMounted(taiDuLieu)
             <div class="hang-doi">
               <div class="form-group">
                 <label>ISBN *</label>
-                <input v-model="form.isbn" class="form-input" placeholder="978-..." />
+                <input v-model="form.maIsbn" class="form-input" placeholder="978-..." />
               </div>
               <div class="form-group">
                 <label>Năm xuất bản *</label>
@@ -137,10 +169,45 @@ onMounted(taiDuLieu)
             </div>
             <div class="form-group">
               <label>Nhà xuất bản *</label>
-              <select v-model.number="form.nhaXuatBanId" class="form-input form-select">
+              <select v-model.number="form.maNhaXuatBan" class="form-input form-select">
                 <option value="0" disabled>-- Chọn NXB --</option>
-                <option v-for="nxb in danhSachNXB" :key="nxb.maNXB" :value="nxb.maNXB">{{ nxb.tenNXB }}</option>
+                <option v-for="nxb in danhSachNXB" :key="nxb.maNhaXuatBan" :value="nxb.maNhaXuatBan">{{ nxb.tenNhaXuatBan }}</option>
               </select>
+            </div>
+          </div>
+
+          <!-- Thông tin xuất bản & Giá sách -->
+          <div class="the-nhom">
+            <h3 class="tieu-de-nhom">Thông tin xuất bản & Giá sách</h3>
+            <div class="hang-doi">
+              <div class="form-group">
+                <label>Lần tái bản *</label>
+                <input v-model.number="form.lanTaiBan" type="number" class="form-input" :min="1" />
+              </div>
+              <div class="form-group">
+                <label>Số trang *</label>
+                <input v-model.number="form.soTrang" type="number" class="form-input" :min="1" />
+              </div>
+            </div>
+            <div class="hang-doi">
+              <div class="form-group">
+                <label>Giá tiền sách (VNĐ) *</label>
+                <input v-model.number="form.giaTien" type="number" class="form-input" :min="0" />
+              </div>
+              <div class="form-group">
+                <label>Phạt quá hạn/ngày (VNĐ) *</label>
+                <input v-model.number="form.donGiaPhatTheoNgay" type="number" class="form-input" :min="0" />
+              </div>
+            </div>
+            <div class="hang-doi">
+              <div class="form-group">
+                <label>Kích thước</label>
+                <input v-model="form.kichThuoc" class="form-input" placeholder="Ví dụ: 13x20 cm" />
+              </div>
+              <div class="form-group">
+                <label>Dịch giả</label>
+                <input v-model="form.dichGia" class="form-input" placeholder="Nhập tên dịch giả nếu có" />
+              </div>
             </div>
           </div>
 
@@ -149,8 +216,8 @@ onMounted(taiDuLieu)
             <h3 class="tieu-de-nhom">Tác giả * (chọn nhiều)</h3>
             <div class="chon-nhieu">
               <label v-for="tg in danhSachTacGia" :key="tg.maTacGia" class="nhan-checkbox">
-                <input type="checkbox" :value="tg.maTacGia" :checked="form.tacGiaIds.includes(tg.maTacGia)" @change="toggleId(form.tacGiaIds, tg.maTacGia)" />
-                <span>{{ tg.tenTacGia }}</span>
+                <input type="checkbox" :value="tg.maTacGia" :checked="form.maTacGias.includes(tg.maTacGia)" @change="toggleId(form.maTacGias, tg.maTacGia)" />
+                <span>{{ tg.hoDem }} {{ tg.ten }}</span>
               </label>
             </div>
           </div>
@@ -160,7 +227,7 @@ onMounted(taiDuLieu)
             <h3 class="tieu-de-nhom">Thể loại (chọn nhiều)</h3>
             <div class="chon-nhieu">
               <label v-for="tl in danhSachTheLoai" :key="tl.maTheLoai" class="nhan-checkbox">
-                <input type="checkbox" :value="tl.maTheLoai" :checked="form.theLoaiIds.includes(tl.maTheLoai)" @change="toggleId(form.theLoaiIds, tl.maTheLoai)" />
+                <input type="checkbox" :value="tl.maTheLoai" :checked="form.maTheLoais.includes(tl.maTheLoai)" @change="toggleId(form.maTheLoais, tl.maTheLoai)" />
                 <span>{{ tl.tenTheLoai }}</span>
               </label>
             </div>
@@ -216,7 +283,7 @@ onMounted(taiDuLieu)
 .form-input:focus { border-color:var(--mau-chinh); }
 .form-textarea { resize:vertical; min-height:100px; }
 .form-select { cursor:pointer; }
-.form-select option { background:#1a1a2e; }
+.form-select option { background:#1a1a2e; color:#ffffff; }
 .hang-doi { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
 .chon-nhieu { display:flex; flex-wrap:wrap; gap:0.5rem; }
 .nhan-checkbox { display:flex; align-items:center; gap:0.4rem; cursor:pointer; padding:0.3rem 0.65rem; border-radius:20px; border:1px solid rgba(255,255,255,0.08); font-size:0.8rem; transition:all 0.2s; }

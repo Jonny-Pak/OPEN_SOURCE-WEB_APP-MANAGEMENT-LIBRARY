@@ -18,7 +18,7 @@ public interface SachRepository extends JpaRepository<Sach, Long> {
     @Query("SELECT DISTINCT s FROM Sach s " +
            "LEFT JOIN s.danhSachTheLoai tl " +
            "LEFT JOIN s.danhSachTacGia tg " +
-           "WHERE (:keyword IS NULL OR LOWER(s.tenSach) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "WHERE (CAST(:keyword AS string) IS NULL OR LOWER(s.tenSach) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))) " +
            "AND (:maTheLoai IS NULL OR tl.maTheLoai = :maTheLoai) " +
            "AND (:maTacGia IS NULL OR tg.maTacGia = :maTacGia) " +
            "AND (:maNhaXuatBan IS NULL OR s.nhaXuatBan.maNhaXuatBan = :maNhaXuatBan)")

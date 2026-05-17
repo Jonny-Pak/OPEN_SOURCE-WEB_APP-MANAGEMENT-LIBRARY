@@ -24,5 +24,9 @@ public interface NguoiDungService {
 
     void changePassword(UUID maNguoiDung, ChangePasswordRequest request);
 
-    void toggleUserStatus(UUID targetUserId, TrangThaiNguoiDung newTrangThai);
+    void toggleUserStatus(UUID id, TrangThaiNguoiDung trangThai);
+
+    NguoiDungResponse createNguoiDung(com.hcmunre.library.dto.request.AdminTaoNguoiDungRequest request);
+    NguoiDungResponse updateNguoiDung(UUID id, UpdateProfileRequest request);
+    void deleteNguoiDung(UUID id);
 }

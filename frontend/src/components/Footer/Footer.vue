@@ -7,10 +7,9 @@
         </div>
         <p>Hệ thống quản lý thư viện mã nguồn mở hiện đại, giúp kết nối tri thức và cộng đồng.</p>
         <div class="social-links">
-          <a href="#"><i class="fab fa-facebook-f"></i></a>
-          <a href="#"><i class="fab fa-twitter"></i></a>
-          <a href="#"><i class="fab fa-instagram"></i></a>
-          <a href="#"><i class="fab fa-linkedin-in"></i></a>
+          <a href="#" title="Facebook"><font-awesome-icon :icon="['fab', 'facebook']" /></a>
+          <a href="#" title="GitHub"><font-awesome-icon :icon="['fab', 'github']" /></a>
+          <a href="#" title="YouTube"><font-awesome-icon :icon="['fab', 'youtube']" /></a>
         </div>
       </div>
       

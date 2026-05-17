@@ -19,4 +19,9 @@ public class PhieuPhatResponse {
     private TrangThaiThanhToan trangThaiThanhToan;
     private LocalDateTime ngayThanhToan;
     private LocalDateTime ngayTao;
+
+    private NguoiDungResponse nguoiDung;
+    private UUID maPhieuMuon;
+    private String lyDo;
+    private String trangThai;
 }

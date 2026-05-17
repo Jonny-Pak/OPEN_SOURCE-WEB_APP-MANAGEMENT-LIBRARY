@@ -10,29 +10,56 @@ export interface Book {
 }
 
 export const useWishlistStore = defineStore('wishlist', () => {
-  const items = ref<Book[]>([])
+  // Load initial books from localStorage if present
+  const books = ref<Book[]>(
+    (() => {
+      const saved = localStorage.getItem('wishlist_books')
+      return saved ? JSON.parse(saved) : []
+    })()
+  )
 
-  const itemCount = computed(() => items.value.length)
+  const items = computed(() => books.value)
+  const itemCount = computed(() => books.value.length)
 
-  function toggleWishlist(book: Book) {
-    const index = items.value.findIndex(item => item.id === book.id)
-    if (index > -1) {
-      items.value.splice(index, 1)
-      return false // Removed
-    } else {
-      items.value.push(book)
-      return true // Added
+  function saveToLocalStorage() {
+    localStorage.setItem('wishlist_books', JSON.stringify(books.value))
+  }
+
+  function addToWishlist(book: Book) {
+    if (!books.value.some(item => item.id === book.id)) {
+      books.value.push(book)
+      saveToLocalStorage()
     }
   }
 
+  function removeFromWishlist(bookId: number) {
+    books.value = books.value.filter(item => item.id !== bookId)
+    saveToLocalStorage()
+  }
+
   function isInWishlist(bookId: number) {
-    return items.value.some(item => item.id === bookId)
+    return books.value.some(item => item.id === bookId)
+  }
+
+  // Backward compatibility alias
+  function toggleWishlist(book: Book) {
+    if (isInWishlist(book.id)) {
+      removeFromWishlist(book.id)
+      return false
+    } else {
+      addToWishlist(book)
+      return true
+    }
   }
 
   return {
+    books,
     items,
     itemCount,
-    toggleWishlist,
-    isInWishlist
+    addToWishlist,
+    removeFromWishlist,
+    isInWishlist,
+    toggleWishlist
   }
 })
+export default useWishlistStore

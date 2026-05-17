@@ -82,6 +82,7 @@ public enum ErrorCode {
 
     /** 423 - Locked */
     TAI_KHOAN_BI_KHOA(HttpStatus.LOCKED, "Tài khoản của bạn đã bị khóa"),
+    TAI_KHOAN_CHUA_KICH_HOAT(HttpStatus.BAD_REQUEST, "Tài khoản của bạn chưa được kích hoạt"),
 
     /** 500 - Internal Server Error */
     SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Hệ thống đang gặp sự cố, vui lòng thử lại sau");

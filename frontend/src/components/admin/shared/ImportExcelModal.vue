@@ -2,25 +2,25 @@
   <div class="modal-overlay" @click.self="$emit('close')">
     <div class="modal-container">
       <div class="modal-header">
-        <h3><i class="fas fa-file-excel"></i> Import sách từ Excel</h3>
+        <h3><font-awesome-icon icon="fa-solid fa-file-excel" /> Import sách từ Excel</h3>
         <button class="btn-close" @click="$emit('close')">
-          <i class="fas fa-xmark"></i>
+          <font-awesome-icon icon="fa-solid fa-xmark" />
         </button>
       </div>
 
       <div class="modal-body">
         <!-- Bước 1: Tải file mẫu -->
         <div class="step-section">
-          <p class="step-label"><i class="fas fa-circle-1"></i> Tải file mẫu</p>
+          <p class="step-label"><font-awesome-icon icon="fa-solid fa-1" /> Tải file mẫu</p>
           <button class="btn-outline" @click="downloadTemplate">
-            <i class="fas fa-download"></i> Tải template Excel
+            <font-awesome-icon icon="fa-solid fa-download" /> Tải template Excel
           </button>
           <p class="hint-text">File mẫu gồm các cột: ISBN, Tên sách, Tác giả, NXB, Thể loại, Năm XB, Số lượng, Mô tả</p>
         </div>
 
         <!-- Bước 2: Upload file -->
         <div class="step-section">
-          <p class="step-label"><i class="fas fa-circle-2"></i> Upload file Excel</p>
+          <p class="step-label"><font-awesome-icon icon="fa-solid fa-2" /> Upload file Excel</p>
           <div
             class="dropzone"
             :class="{ 'dragover': isDragging }"
@@ -29,7 +29,7 @@
             @drop.prevent="handleDrop"
             @click="fileInput?.click()"
           >
-            <i class="fas fa-cloud-arrow-up dropzone-icon"></i>
+            <font-awesome-icon icon="fa-solid fa-upload" class="dropzone-icon" />
             <p>Kéo thả file vào đây hoặc <span class="link-text">click để chọn</span></p>
             <p class="hint-text">Hỗ trợ .xlsx, .xls (tối đa 5MB)</p>
           </div>
@@ -39,7 +39,7 @@
         <!-- Preview dữ liệu -->
         <div v-if="previewData.length > 0" class="preview-section">
           <p class="step-label">
-            <i class="fas fa-circle-3"></i> Xem trước dữ liệu
+            <font-awesome-icon icon="fa-solid fa-3" /> Xem trước dữ liệu
             <span class="badge-count">{{ previewData.length }} dòng</span>
           </p>
           <div class="preview-table-wrapper">
@@ -61,10 +61,10 @@
                   <td v-for="col in columns" :key="col">{{ row[col] }}</td>
                   <td>
                     <span v-if="row._error" class="badge-error">
-                      <i class="fas fa-triangle-exclamation"></i> {{ row._error }}
+                      <font-awesome-icon icon="fa-solid fa-triangle-exclamation" /> {{ row._error }}
                     </span>
                     <span v-else class="badge-success">
-                      <i class="fas fa-check"></i> Hợp lệ
+                      <font-awesome-icon icon="fa-solid fa-circle-check" /> Hợp lệ
                     </span>
                   </td>
                 </tr>
@@ -78,11 +78,11 @@
           <!-- Thống kê -->
           <div class="import-stats">
             <div class="stat-item stat-valid">
-              <i class="fas fa-check-circle"></i>
+              <font-awesome-icon icon="fa-solid fa-circle-check" />
               <span>{{ validCount }} hợp lệ</span>
             </div>
             <div class="stat-item stat-error">
-              <i class="fas fa-times-circle"></i>
+              <font-awesome-icon icon="fa-solid fa-circle-xmark" />
               <span>{{ errorCount }} lỗi (sẽ bỏ qua)</span>
             </div>
           </div>
@@ -96,8 +96,8 @@
           :disabled="validCount === 0 || isImporting"
           @click="handleImport"
         >
-          <i v-if="isImporting" class="fas fa-spinner fa-spin"></i>
-          <i v-else class="fas fa-file-import"></i>
+          <font-awesome-icon v-if="isImporting" icon="fa-solid fa-spinner" class="fa-spin" />
+          <font-awesome-icon v-else icon="fa-solid fa-file-excel" />
           {{ isImporting ? 'Đang import...' : `Import ${validCount} sách` }}
         </button>
       </div>
@@ -107,15 +107,16 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import * as XLSX from 'xlsx'
 
 const emit = defineEmits<{
   close: []
-  imported: [data: any[]]
+  imported: [data: Record<string, unknown>[]]
 }>()
 
 const isDragging = ref(false)
 const fileInput = ref<HTMLInputElement>()
-const previewData = ref<any[]>([])
+const previewData = ref<Record<string, unknown>[]>([])
 const isImporting = ref(false)
 
 const columns = ['ISBN', 'Tên sách', 'Tác giả', 'NXB', 'Thể loại', 'Năm XB', 'Số lượng']
@@ -124,14 +125,8 @@ const validCount = computed(() => previewData.value.filter(r => !r._error).lengt
 const errorCount = computed(() => previewData.value.filter(r => r._error).length)
 
 const downloadTemplate = () => {
-  // Dùng xlsx library — cần: npm install xlsx
+  // Dùng xlsx library
   try {
-    const XLSX = (window as any).XLSX
-    if (!XLSX) {
-      alert('Thư viện XLSX chưa được tải. Vui lòng chạy: npm install xlsx')
-      return
-    }
-
     const ws = XLSX.utils.aoa_to_sheet([
       columns,
       ['978-604-1-12345-6', 'Lập trình Vue 3', 'Nguyễn Văn A', 'NXB Trẻ', 'Công nghệ', 2024, 5],
@@ -147,19 +142,22 @@ const downloadTemplate = () => {
 
 const parseFile = (file: File) => {
   try {
-    const XLSX = (window as any).XLSX
-    if (!XLSX) {
-      alert('Thư viện XLSX chưa được tải. Vui lòng chạy: npm install xlsx')
-      return
-    }
-
     const reader = new FileReader()
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target!.result as ArrayBuffer)
         const workbook = XLSX.read(data, { type: 'array' })
-        const sheet = workbook.Sheets[workbook.SheetNames[0]]
-        const rows = XLSX.utils.sheet_to_json(sheet, { header: columns, range: 1 }) as any[]
+        const sheetName = workbook.SheetNames[0]
+        if (!sheetName) {
+          alert('Không tìm thấy sheet nào trong file Excel')
+          return
+        }
+        const sheet = workbook.Sheets[sheetName]
+        if (!sheet) {
+          alert('Không thể đọc dữ liệu từ sheet!')
+          return
+        }
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: columns, range: 1 }) as Record<string, unknown>[]
 
         // Validate
         previewData.value = rows.map(row => {

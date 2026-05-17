@@ -23,7 +23,7 @@ const router = useRouter()
 
         <div v-if="wishlist.itemCount === 0" class="empty-state text-center">
           <div class="empty-icon">
-            <i class="far fa-heart"></i>
+            <font-awesome-icon :icon="['far', 'heart']" />
           </div>
           <h2>Chưa có sách yêu thích</h2>
           <p>Hãy khám phá kho sách và nhấn vào biểu tượng trái tim để lưu lại những cuốn sách bạn thích.</p>

@@ -50,16 +50,26 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(code.getHttpStatus()).body(errorResponse);
     }
 
+    @ExceptionHandler({org.springframework.security.access.AccessDeniedException.class, org.springframework.security.core.AuthenticationException.class})
+    public void handleSecurityException(Exception ex) throws Exception {
+        throw ex; // Nhường lại cho CustomAccessDeniedHandler và CustomAuthenticationEntryPoint xử lý
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, HttpServletRequest request){
         ex.printStackTrace();
+
+        java.io.StringWriter sw = new java.io.StringWriter();
+        java.io.PrintWriter pw = new java.io.PrintWriter(sw);
+        ex.printStackTrace(pw);
+        String stackTrace = sw.toString();
 
         ErrorCode code = ErrorCode.SERVER_ERROR;
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(code.getHttpStatus().value())
                 .error(code.name())
-                .message(code.getMessage())
+                .message(ex.getMessage() != null ? ex.getMessage() + " | " + stackTrace : code.getMessage() + " | " + stackTrace)
                 .path(request.getRequestURI())
                 .build();
 

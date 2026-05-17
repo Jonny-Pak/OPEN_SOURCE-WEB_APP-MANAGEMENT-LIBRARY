@@ -147,4 +147,16 @@ public class PhieuMuonController {
         return ResponseEntity.ok(phieuPhatService.getPhieuPhatByNguoiDung(maNguoiDung));
     }
 
+    @GetMapping("/phieu-phat")
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
+    public ResponseEntity<Page<PhieuPhatResponse>> getAllPhieuPhat(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "ngayTao") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction) {
+        Sort sort = direction.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return ResponseEntity.ok(phieuPhatService.getAllPhieuPhat(pageable));
+    }
+
 }

@@ -21,10 +21,11 @@ const dangTai = ref(false)
 const danhSach = ref<PhieuMuon[]>([])
 const filterTrangThai = ref<TrangThaiPhieuMuon | ''>('')
 
-const TRANG_THAI_MAP: Record<TrangThaiPhieuMuon, { nhan: string; mau: 'xanh-duong' | 'xanh' | 'do' }> = {
+const TRANG_THAI_MAP: Record<TrangThaiPhieuMuon, { nhan: string; mau: 'xanh-duong' | 'xanh' | 'do' | 'xam' }> = {
   DANG_MUON: { nhan: 'Đang mượn', mau: 'xanh-duong' },
   DA_TRA: { nhan: 'Đã trả', mau: 'xanh' },
   QUA_HAN: { nhan: 'Quá hạn', mau: 'do' },
+  DA_HUY: { nhan: 'Đã hủy', mau: 'xam' },
 }
 
 function formatNgay(s: string) { return new Date(s).toLocaleDateString('vi-VN') }
@@ -32,8 +33,15 @@ function formatNgay(s: string) { return new Date(s).toLocaleDateString('vi-VN') 
 async function taiDanhSach() {
   dangTai.value = true
   try {
-    danhSach.value = await muonSachService.danhSach()
-    phanTrang.capNhatTong(danhSach.value.length)
+    const response = await muonSachService.danhSach(
+      phanTrang.trangHienTai.value,
+      10,
+      '', // keyword is not supported yet in UI, sending empty
+      '',
+      ''
+    )
+    danhSach.value = response.content
+    phanTrang.capNhatTong(response.totalElements)
   } catch { toast.loi('Không thể tải danh sách phiếu mượn') }
   finally { dangTai.value = false }
 }
@@ -59,18 +67,27 @@ onMounted(taiDanhSach)
       <template v-else>
         <EmptyState v-if="danhSach.length === 0" thong-diep="Không có phiếu mượn nào" />
         <table v-else class="bang">
-          <thead><tr><th>Mã phiếu</th><th>Độc giả</th><th>Ngày mượn</th><th>Hạn trả</th><th>Số cuốn</th><th>Trạng thái</th></tr></thead>
+          <thead><tr><th>Mã phiếu</th><th>Độc giả</th><th>Ngày mượn</th><th>Hạn trả</th><th>Số cuốn</th><th>Trạng thái</th><th>Hành động</th></tr></thead>
           <tbody>
             <tr v-for="item in danhSach" :key="item.maPhieuMuon">
               <td><code class="ma-phieu">#{{ item.maPhieuMuon }}</code></td>
               <td>
-                <div class="ten-nguoi">{{ item.nguoiDung.hoDem }} {{ item.nguoiDung.ten }}</div>
-                <div class="email-mo">{{ item.nguoiDung.email }}</div>
+                <div class="ten-nguoi">{{ item.nguoiDung?.hoDem || '' }} {{ item.nguoiDung?.ten || '' }}</div>
+                <div class="email-mo">{{ item.nguoiDung?.email || 'N/A' }}</div>
               </td>
               <td>{{ formatNgay(item.ngayMuon) }}</td>
               <td :class="{ 'qua-han': item.trangThai === 'QUA_HAN' }">{{ formatNgay(item.hanTra) }}</td>
               <td><span class="so-cuon">{{ item.soLuongCuon }}</span></td>
-              <td><StatusBadge :nhan-hien="TRANG_THAI_MAP[item.trangThai].nhan" :loai="TRANG_THAI_MAP[item.trangThai].mau" /></td>
+              <td><StatusBadge :nhan-hien="TRANG_THAI_MAP[item.trangThai]?.nhan || 'Không rõ'" :loai="TRANG_THAI_MAP[item.trangThai]?.mau || 'xam'" /></td>
+              <td>
+                <button 
+                  class="nut-tra-phat"
+                  @click="router.push(`/admin/tra-sach?maPhieuMuon=${item.maPhieuMuon}`)"
+                  style="padding: 0.35rem 0.75rem; background: rgba(6, 182, 212, 0.12); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: 6px; color: var(--mau-chinh); cursor: pointer; font-size: 0.8rem; font-weight: 600;"
+                >
+                  📥 Trả / Phạt
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -84,7 +101,7 @@ onMounted(taiDanhSach)
 .muon-sach-list { animation:fadeInUp 0.4s ease; }
 .thanh-cong-cu { display:flex; gap:0.75rem; margin-bottom:1rem; flex-wrap:wrap; }
 .select-filter { padding:0.65rem 1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu); font-family:inherit; cursor:pointer; }
-.select-filter option { background:#1a1a2e; }
+.select-filter option { background:#1a1a2e; color:#ffffff; }
 .nut-them { padding:0.65rem 1.25rem; background:var(--color-primary); border:none; border-radius:8px; color:white; cursor:pointer; font-family:inherit; font-size:0.875rem; font-weight:600; white-space:nowrap; margin-left:auto; }
 .bang-container { background:var(--glass-nen); border:1px solid var(--glass-vien); border-radius:12px; overflow:hidden; padding:1rem; }
 .bang { width:100%; border-collapse:collapse; }

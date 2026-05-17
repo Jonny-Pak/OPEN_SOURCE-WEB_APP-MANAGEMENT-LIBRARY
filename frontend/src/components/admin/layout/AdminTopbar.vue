@@ -4,7 +4,7 @@
 -->
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 defineProps<{ sidebarMo?: boolean }>()
@@ -12,7 +12,6 @@ defineEmits<{ 'toggle-sidebar': [] }>()
 
 const authStore = useAuthStore()
 const route = useRoute()
-const router = useRouter()
 
 /** Bản đồ tên route → tiêu đề trang */
 const BAN_DO_TIEU_DE: Record<string, string> = {
@@ -48,7 +47,7 @@ async function dangXuat(): Promise<void> {
   <header class="topbar">
     <!-- Hamburger (mobile) -->
     <button class="topbar__hamburger" @click="$emit('toggle-sidebar')" aria-label="Mở menu">
-      ☰
+      <font-awesome-icon icon="fa-solid fa-bars" />
     </button>
 
     <!-- Tiêu đề trang hiện tại -->
@@ -59,7 +58,7 @@ async function dangXuat(): Promise<void> {
       <!-- [DEV] Switch Role -->
       <div class="switch-role-wrapper">
         <span class="switch-role-label">
-          <i class="fas fa-flask"></i> DEV
+          <font-awesome-icon icon="fa-solid fa-screwdriver-wrench" /> DEV
         </span>
         <div class="role-toggle">
           <button
@@ -67,14 +66,14 @@ async function dangXuat(): Promise<void> {
             @click="authStore.switchRole('ADMIN')"
             title="Chuyển sang role Admin"
           >
-            <i class="fas fa-shield-halved"></i> Admin
+            <font-awesome-icon icon="fa-solid fa-user-shield" /> Admin
           </button>
           <button
             :class="['role-btn', authStore.currentRole === 'LIBRARIAN' && 'active']"
             @click="authStore.switchRole('LIBRARIAN')"
             title="Chuyển sang role Thủ thư"
           >
-            <i class="fas fa-user-tie"></i> Thủ thư
+            <font-awesome-icon icon="fa-solid fa-user-shield" /> Thủ thư
           </button>
         </div>
       </div>
@@ -86,8 +85,11 @@ async function dangXuat(): Promise<void> {
         </span>
       </div>
       <div class="topbar__avatar">{{ kyTuDau }}</div>
+      <RouterLink to="/" class="topbar__nut-website" title="Xem Website">
+        <font-awesome-icon icon="fa-solid fa-globe" />
+      </RouterLink>
       <button class="topbar__nut-dang-xuat" @click="dangXuat" title="Đăng xuất">
-        <i class="fas fa-arrow-right-from-bracket"></i>
+        <font-awesome-icon icon="fa-solid fa-right-from-bracket" />
       </button>
     </div>
   </header>
@@ -216,6 +218,24 @@ async function dangXuat(): Promise<void> {
   font-weight: 700;
   color: white;
   flex-shrink: 0;
+}
+.topbar__nut-website {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--mau-chu);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.topbar__nut-website:hover {
+  background: rgba(6, 182, 212, 0.1);
+  border-color: rgba(6, 182, 212, 0.35);
+  color: #0891b2;
 }
 .topbar__nut-dang-xuat {
   background: #ffffff;

@@ -67,7 +67,7 @@ public class NguoiDungController {
     }
 
     @PatchMapping("/{id}/trang-thai")
-    @PreAuthorize("hasRole('QUAN_TRI_VIEN')")
+    @PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'THU_THU')")
     public ResponseEntity<Void> toggleStatus(
             @PathVariable UUID id,
             @RequestParam TrangThaiNguoiDung trangThai) {
@@ -86,5 +86,24 @@ public class NguoiDungController {
     @PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'THU_THU')")
     public ResponseEntity<ImportExcelResponse> importFromExcel(@RequestParam("file") MultipartFile file) {
         return ResponseEntity.ok(importExcelService.importNguoiDung(file));
+    }
+
+    @PostMapping
+    @PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'THU_THU')")
+    public ResponseEntity<NguoiDungResponse> createNguoiDung(@Valid @RequestBody com.hcmunre.library.dto.request.AdminTaoNguoiDungRequest request) {
+        return ResponseEntity.ok(nguoiDungService.createNguoiDung(request));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'THU_THU')")
+    public ResponseEntity<NguoiDungResponse> updateNguoiDung(@PathVariable UUID id, @Valid @RequestBody UpdateProfileRequest request) {
+        return ResponseEntity.ok(nguoiDungService.updateNguoiDung(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'THU_THU')")
+    public ResponseEntity<Void> deleteNguoiDung(@PathVariable UUID id) {
+        nguoiDungService.deleteNguoiDung(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -84,23 +84,55 @@ public class ImportExcelServiceImplement implements ImportExcelService {
     }
 
     private NguoiDung parseRow(Row row) {
-        String hoDem = cellStr(row, 0);
-        String ten = cellStr(row, 1);
-        String email = cellStr(row, 2);
-        String sdt = cellStr(row, 3);
+        String mssv = cellStr(row, 1);
+        String hoTenStr = cellStr(row, 2);
+        String gtStr = cellStr(row, 3);
+        String nsStr = cellStr(row, 4);
 
-        if (hoDem == null || hoDem.isBlank()) throw new LibraryException(ErrorCode.EXCEL_THIEU_HO_DEM);
-        if (ten == null || ten.isBlank()) throw new LibraryException(ErrorCode.EXCEL_THIEU_TEN);
-        if (email == null || email.isBlank()) throw new LibraryException(ErrorCode.EXCEL_THIEU_EMAIL);
-        if (sdt == null || sdt.isBlank()) throw new LibraryException(ErrorCode.EXCEL_THIEU_SDT);
+        if (mssv == null || mssv.isBlank()) {
+            throw new LibraryException(ErrorCode.EXCEL_THIEU_EMAIL); // Thiếu MSSV nên thiếu email
+        }
+        if (hoTenStr == null || hoTenStr.isBlank()) {
+            throw new LibraryException(ErrorCode.EXCEL_THIEU_TEN);
+        }
 
-        if (nguoiDungRepository.existsByEmail(email.trim().toLowerCase()))
+        // Tách họ tên thành hoDem và ten
+        hoTenStr = hoTenStr.trim();
+        int lastSpaceIdx = hoTenStr.lastIndexOf(' ');
+        String hoDem = "";
+        String ten = "";
+        if (lastSpaceIdx > 0) {
+            hoDem = hoTenStr.substring(0, lastSpaceIdx).trim();
+            ten = hoTenStr.substring(lastSpaceIdx + 1).trim();
+        } else {
+            hoDem = "Sinh viên";
+            ten = hoTenStr;
+        }
+
+        // Sinh email tự động: mssv@sv.hcmunre.edu.vn
+        String email = mssv.trim().toLowerCase() + "@sv.hcmunre.edu.vn";
+
+        if (nguoiDungRepository.existsByEmail(email)) {
             throw new LibraryException(ErrorCode.EMAIL_DA_TON_TAI);
-        if (nguoiDungRepository.existsBySoDienThoai(sdt.trim()))
+        }
+
+        // Tạo số điện thoại ảo duy nhất dựa trên MSSV bắt đầu bằng 0 và đủ 10 số để thoả mãn regex validation
+        String mssvClean = mssv.replaceAll("\\D", "");
+        String sdtSuffix = mssvClean;
+        if (sdtSuffix.length() > 9) {
+            sdtSuffix = sdtSuffix.substring(sdtSuffix.length() - 9);
+        } else {
+            while (sdtSuffix.length() < 9) {
+                sdtSuffix = sdtSuffix + "0";
+            }
+        }
+        String sdt = "0" + sdtSuffix;
+
+        if (nguoiDungRepository.existsBySoDienThoai(sdt)) {
             throw new LibraryException(ErrorCode.SDT_DA_TON_TAI);
+        }
 
         LocalDate ngaySinh = null;
-        String nsStr = cellStr(row, 4);
         if (nsStr != null && !nsStr.isBlank()) {
             try {
                 ngaySinh = LocalDate.parse(nsStr.trim(), DATE_FMT);
@@ -110,30 +142,27 @@ public class ImportExcelServiceImplement implements ImportExcelService {
         }
 
         GioiTinh gioiTinh = null;
-        String gtStr = cellStr(row, 5);
         if (gtStr != null && !gtStr.isBlank()) {
-            try {
-                gioiTinh = GioiTinh.valueOf(gtStr.toUpperCase().trim());
-            } catch (IllegalArgumentException e) {
+            String gtClean = gtStr.toUpperCase().trim();
+            if (gtClean.equals("NAM")) {
+                gioiTinh = GioiTinh.NAM;
+            } else if (gtClean.equals("NỮ") || gtClean.equals("NU")) {
+                gioiTinh = GioiTinh.NU;
+            } else {
                 throw new LibraryException(ErrorCode.EXCEL_GIOI_TINH_KHONG_HOP_LE);
             }
         }
 
-        String cccd = cellStr(row, 6);
-        String diaChi = cellStr(row, 7);
-
         return NguoiDung.builder()
-                .hoDem(hoDem.trim())
-                .ten(ten.trim())
-                .email(email.trim().toLowerCase())
-                .soDienThoai(sdt.trim())
+                .hoDem(hoDem)
+                .ten(ten)
+                .email(email)
+                .soDienThoai(sdt)
                 .matKhau(passwordEncoder.encode(DEFAULT_PASSWORD))
                 .ngaySinh(ngaySinh)
                 .gioiTinh(gioiTinh)
-                .cccd(cccd != null ? cccd.trim() : null)
-                .diaChi(diaChi != null ? diaChi.trim() : null)
                 .vaiTro(VaiTro.DOC_GIA)
-                .trangThai(TrangThaiNguoiDung.HOAT_DONG)
+                .trangThai(TrangThaiNguoiDung.CHUA_KICH_HOAT)
                 .build();
     }
 
@@ -143,6 +172,10 @@ public class ImportExcelServiceImplement implements ImportExcelService {
         return switch (cell.getCellType()) {
             case STRING -> cell.getStringCellValue().trim();
             case NUMERIC -> {
+                if (DateUtil.isCellDateFormatted(cell)) {
+                    java.util.Date date = cell.getDateCellValue();
+                    yield new java.text.SimpleDateFormat("dd/MM/yyyy").format(date);
+                }
                 double v = cell.getNumericCellValue();
                 yield v == Math.floor(v) ? String.valueOf((long) v) : String.valueOf(v);
             }

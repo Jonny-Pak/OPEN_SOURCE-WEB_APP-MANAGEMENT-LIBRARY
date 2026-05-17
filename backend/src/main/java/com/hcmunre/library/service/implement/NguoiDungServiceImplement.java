@@ -12,6 +12,7 @@ import com.hcmunre.library.service.NguoiDungService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -38,7 +39,7 @@ public class NguoiDungServiceImplement implements NguoiDungService {
 
     @Override
     public Page<NguoiDungResponse> getAllNguoiDung(Pageable pageable) {
-        return nguoiDungRepository.findAll(pageable).map(this::toRespone);
+        return nguoiDungRepository.findByNgayXoaIsNull(pageable).map(this::toRespone);
     }
 
     @Override
@@ -84,12 +85,73 @@ public class NguoiDungServiceImplement implements NguoiDungService {
     }
 
     @Override
+    @Transactional
     public void toggleUserStatus(UUID targetUserId, TrangThaiNguoiDung newTrangThai) {
-        NguoiDung nguoiDung = nguoiDungRepository.findById(targetUserId).orElseThrow(
-                () -> new LibraryException(ErrorCode.NGUOI_DUNG_KHONG_TON_TAI));
-
+        NguoiDung nguoiDung = nguoiDungRepository.findById(targetUserId)
+                .orElseThrow(() -> new LibraryException(ErrorCode.NGUOI_DUNG_KHONG_TON_TAI));
         nguoiDung.setTrangThai(newTrangThai);
         nguoiDungRepository.save(nguoiDung);
+    }
+
+    @Override
+    @Transactional
+    public NguoiDungResponse createNguoiDung(com.hcmunre.library.dto.request.AdminTaoNguoiDungRequest request) {
+        if (nguoiDungRepository.existsByEmail(request.getEmail())) {
+            throw new LibraryException(ErrorCode.EMAIL_DA_TON_TAI);
+        }
+        if (nguoiDungRepository.existsBySoDienThoai(request.getSoDienThoai())) {
+            throw new LibraryException(ErrorCode.SDT_DA_TON_TAI);
+        }
+
+        com.hcmunre.library.enums.VaiTro vaiTro = request.getVaiTro() != null ? request.getVaiTro() : com.hcmunre.library.enums.VaiTro.DOC_GIA;
+        TrangThaiNguoiDung trangThai = request.getTrangThai();
+        if (trangThai == null) {
+            trangThai = (vaiTro == com.hcmunre.library.enums.VaiTro.DOC_GIA) ? TrangThaiNguoiDung.CHUA_KICH_HOAT : TrangThaiNguoiDung.HOAT_DONG;
+        }
+
+        NguoiDung nguoiDung = NguoiDung.builder()
+                .hoDem(request.getHoDem())
+                .ten(request.getTen())
+                .email(request.getEmail())
+                .soDienThoai(request.getSoDienThoai())
+                .matKhau(passwordEncoder.encode(request.getMatKhau()))
+                .vaiTro(vaiTro)
+                .trangThai(trangThai)
+                .build();
+        return toRespone(nguoiDungRepository.save(nguoiDung));
+    }
+
+    @Override
+    @Transactional
+    public NguoiDungResponse updateNguoiDung(UUID id, UpdateProfileRequest request) {
+        NguoiDung nguoiDung = nguoiDungRepository.findById(id)
+                .orElseThrow(() -> new LibraryException(ErrorCode.NGUOI_DUNG_KHONG_TON_TAI));
+        
+        nguoiDung.setHoDem(request.getHoDem());
+        nguoiDung.setTen(request.getTen());
+        nguoiDung.setSoDienThoai(request.getSoDienThoai());
+        nguoiDung.setNgaySinh(request.getNgaySinh());
+        nguoiDung.setGioiTinh(request.getGioiTinh());
+        nguoiDung.setCccd(request.getCccd());
+        nguoiDung.setDiaChi(request.getDiaChi());
+        nguoiDung.setAvatar(request.getAvatar());
+
+        return toRespone(nguoiDungRepository.save(nguoiDung));
+    }
+
+    @Override
+    @Transactional
+    public void deleteNguoiDung(UUID id) {
+        NguoiDung nguoiDung = nguoiDungRepository.findById(id)
+                .orElseThrow(() -> new LibraryException(ErrorCode.NGUOI_DUNG_KHONG_TON_TAI));
+        try {
+            nguoiDungRepository.delete(nguoiDung);
+            nguoiDungRepository.flush(); // Force database to evaluate constraints immediately
+        } catch (Exception e) {
+            nguoiDung.setNgayXoa(java.time.LocalDateTime.now());
+            nguoiDung.setTrangThai(TrangThaiNguoiDung.KHOA);
+            nguoiDungRepository.save(nguoiDung);
+        }
     }
 
     private NguoiDungResponse toRespone(NguoiDung nguoiDung) {

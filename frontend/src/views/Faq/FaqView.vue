@@ -13,7 +13,7 @@ const toggleFaq = (id: string) => {
 const faqCategories = [
   {
     title: 'Tài khoản & Đăng nhập',
-    icon: 'fa-user-circle',
+    icon: 'fa-solid fa-circle-user',
     questions: [
       {
         id: 'acc-1',
@@ -29,7 +29,7 @@ const faqCategories = [
   },
   {
     title: 'Mượn & Trả sách',
-    icon: 'fa-book',
+    icon: 'fa-solid fa-book',
     questions: [
       {
         id: 'borrow-1',
@@ -50,7 +50,7 @@ const faqCategories = [
   },
   {
     title: 'Dịch vụ khác',
-    icon: 'fa-concierge-bell',
+    icon: 'fa-solid fa-bell',
     questions: [
       {
         id: 'svc-1',
@@ -92,7 +92,7 @@ const filteredFaqs = computed(() => {
           <p>Tìm kiếm câu trả lời nhanh chóng cho các thắc mắc thường gặp nhất</p>
           
           <div class="faq-search">
-            <i class="fas fa-search search-icon"></i>
+            <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="search-icon" />
             <input 
               v-model="searchQuery" 
               type="text" 
@@ -104,14 +104,14 @@ const filteredFaqs = computed(() => {
         <!-- FAQ Categories -->
         <div class="faq-container">
           <div v-if="filteredFaqs.length === 0" class="no-results">
-            <i class="fas fa-search"></i>
+            <font-awesome-icon icon="fa-solid fa-magnifying-glass" />
             <p>Không tìm thấy câu hỏi nào phù hợp với "{{ searchQuery }}"</p>
             <button @click="searchQuery = ''" class="btn btn-outline">Xem tất cả câu hỏi</button>
           </div>
 
           <div v-for="category in filteredFaqs" :key="category.title" class="faq-category">
             <div class="category-header">
-              <i :class="['fas', category.icon]"></i>
+              <font-awesome-icon :icon="category.icon" />
               <h2>{{ category.title }}</h2>
             </div>
             
@@ -125,7 +125,7 @@ const filteredFaqs = computed(() => {
                 <div class="faq-question" @click="toggleFaq(faq.id)">
                   <h3>{{ faq.question }}</h3>
                   <div class="toggle-icon">
-                    <i class="fas fa-plus"></i>
+                    <font-awesome-icon icon="fa-solid fa-plus" />
                   </div>
                 </div>
                 <div class="faq-answer">
@@ -142,7 +142,7 @@ const filteredFaqs = computed(() => {
         <section class="support-cta">
           <div class="support-card">
             <div class="support-icon">
-              <i class="fas fa-headset"></i>
+              <font-awesome-icon icon="fa-solid fa-headset" />
             </div>
             <div class="support-text">
               <h3>Vẫn còn thắc mắc?</h3>

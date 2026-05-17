@@ -88,15 +88,15 @@ onMounted(taiDanhSach)
           <tbody>
             <tr v-for="item in danhSach" :key="item.maDatCho">
               <td>
-                <div class="ten-nguoi">{{ item.nguoiDung.hoDem }} {{ item.nguoiDung.ten }}</div>
-                <div class="email-mo">{{ item.nguoiDung.email }}</div>
+                <div class="ten-nguoi">{{ item.nguoiDung?.hoDem || '' }} {{ item.nguoiDung?.ten || '' }}</div>
+                <div class="email-mo">{{ item.nguoiDung?.email || 'N/A' }}</div>
               </td>
-              <td>{{ item.sach.tenSach }}</td>
-              <td>{{ formatNgay(item.ngayDat) }}</td>
-              <td><StatusBadge :nhan-hien="TRANG_THAI_MAP[item.trangThai].nhan" :loai="TRANG_THAI_MAP[item.trangThai].mau" /></td>
+              <td>{{ item.sach?.tenSach || 'N/A' }}</td>
+              <td>{{ item.ngayDatCho ? formatNgay(item.ngayDatCho) : '' }}</td>
+              <td><StatusBadge v-if="item.trangThai && TRANG_THAI_MAP[item.trangThai]" :nhan-hien="TRANG_THAI_MAP[item.trangThai].nhan" :loai="TRANG_THAI_MAP[item.trangThai].mau" /></td>
               <td>
                 <div v-if="item.trangThai === 'CHO_DUYET'" class="hanh-dong">
-                  <button class="nut-duyet" :disabled="dangXuLy" @click="duyet(item)">✅ Duyệt</button>
+                   <button class="nut-duyet" :disabled="dangXuLy" @click="duyet(item)">✅ Duyệt</button>
                   <button class="nut-huy-btn" :disabled="dangXuLy" @click="huyItem = item; lyDoHuy = ''">❌ Hủy</button>
                 </div>
                 <span v-else class="khong-hanh-dong">—</span>
@@ -111,7 +111,7 @@ onMounted(taiDanhSach)
     <!-- Modal hủy -->
     <ModalDialog :dang-mo="huyItem !== null" tieu-de="Hủy đặt chỗ" @dong="huyItem = null">
       <div class="form-modal">
-        <p style="color:var(--mau-chu-mo);font-size:0.875rem;margin-bottom:0.75rem">Hủy đặt chỗ của <strong>{{ huyItem?.nguoiDung.hoDem }} {{ huyItem?.nguoiDung.ten }}</strong> cho sách <strong>{{ huyItem?.sach.tenSach }}</strong>.</p>
+        <p style="color:var(--mau-chu-mo);font-size:0.875rem;margin-bottom:0.75rem">Hủy đặt chỗ của <strong>{{ huyItem?.nguoiDung?.hoDem || '' }} {{ huyItem?.nguoiDung?.ten || '' }}</strong> cho sách <strong>{{ huyItem?.sach?.tenSach || 'N/A' }}</strong>.</p>
         <div class="form-group">
           <label>Lý do hủy *</label>
           <textarea v-model="lyDoHuy" class="form-input form-textarea" placeholder="Nhập lý do hủy..."></textarea>
@@ -129,7 +129,7 @@ onMounted(taiDanhSach)
 .dat-cho { animation:fadeInUp 0.4s ease; }
 .thanh-cong-cu { margin-bottom:1rem; }
 .select-filter { padding:0.65rem 1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu); font-family:inherit; cursor:pointer; }
-.select-filter option { background:#1a1a2e; }
+.select-filter option { background:#1a1a2e; color:#ffffff; }
 .bang-container { background:var(--glass-nen); border:1px solid var(--glass-vien); border-radius:12px; overflow:hidden; padding:1rem; }
 .bang { width:100%; border-collapse:collapse; }
 .bang th { padding:0.75rem 1rem; text-align:left; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--mau-chu-mo); border-bottom:1px solid rgba(255,255,255,0.08); }

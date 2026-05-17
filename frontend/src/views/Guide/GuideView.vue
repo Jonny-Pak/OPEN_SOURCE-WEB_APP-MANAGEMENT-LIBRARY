@@ -13,22 +13,22 @@ const steps = [
   {
     title: 'Tìm kiếm sách',
     description: 'Sử dụng thanh tìm kiếm hoặc duyệt qua danh mục để tìm cuốn sách bạn cần.',
-    icon: 'fa-search'
+    icon: 'fa-solid fa-magnifying-glass'
   },
   {
     title: 'Đăng ký mượn',
     description: 'Nhấn nút "Mượn sách" tại trang chi tiết. Hệ thống sẽ ghi nhận yêu cầu của bạn.',
-    icon: 'fa-file-signature'
+    icon: 'fa-solid fa-hand-holding-heart'
   },
   {
     title: 'Nhận sách',
     description: 'Đến quầy thủ thư, xuất trình mã số học sinh để nhận sách vật lý.',
-    icon: 'fa-book-reader'
+    icon: 'fa-solid fa-book-open-reader'
   },
   {
     title: 'Trả sách đúng hạn',
     description: 'Hoàn trả sách trước ngày hết hạn để duy trì điểm tin cậy của bạn.',
-    icon: 'fa-calendar-check'
+    icon: 'fa-solid fa-calendar-check'
   }
 ]
 
@@ -78,7 +78,7 @@ const rules = [
             <div v-for="(step, index) in steps" :key="index" class="step-item">
               <div class="step-number">{{ index + 1 }}</div>
               <div class="step-card">
-                <div class="step-icon"><i :class="['fas', step.icon]"></i></div>
+                <div class="step-icon"><font-awesome-icon :icon="step.icon" /></div>
                 <h3>{{ step.title }}</h3>
                 <p>{{ step.description }}</p>
               </div>
@@ -91,7 +91,7 @@ const rules = [
           <!-- FAQ Section -->
           <section class="section faq-section">
             <div class="section-title">
-              <i class="fas fa-question-circle"></i>
+              <font-awesome-icon icon="fa-solid fa-circle-question" />
               <h2>Câu hỏi thường gặp</h2>
             </div>
             
@@ -104,7 +104,7 @@ const rules = [
               >
                 <div class="faq-question" @click="toggleFaq(index)">
                   <h3>{{ faq.question }}</h3>
-                  <i class="fas fa-chevron-down"></i>
+                  <font-awesome-icon icon="fa-solid fa-chevron-down" />
                 </div>
                 <div class="faq-answer">
                   <p>{{ faq.answer }}</p>
@@ -117,17 +117,17 @@ const rules = [
           <aside class="section rules-section">
             <div class="rules-card">
               <div class="section-title">
-                <i class="fas fa-gavel"></i>
+                <font-awesome-icon icon="fa-solid fa-scale-balanced" />
                 <h2>Nội quy thư viện</h2>
               </div>
               <ul class="rules-list">
                 <li v-for="(rule, index) in rules" :key="index">
-                  <i class="fas fa-check-circle"></i>
+                  <font-awesome-icon icon="fa-solid fa-circle-check" />
                   {{ rule }}
                 </li>
               </ul>
               <div class="rules-note">
-                <i class="fas fa-info-circle"></i>
+                <font-awesome-icon icon="fa-solid fa-circle-info" />
                 <p>Việc vi phạm nội quy có thể dẫn đến việc tạm dừng quyền mượn sách.</p>
               </div>
             </div>

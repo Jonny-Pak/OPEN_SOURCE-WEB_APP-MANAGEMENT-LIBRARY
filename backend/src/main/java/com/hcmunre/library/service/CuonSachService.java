@@ -13,6 +13,7 @@ public interface CuonSachService {
     List<CuonSachResponse> getCuonSachBySach(Long maSach);
     CuonSachResponse getCuonSachById(Long id);
     CuonSach getCuonSachAvailable(Long maSach);
+    CuonSach getCuonSachByMaVach(String maVach);
 
     // Commands
     CuonSachResponse createCuonSach(CuonSachRequest request);

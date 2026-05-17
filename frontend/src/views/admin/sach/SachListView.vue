@@ -5,7 +5,7 @@
 import { ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { sachService } from '@/services/sachService'
-import { theLoaiService } from '@/services/danhMucService'
+import { theLoaiService, tacGiaService, nhaXuatBanService } from '@/services/danhMucService'
 import { useSearch } from '@/composables/useSearch'
 import { usePagination } from '@/composables/usePagination'
 import { useToast } from '@/composables/useToast'
@@ -35,16 +35,15 @@ const showImportModal = ref(false)
 async function taiDanhSach() {
   dangTai.value = true
   try {
-    danhSach.value = await sachService.danhSach()
-    phanTrang.capNhatTong(danhSach.value.length)
+    const response = await sachService.danhSach(
+      phanTrang.trangHienTai.value,
+      10,
+      tuKhoaDebounced.value
+    )
+    danhSach.value = response.content
+    phanTrang.capNhatTong(response.totalElements)
   } catch { toast.loi('Không thể tải danh sách sách') }
   finally { dangTai.value = false }
-}
-
-async function taiTheLoai() {
-  try {
-    danhSachTheLoai.value = await theLoaiService.danhSach()
-  } catch { /* im lặng */ }
 }
 
 async function xacNhanXoa() {
@@ -59,19 +58,69 @@ async function xacNhanXoa() {
   finally { dangXoa.value = false }
 }
 
-async function handleExcelImport(rows: any[]) {
+async function taiDuLieuDanhMuc() {
   try {
-    // TODO: Gửi data lên API backend để import
-    // Tạm thời mock: giả lập delay 1s rồi reload
-    await new Promise(r => setTimeout(r, 1000))
-    toast.thanhCong(`Đã import thành công ${rows.length} sách`)
+    const [tl, tg, nxb] = await Promise.all([
+      theLoaiService.danhSach(),
+      tacGiaService.danhSach(),
+      nhaXuatBanService.danhSach(),
+    ])
+    danhSachTheLoai.value = tl
+    // Lưu tạm để dùng lúc import
+    ;(window as any).__danhSachTacGia = tg
+    ;(window as any).__danhSachNXB = nxb
+  } catch { /* im lặng */ }
+}
+
+async function handleExcelImport(rows: Record<string, unknown>[]) {
+  try {
+    let successCount = 0
+    for (const row of rows) {
+      const tenSach = String(row['Tên sách'])
+      const maIsbn = String(row['ISBN'] || `ISBN-${Date.now()}`)
+      const tacGiaStr = String(row['Tác giả'])
+      const nxbStr = String(row['NXB'])
+      const theLoaiStr = String(row['Thể loại'] || '')
+      const namXuatBan = Number(row['Năm XB']) || new Date().getFullYear()
+
+      // Map tên thành ID
+      const tgList = (window as any).__danhSachTacGia || []
+      const nxbList = (window as any).__danhSachNXB || []
+      const tlList = danhSachTheLoai.value || []
+
+      const tacGiaMatch = tgList.find((t: any) => `${t.hoDem} ${t.ten}`.toLowerCase() === tacGiaStr.toLowerCase())
+      const nxbMatch = nxbList.find((n: any) => n.tenNhaXuatBan.toLowerCase() === nxbStr.toLowerCase())
+      const tlMatch = tlList.find((t: any) => t.tenTheLoai.toLowerCase() === theLoaiStr.toLowerCase())
+
+      const dto = {
+        tenSach,
+        maIsbn,
+        namXuatBan,
+        lanTaiBan: 1,
+        soTrang: 100,
+        giaTien: 100000,
+        donGiaPhatTheoNgay: 5000,
+        moTa: String(row['Mô tả'] || ''),
+        maNhaXuatBan: nxbMatch ? nxbMatch.maNhaXuatBan : 1, // fallback ID
+        maTacGias: tacGiaMatch ? [tacGiaMatch.maTacGia] : [1],
+        maTheLoais: tlMatch ? [tlMatch.maTheLoai] : [1]
+      }
+
+      try {
+        await sachService.taoCai(dto)
+        successCount++
+      } catch (e) {
+        console.error('Lỗi import dòng:', row, e)
+      }
+    }
+    toast.thanhCong(`Đã import thành công ${successCount} sách`)
     taiDanhSach()
-  } catch { toast.loi('Lỗi import Excel') }
+  } catch (err) { toast.loi('Lỗi import Excel') }
 }
 
 watch([tuKhoaDebounced, filterTheLoai], () => { phanTrang.datLaiTrang(); taiDanhSach() })
 watch(() => phanTrang.trangHienTai.value, taiDanhSach)
-onMounted(() => { taiDanhSach(); taiTheLoai() })
+onMounted(() => { taiDanhSach(); taiDuLieuDanhMuc() })
 </script>
 
 <template>
@@ -89,7 +138,7 @@ onMounted(() => { taiDanhSach(); taiTheLoai() })
         class="nut-them nut-import"
         @click="showImportModal = true"
       >
-        <i class="fas fa-file-excel"></i> Import Excel
+        <font-awesome-icon icon="fa-solid fa-file-excel" /> Import Excel
       </button>
     </div>
 
@@ -108,22 +157,22 @@ onMounted(() => { taiDanhSach(); taiTheLoai() })
             <tr v-for="item in danhSach" :key="item.maSach">
               <td>
                 <div class="anh-bia-nho">
-                  <img v-if="item.anhBiaUrl" :src="item.anhBiaUrl" alt="Ảnh bìa" />
-                  <span v-else class="anh-placeholder"><i class="fas fa-book"></i></span>
+                  <img v-if="item.danhSachHinhAnhUrl?.[0]" :src="item.danhSachHinhAnhUrl[0]" alt="Ảnh bìa" />
+                  <span v-else class="anh-placeholder"><font-awesome-icon icon="fa-solid fa-book" /></span>
                 </div>
               </td>
               <td><span class="ten-sach">{{ item.tenSach }}</span></td>
-              <td><code class="isbn">{{ item.isbn }}</code></td>
-              <td>{{ item.tacGias.map(t => t.tenTacGia).join(', ') || '—' }}</td>
-              <td>{{ item.nhaXuatBan.tenNXB }}</td>
+              <td><code class="isbn">{{ item.maIsbn }}</code></td>
+              <td>{{ item.danhSachTacGia?.map(t => `${t.hoDem} ${t.ten}`).join(', ') || '—' }}</td>
+              <td>{{ item.nhaXuatBan?.tenNhaXuatBan || '—' }}</td>
               <td>{{ item.namXuatBan }}</td>
               <td>
                 <div class="hanh-dong">
                   <button class="nut-hanh-dong nut-sua" @click="router.push(`/admin/sach/${item.maSach}/chinh-sua`)">
-                    <i class="fas fa-pen-to-square"></i> Sửa
+                    <font-awesome-icon icon="fa-solid fa-pen-to-square" /> Sửa
                   </button>
                   <button class="nut-hanh-dong nut-xoa" @click="xoaItem = item">
-                    <i class="fas fa-trash"></i> Xóa
+                    <font-awesome-icon icon="fa-solid fa-trash-can" /> Xóa
                   </button>
                 </div>
               </td>
@@ -151,7 +200,7 @@ onMounted(() => { taiDanhSach(); taiTheLoai() })
 .input-tk { flex:1; min-width:200px; padding:0.65rem 1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu); font-family:inherit; font-size:0.875rem; outline:none; }
 .input-tk:focus { border-color:var(--mau-chinh); }
 .select-filter { padding:0.65rem 1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu); font-family:inherit; font-size:0.875rem; cursor:pointer; }
-.select-filter option { background:#1a1a2e; }
+.select-filter option { background:#1a1a2e; color:#ffffff; }
 .nut-them { padding:0.65rem 1.25rem; background:var(--color-primary); border:none; border-radius:8px; color:white; cursor:pointer; font-family:inherit; font-size:0.875rem; font-weight:600; white-space:nowrap; }
 .nut-import { display: flex; align-items: center; gap: 0.5rem; background: #16a34a; }
 .nut-import:hover { background: #15803d; }

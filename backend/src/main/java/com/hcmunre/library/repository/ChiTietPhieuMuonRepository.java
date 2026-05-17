@@ -15,5 +15,7 @@ public interface ChiTietPhieuMuonRepository extends JpaRepository<ChiTietPhieuMu
             TrangThaiChiTietPhieuMuon trangThai,
             LocalDateTime now
     );
+    long countByTrangThaiChiTietPhieuMuon(TrangThaiChiTietPhieuMuon trangThai);
+    long countByTrangThaiChiTietPhieuMuonIn(List<TrangThaiChiTietPhieuMuon> trangThais);
 
 }

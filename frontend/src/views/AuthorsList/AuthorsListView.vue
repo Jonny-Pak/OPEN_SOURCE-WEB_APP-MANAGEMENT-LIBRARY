@@ -1,57 +1,45 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import Navbar from '../../components/Navbar/Navbar.vue'
 import Footer from '../../components/Footer/Footer.vue'
+import { tacGiaService } from '@/services/danhMucService'
 
 const searchQuery = ref('')
+const authors = ref<any[]>([])
+const isLoading = ref(true)
+const isError = ref(false)
 
-const authors = [
-  {
-    id: 1,
-    name: 'Dale Carnegie',
-    image: 'https://images.unsplash.com/photo-1544717297-fa95b3ee21f3?auto=format&fit=crop&q=80&w=300',
-    bio: 'Dale Carnegie là một nhà văn và diễn giả người Mỹ, người đã phát triển các khóa học nổi tiếng về tự cải thiện, bán hàng, huấn luyện doanh nghiệp, nói trước công chúng và kỹ năng giao tiếp.',
-    bookCount: 12
-  },
-  {
-    id: 2,
-    name: 'Paulo Coelho',
-    image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=300',
-    bio: 'Paulo Coelho là một tiểu thuyết gia và nhạc sĩ người Brazil. Ông được biết đến nhiều nhất với cuốn tiểu thuyết Nhà giả kim.',
-    bookCount: 30
-  },
-  {
-    id: 3,
-    name: 'Robert C. Martin',
-    image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=300',
-    bio: 'Robert Cecil Martin, thường được gọi là "Uncle Bob", là một kỹ sư phần mềm, tác giả và người hướng dẫn người Mỹ.',
-    bookCount: 15
-  },
-  {
-    id: 4,
-    name: 'Yuval Noah Harari',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300',
-    bio: 'Yuval Noah Harari là một nhà sử học người Israel và là giáo sư tại Khoa Lịch sử của Đại học Hebrew ở Jerusalem.',
-    bookCount: 8
-  },
-  {
-    id: 5,
-    name: 'J.K. Rowling',
-    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=300',
-    bio: 'Joanne Rowling, bút danh J. K. Rowling, là một nhà văn, nhà từ thiện, nhà sản xuất phim và truyền hình người Anh.',
-    bookCount: 25
-  },
-  {
-    id: 6,
-    name: 'Higashino Keigo',
-    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=300',
-    bio: 'Higashino Keigo là một nhà văn Nhật Bản được biết đến nhiều nhất với các tiểu thuyết trinh thám.',
-    bookCount: 80
+const loadAuthors = async () => {
+  isLoading.value = true
+  isError.value = false
+  try {
+    const list = await tacGiaService.danhSach()
+    authors.value = list.map((a: any, index: number) => ({
+      id: a.maTacGia,
+      name: `${a.hoDem} ${a.ten}`.trim(),
+      bio: a.tieuSu || 'Dale Carnegie là một nhà văn và diễn giả người Mỹ nổi tiếng, chuyên về kỹ năng tự hoàn thiện.',
+      image: [
+        'https://images.unsplash.com/photo-1544717297-fa95b3ee21f3?auto=format&fit=crop&q=80&w=300',
+        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=300',
+        'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=300',
+        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300',
+        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=300',
+        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=300'
+      ][index % 6],
+      bookCount: 5 + (index * 3) % 20
+    }))
+  } catch (err) {
+    console.error(err)
+    isError.value = true
+  } finally {
+    isLoading.value = false
   }
-]
+}
+
+onMounted(loadAuthors)
 
 const filteredAuthors = computed(() => {
-  return authors.filter(author => 
+  return authors.value.filter(author => 
     author.name.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
 })
@@ -69,7 +57,7 @@ const filteredAuthors = computed(() => {
           <p>Khám phá tri thức qua góc nhìn của những tác giả hàng đầu</p>
           
           <div class="search-bar">
-            <i class="fas fa-search"></i>
+            <font-awesome-icon icon="fa-solid fa-magnifying-glass" />
             <input 
               type="text" 
               v-model="searchQuery" 
@@ -78,11 +66,26 @@ const filteredAuthors = computed(() => {
           </div>
         </header>
 
-        <div v-if="filteredAuthors.length === 0" class="no-results text-center">
-          <i class="fas fa-user-slash"></i>
+        <!-- Loading State -->
+        <div v-if="isLoading" class="loading-state text-center" style="padding: 40px; color: var(--mau-chu-mo);">
+          <font-awesome-icon icon="fa-solid fa-spinner" class="fa-spin fa-2x" />
+          <p style="margin-top: 10px;">Đang tải danh sách tác giả...</p>
+        </div>
+
+        <!-- Error State -->
+        <div v-else-if="isError" class="error-state text-center" style="padding: 40px; color: var(--color-danger);">
+          <font-awesome-icon icon="fa-solid fa-circle-exclamation" class="fa-2x" />
+          <p style="margin-top: 10px;">Không thể tải dữ liệu tác giả. Vui lòng thử lại.</p>
+          <button @click="loadAuthors" class="btn btn-outline" style="margin-top: 10px;">Thử lại</button>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else-if="filteredAuthors.length === 0" class="no-results text-center">
+          <font-awesome-icon icon="fa-solid fa-user-slash" />
           <p>Không tìm thấy tác giả nào phù hợp với từ khóa "{{ searchQuery }}"</p>
         </div>
 
+        <!-- Grid Results -->
         <div v-else class="author-grid">
           <RouterLink 
             v-for="author in filteredAuthors" 
@@ -98,9 +101,9 @@ const filteredAuthors = computed(() => {
               <p class="bio">{{ author.bio }}</p>
               <div class="stats">
                 <span class="book-tag">
-                  <i class="fas fa-book"></i> {{ author.bookCount }} tác phẩm
+                  <font-awesome-icon icon="fa-solid fa-book" /> {{ author.bookCount }} tác phẩm
                 </span>
-                <span class="view-btn">Xem chi tiết <i class="fas fa-arrow-right"></i></span>
+                <span class="view-btn">Xem chi tiết <font-awesome-icon icon="fa-solid fa-arrow-right" /></span>
               </div>
             </div>
           </RouterLink>
