@@ -13,9 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,9 +26,10 @@ public class NguoiDungServiceImplement implements NguoiDungService {
 
     @Override
     public NguoiDung getNguoiDungActive(UUID maNugoiDung) {
-        NguoiDung nguoiDung = nguoiDungRepository.findById(maNugoiDung).orElseThrow(() -> new LibraryException(ErrorCode.NGUOI_DUNG_KHONG_TON_TAI));
+        NguoiDung nguoiDung = nguoiDungRepository.findById(maNugoiDung)
+                .orElseThrow(() -> new LibraryException(ErrorCode.NGUOI_DUNG_KHONG_TON_TAI));
 
-        if(nguoiDung.getTrangThai() == TrangThaiNguoiDung.KHOA){
+        if (nguoiDung.getTrangThai() == TrangThaiNguoiDung.KHOA) {
             throw new LibraryException(ErrorCode.TAI_KHOAN_BI_KHOA);
         }
 
@@ -45,27 +44,24 @@ public class NguoiDungServiceImplement implements NguoiDungService {
     @Override
     public NguoiDungResponse getMyProfile(UUID maNguoiDung) {
         NguoiDung nguoiDung = nguoiDungRepository.findById(maNguoiDung).orElseThrow(
-                () -> new LibraryException(ErrorCode.NGUOI_DUNG_KHONG_TON_TAI)
-        );
+                () -> new LibraryException(ErrorCode.NGUOI_DUNG_KHONG_TON_TAI));
 
         return toRespone(nguoiDung);
     }
 
-
-
     @Override
     public NguoiDungResponse updateProfile(UUID maNguoiDung, UpdateProfileRequest request) {
         NguoiDung nguoiDung = nguoiDungRepository.findById(maNguoiDung).orElseThrow(
-                () -> new LibraryException(ErrorCode.NGUOI_DUNG_KHONG_TON_TAI)
-        );
+                () -> new LibraryException(ErrorCode.NGUOI_DUNG_KHONG_TON_TAI));
 
         nguoiDung.setHoDem(request.getHoDem());
         nguoiDung.setTen(request.getTen());
         nguoiDung.setSoDienThoai(request.getSoDienThoai());
         nguoiDung.setNgaySinh(request.getNgaySinh());
         nguoiDung.setGioiTinh(request.getGioiTinh());
-        nguoiDung.setCccd(request.getCccd());
-        nguoiDung.setDiaChi(request.getDiaChi());
+        if(request.getCccd() != null) nguoiDung.setCccd(request.getCccd());
+        if(request.getDiaChi() != null) nguoiDung.setDiaChi(request.getDiaChi());
+        if(request.getAvatar() != null) nguoiDung.setAvatar(request.getAvatar());
 
         return toRespone(nguoiDungRepository.save(nguoiDung));
     }
@@ -73,14 +69,13 @@ public class NguoiDungServiceImplement implements NguoiDungService {
     @Override
     public void changePassword(UUID maNguoiDung, ChangePasswordRequest request) {
         NguoiDung nguoiDung = nguoiDungRepository.findById(maNguoiDung).orElseThrow(
-                () -> new LibraryException(ErrorCode.NGUOI_DUNG_KHONG_TON_TAI)
-        );
+                () -> new LibraryException(ErrorCode.NGUOI_DUNG_KHONG_TON_TAI));
 
-        if(!passwordEncoder.matches(request.getMatKhauCu(), nguoiDung.getMatKhau())){
+        if (!passwordEncoder.matches(request.getMatKhauCu(), nguoiDung.getMatKhau())) {
             throw new LibraryException(ErrorCode.MAT_KHAU_CU_SAI);
         }
 
-        if(!request.getMatKhauMoi().equals(request.getXacNhanMatKhau())){
+        if (!request.getMatKhauMoi().equals(request.getXacNhanMatKhau())) {
             throw new LibraryException(ErrorCode.MAT_KHAU_KHONG_KHOP);
         }
 
@@ -91,14 +86,13 @@ public class NguoiDungServiceImplement implements NguoiDungService {
     @Override
     public void toggleUserStatus(UUID targetUserId, TrangThaiNguoiDung newTrangThai) {
         NguoiDung nguoiDung = nguoiDungRepository.findById(targetUserId).orElseThrow(
-                () -> new LibraryException(ErrorCode.NGUOI_DUNG_KHONG_TON_TAI)
-        );
+                () -> new LibraryException(ErrorCode.NGUOI_DUNG_KHONG_TON_TAI));
 
         nguoiDung.setTrangThai(newTrangThai);
         nguoiDungRepository.save(nguoiDung);
     }
 
-    private NguoiDungResponse toRespone(NguoiDung nguoiDung){
+    private NguoiDungResponse toRespone(NguoiDung nguoiDung) {
         return NguoiDungResponse.builder()
                 .maNguoiDung(nguoiDung.getMaNguoiDung())
                 .hoDem(nguoiDung.getHoDem())
@@ -111,6 +105,7 @@ public class NguoiDungServiceImplement implements NguoiDungService {
                 .diaChi(nguoiDung.getDiaChi())
                 .vaiTro(nguoiDung.getVaiTro())
                 .trangThai(nguoiDung.getTrangThai())
+                .avatar(nguoiDung.getAvatar())
                 .ngayTao(nguoiDung.getNgayTao())
                 .build();
     }

@@ -29,4 +29,6 @@ public class UpdateProfileRequest {
     private String cccd;
 
     private String diaChi;
+    
+    private String avatar;
 }

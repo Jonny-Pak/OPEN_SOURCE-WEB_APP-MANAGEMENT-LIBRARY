@@ -1,7 +1,9 @@
 package com.hcmunre.library.controller;
 
 import com.hcmunre.library.dto.request.AuthRequest;
+import com.hcmunre.library.dto.request.ForgotPasswordRequest;
 import com.hcmunre.library.dto.request.RegisterRequest;
+import com.hcmunre.library.dto.request.ResetPasswordRequest;
 import com.hcmunre.library.dto.response.AuthResponse;
 import com.hcmunre.library.service.AuthService;
 import jakarta.validation.Valid;
@@ -12,6 +14,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 /**
  * Controller xử lý các API xác thực (Authentication).
@@ -60,4 +64,20 @@ public class AuthController {
         AuthResponse response = authService.refreshToken(request);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, String>> quenMatKhau(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        authService.quenMatKhau(request);
+        return ResponseEntity.ok(Map.of("message",
+                "Mã OTP đã được gửi đến email của bạn"));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, String>> datLaiMatKhau(
+            @Valid @RequestBody ResetPasswordRequest request) {
+        authService.datLaiMatKhau(request);
+        return ResponseEntity.ok(Map.of("message", "Đặt lại mật khẩu thành công"));
+    }
+
 }

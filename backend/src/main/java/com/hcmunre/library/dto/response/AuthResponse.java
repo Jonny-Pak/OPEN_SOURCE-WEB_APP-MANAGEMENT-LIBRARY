@@ -39,4 +39,7 @@ public class AuthResponse {
 
     /** Vai trò (QUAN_TRI_VIEN, THU_THU, DOC_GIA) */
     private String vaiTro;
+
+    /** Ảnh đại diện (URL) */
+    private String avatar;
 }
