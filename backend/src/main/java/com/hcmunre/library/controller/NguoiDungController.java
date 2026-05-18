@@ -103,7 +103,7 @@ public class NguoiDungController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'THU_THU')")
+    @PreAuthorize("hasRole('QUAN_TRI_VIEN')")
     public ResponseEntity<Void> deleteNguoiDung(@PathVariable UUID id) {
         nguoiDungService.deleteNguoiDung(id);
         return ResponseEntity.noContent().build();

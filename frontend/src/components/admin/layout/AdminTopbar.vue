@@ -55,28 +55,7 @@ async function dangXuat(): Promise<void> {
 
     <!-- Phần phải: thông tin người dùng -->
     <div class="topbar__nguoi-dung">
-      <!-- [DEV] Switch Role -->
-      <div class="switch-role-wrapper">
-        <span class="switch-role-label">
-          <font-awesome-icon icon="fa-solid fa-screwdriver-wrench" /> DEV
-        </span>
-        <div class="role-toggle">
-          <button
-            :class="['role-btn', authStore.currentRole === 'ADMIN' && 'active']"
-            @click="authStore.switchRole('ADMIN')"
-            title="Chuyển sang role Admin"
-          >
-            <font-awesome-icon icon="fa-solid fa-user-shield" /> Admin
-          </button>
-          <button
-            :class="['role-btn', authStore.currentRole === 'LIBRARIAN' && 'active']"
-            @click="authStore.switchRole('LIBRARIAN')"
-            title="Chuyển sang role Thủ thư"
-          >
-            <font-awesome-icon icon="fa-solid fa-user-shield" /> Thủ thư
-          </button>
-        </div>
-      </div>
+
 
       <div class="topbar__ten-nguoi-dung">
         <span class="topbar__ten">{{ authStore.tenDayDu }}</span>

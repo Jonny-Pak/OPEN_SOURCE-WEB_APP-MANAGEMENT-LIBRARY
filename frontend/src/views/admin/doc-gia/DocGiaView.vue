@@ -13,6 +13,7 @@ import SkeletonLoader from '@/components/admin/shared/SkeletonLoader.vue'
 import EmptyState from '@/components/admin/shared/EmptyState.vue'
 import StatusBadge from '@/components/admin/shared/StatusBadge.vue'
 import ImportDocGiaExcelModal from '@/components/admin/shared/ImportDocGiaExcelModal.vue'
+import { useAuthStore } from '@/stores/auth'
 
 interface ImportResult {
   thanhCong: number
@@ -20,6 +21,7 @@ interface ImportResult {
   loi: Array<{ email: string; message: string }>
 }
 
+const authStore = useAuthStore()
 const toast = useToast()
 const { tuKhoaTimKiem, tuKhoaDebounced } = useSearch(250)
 const phanTrang = usePagination(10)
@@ -301,7 +303,7 @@ onMounted(taiDanhSach)
                   <button class="nut-hd" @click="moXacNhanTrangThai(item)">
                     {{ chuanHoaTrangThai(item.trangThai) === 'chua_kich_hoat' ? 'Kich hoat' : chuanHoaTrangThai(item.trangThai) === 'da_kich_hoat' ? 'Khoa' : 'Mo khoa' }}
                   </button>
-                  <button class="nut-hd nut-xoa-btn" @click="xoaItem = item">Xoa</button>
+                  <button v-if="authStore.isAdmin" class="nut-hd nut-xoa-btn" @click="xoaItem = item">Xoa</button>
                 </div>
               </td>
             </tr>
