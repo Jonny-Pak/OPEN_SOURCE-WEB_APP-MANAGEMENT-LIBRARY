@@ -1,5 +1,6 @@
 package com.hcmunre.library.dto.request;
 
+import com.hcmunre.library.enums.GioiTinh;
 import com.hcmunre.library.enums.TrangThaiNguoiDung;
 import com.hcmunre.library.enums.VaiTro;
 import jakarta.validation.constraints.Email;
@@ -9,6 +10,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
 
 @Data
 @Builder
@@ -26,13 +29,21 @@ public class AdminTaoNguoiDungRequest {
     @Email(message = "Email không đúng định dạng")
     private String email;
 
-    @NotBlank(message = "Mật khẩu không được để trống")
-    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!])(?=\\S+$).{8,}$", message = "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt")
+    /**
+     * Mật khẩu do admin đặt. Không bắt buộc độ phức tạp vì admin quản lý.
+     * Nếu để trống, backend sẽ dùng mật khẩu mặc định "Password@123".
+     */
     private String matKhau;
 
-    @NotBlank(message = "Số điện thoại không được để trống")
     @Pattern(regexp = "^0\\d{9}$", message = "Số điện thoại phải có 10 chữ số và bắt đầu bằng 0")
     private String soDienThoai;
+
+    @Pattern(regexp = "^\\d{12}$", message = "CCCD phải gồm 12 chữ số")
+    private String cccd;
+
+    private LocalDate ngaySinh;
+
+    private GioiTinh gioiTinh;
 
     private VaiTro vaiTro;
 

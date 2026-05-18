@@ -88,8 +88,12 @@ export const muonSachService = {
     return apiClient.get<any>('/api/v1/phieu-muon', { params })
   },
 
-  getMyBorrows: async () => {
-    return apiClient.get<any>('/api/muon-sach/cua-toi')
+  getMyBorrows: async (page: number = 0, size: number = 50) => {
+    const response = await apiClient.get<PageResponse<any>>(`/api/v1/phieu-muon/cua-toi?page=${page}&size=${size}`)
+    if (response && response.content) {
+      response.content = response.content.map(normalizePhieuMuon)
+    }
+    return response as PageResponse<PhieuMuon>
   },
 
   borrowBook: async (sachId: string) => {
@@ -136,6 +140,33 @@ export const muonSachService = {
       maNguoiThucHien: authStore.thongTinNguoiDung?.maNguoiDung,
       lyDo: 'Gia hạn qua website'
     })
+  },
+
+  extendBorrowDocGia: async (muonId: string, soNgayGiaHan?: number) => {
+    let days = soNgayGiaHan
+    if (!days) {
+      try {
+        const saved = localStorage.getItem('library_settings')
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          if (parsed && parsed.soNgayGiaHan) {
+            days = Number(parsed.soNgayGiaHan)
+          }
+        }
+      } catch {}
+    }
+    const finalDays = days || 7
+    return apiClient.post(`/api/v1/phieu-muon/gia-han/doc-gia/${muonId}?soNgayGiaHan=${finalDays}`)
+  },
+
+  layYeuCauGiaHan: async (trangThai?: string) => {
+    const params = new URLSearchParams()
+    if (trangThai) params.append('trangThai', trangThai)
+    return apiClient.get<any[]>(`/api/v1/phieu-muon/gia-han/danh-sach?${params.toString()}`)
+  },
+
+  duyetYeuCauGiaHan: async (id: string, dongY: boolean) => {
+    return apiClient.post(`/api/v1/phieu-muon/gia-han/duyet/${id}?dongY=${dongY}`)
   }
 }
 

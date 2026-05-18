@@ -18,4 +18,10 @@ public interface ChiTietPhieuMuonRepository extends JpaRepository<ChiTietPhieuMu
     long countByTrangThaiChiTietPhieuMuon(TrangThaiChiTietPhieuMuon trangThai);
     long countByTrangThaiChiTietPhieuMuonIn(List<TrangThaiChiTietPhieuMuon> trangThais);
 
+    /** Tìm các chi tiết đang mượn mà hạn trả nằm trong khoảng từ 'from' đến 'to' (dùng để nhắc trước 1 ngày) */
+    List<ChiTietPhieuMuon> findByTrangThaiChiTietPhieuMuonAndHanTraHienTaiBetween(
+            TrangThaiChiTietPhieuMuon trangThai,
+            LocalDateTime from,
+            LocalDateTime to
+    );
 }

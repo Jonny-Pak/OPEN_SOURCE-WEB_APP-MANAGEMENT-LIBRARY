@@ -1,5 +1,6 @@
 package com.hcmunre.library.controller;
 
+import com.hcmunre.library.dto.request.AdminTaoNguoiDungRequest;
 import com.hcmunre.library.dto.request.ChangePasswordRequest;
 import com.hcmunre.library.dto.request.UpdateProfileRequest;
 import com.hcmunre.library.dto.response.ImportExcelResponse;
@@ -92,7 +93,7 @@ public class NguoiDungController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'THU_THU')")
-    public ResponseEntity<NguoiDungResponse> createNguoiDung(@Valid @RequestBody com.hcmunre.library.dto.request.AdminTaoNguoiDungRequest request) {
+    public ResponseEntity<NguoiDungResponse> createNguoiDung(@Valid @RequestBody AdminTaoNguoiDungRequest request) {
         return ResponseEntity.ok(nguoiDungService.createNguoiDung(request));
     }
 
@@ -107,5 +108,12 @@ public class NguoiDungController {
     public ResponseEntity<Void> deleteNguoiDung(@PathVariable UUID id) {
         nguoiDungService.deleteNguoiDung(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/doi-mat-khau")
+    @PreAuthorize("hasRole('QUAN_TRI_VIEN')")
+    public ResponseEntity<Void> adminDoiMatKhau(@PathVariable UUID id, @RequestParam String matKhauMoi) {
+        nguoiDungService.adminDoiMatKhau(id, matKhauMoi);
+        return ResponseEntity.ok().build();
     }
 }

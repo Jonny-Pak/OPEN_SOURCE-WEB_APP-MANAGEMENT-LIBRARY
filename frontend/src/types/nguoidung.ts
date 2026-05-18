@@ -28,11 +28,13 @@ export interface TaoNguoiDungRequest {
   hoDem: string
   ten: string
   email: string
-  matKhau: string
-  soDienThoai: string
+  matKhau?: string
+  soDienThoai?: string
+  cccd?: string
+  ngaySinh?: string
+  gioiTinh?: 'NAM' | 'NU'
   vaiTro?: VaiTro
   trangThai?: TrangThaiNguoiDung
-  isDefaultPassword?: boolean
 }
 
 export interface SuaNguoiDungRequest {

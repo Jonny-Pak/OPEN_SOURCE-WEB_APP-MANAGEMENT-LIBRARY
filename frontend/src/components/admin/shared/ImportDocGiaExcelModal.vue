@@ -15,7 +15,7 @@
           <button class="btn-outline" @click="downloadTemplate">
             <font-awesome-icon icon="fa-solid fa-download" /> Tải template Excel
           </button>
-          <p class="hint-text">File mẫu gồm các cột: STT, Mã SV, Họ tên, Giới tính, Ngày sinh</p>
+          <p class="hint-text">File mẫu gồm các cột: STT | Mã SV | Họ tên | Giới tính | Ngày sinh | Số điện thoại | CCCD | Email</p>
         </div>
 
         <!-- Bước 2: Upload file -->
@@ -120,7 +120,7 @@ const previewData = ref<Record<string, unknown>[]>([])
 const selectedFile = ref<File | null>(null)
 const isImporting = ref(false)
 
-const columns = ['STT', 'Mã SV', 'Họ tên', 'Giới tính', 'Ngày sinh']
+const columns = ['STT', 'Mã SV', 'Họ tên', 'Giới tính', 'Ngày sinh', 'Số điện thoại', 'CCCD', 'Email']
 
 const validCount = computed(() => previewData.value.filter(r => !r._error).length)
 const errorCount = computed(() => previewData.value.filter(r => r._error).length)
@@ -129,7 +129,7 @@ const downloadTemplate = () => {
   try {
     const ws = XLSX.utils.aoa_to_sheet([
       columns,
-      [1, '1250080082', 'Đào Kỹ Vân Khoa', 'Nam', '04/05/2005'],
+      [1, '1250080082', 'Đào Kỹ Vân Khoa', 'Nam', '04/05/2005', '0901234567', '123456789012', 'khoa@sv.hcmunre.edu.vn'],
     ])
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'DanhSachDocGia')
@@ -193,6 +193,21 @@ const parseFile = (file: File) => {
             return { ...row, _error: 'Giới tính phải là Nam hoặc Nữ' }
           }
 
+          // Validate email và số điện thoại
+          const email = String(row['Email'] || '').trim()
+          if (!email) {
+            return { ...row, _error: 'Thiếu email' }
+          }
+          if (!/^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+            return { ...row, _error: 'Email không đúng định dạng' }
+          }
+          const sdt = String(row['Số điện thoại'] || '').trim()
+          if (!sdt) {
+            return { ...row, _error: 'Thiếu số điện thoại' }
+          }
+          if (!/^0\d{9}$/.test(sdt)) {
+            return { ...row, _error: 'Số điện thoại phải có 10 số bắt đầu bằng 0' }
+          }
           row['Mã SV'] = mssv
           row['Họ tên'] = hoTen
           return row
@@ -251,7 +266,10 @@ const handleImport = async () => {
         row['Mã SV'],
         row['Họ tên'],
         row['Giới tính'],
-        row['Ngày sinh'] || ''
+        row['Ngày sinh'] || '',
+        row['Số điện thoại'] || '',
+        row['CCCD'] || '',
+        row['Email'] || ''
       ])
     ]
 

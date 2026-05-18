@@ -18,6 +18,7 @@ import Pagination from '@/components/admin/shared/Pagination.vue'
 import SkeletonLoader from '@/components/admin/shared/SkeletonLoader.vue'
 import EmptyState from '@/components/admin/shared/EmptyState.vue'
 import StatusBadge from '@/components/admin/shared/StatusBadge.vue'
+import ImportCuonSachExcelModal from '@/components/admin/shared/ImportCuonSachExcelModal.vue'
 
 const toast = useToast()
 const { tuKhoaTimKiem, tuKhoaDebounced } = useSearch(300)
@@ -38,6 +39,7 @@ const formThem = ref({ sachId: 0, viTriKe: '', tinhTrangVatLy: 'TOT' as TinhTran
 const formSua = ref({ viTriKe: '', tinhTrangVatLy: 'TOT' as TinhTrangVatLy })
 const itemDangSua = ref<CuonSach | null>(null)
 const dangSua = ref(false)
+const showImportCuonSach = ref(false)
 
 const TRANG_THAI_LABEL: Record<TrangThaiCuonSach, { nhan: string; mau: 'xanh' | 'do' | 'vang' | 'xam' }> = {
   SAN_SANG: { nhan: 'Sẵn sàng', mau: 'xanh' },
@@ -168,6 +170,9 @@ onMounted(() => { taiDanhSach(); taiDanhSachSach() })
         <option value="BAO_MAT">Đã báo mất</option>
       </select>
       <button class="nut-them" @click="modalThem.moModalThem()">+ Thêm cuốn sách</button>
+      <button class="nut-them nut-import" @click="showImportCuonSach = true">
+        <font-awesome-icon icon="fa-solid fa-file-excel" /> Import Excel
+      </button>
     </div>
 
     <div class="bang-container">
@@ -253,6 +258,13 @@ onMounted(() => { taiDanhSach(); taiDanhSachSach() })
     </ModalDialog>
 
     <ConfirmDialog :dang-mo="xoaItem !== null" :thong-diep="`Xóa cuốn sách mã '${xoaItem?.maBarcodeVatLy}'?`" :dang-xu-ly="dangXoa" @xac-nhan="xacNhanXoa" @huy="xoaItem = null" />
+
+    <!-- Import cuốn sách Excel -->
+    <ImportCuonSachExcelModal
+      v-if="showImportCuonSach"
+      @close="showImportCuonSach = false"
+      @done="() => { showImportCuonSach = false; taiDanhSach() }"
+    />
   </div>
 </template>
 
@@ -264,6 +276,8 @@ onMounted(() => { taiDanhSach(); taiDanhSachSach() })
 .select-filter { padding:0.65rem 1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu); font-family:inherit; cursor:pointer; }
 .select-filter option { background:#1a1a2e; color:#ffffff; }
 .nut-them { padding:0.65rem 1.25rem; background:var(--color-primary); border:none; border-radius:8px; color:white; cursor:pointer; font-family:inherit; font-size:0.875rem; font-weight:600; white-space:nowrap; }
+.nut-import { display: flex; align-items: center; gap: 0.5rem; background: #16a34a; }
+.nut-import:hover { background: #15803d; }
 .bang-container { background:var(--glass-nen); border:1px solid var(--glass-vien); border-radius:12px; overflow:hidden; padding:1rem; }
 .bang { width:100%; border-collapse:collapse; }
 .bang th { padding:0.75rem 1rem; text-align:left; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--mau-chu-mo); border-bottom:1px solid rgba(255,255,255,0.08); }

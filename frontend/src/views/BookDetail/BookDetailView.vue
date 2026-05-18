@@ -98,7 +98,8 @@ const loadData = async (id: number) => {
       danhSachTacGia: fetchedBook.danhSachTacGia,
       danhSachTheLoai: fetchedBook.danhSachTheLoai,
       category: fetchedBook.danhSachTheLoai?.[0]?.tenTheLoai || 'Chưa phân loại',
-      image: fetchedBook.danhSachHinhAnhUrl?.[0] || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=600',
+      image: fetchedBook.danhSachHinhAnh?.[0]?.duongDan || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=600',
+      images: fetchedBook.danhSachHinhAnh || [],
       rating: 5,
       description: fetchedBook.moTa || 'Chưa có thông tin mô tả.',
       status: (fetchedBook.soLuongKho || fetchedBook.soLuongCoSan || 0) > 0 ? 'Available' : 'Unavailable',
@@ -121,7 +122,7 @@ const loadData = async (id: number) => {
           title: b.tenSach,
           author: b.danhSachTacGia?.map((t: any) => `${t.hoDem} ${t.ten}`).join(', ') || 'Đang cập nhật',
           category: b.danhSachTheLoai?.[0]?.tenTheLoai || 'Chưa phân loại',
-          image: b.danhSachHinhAnhUrl?.[0] || 'https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&q=80&w=400',
+          image: b.danhSachHinhAnh?.[0]?.duongDan || 'https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&q=80&w=400',
           rating: 4
         }))
     }
@@ -171,6 +172,20 @@ onMounted(() => {
             <div class="image-card">
               <img :src="book.image" :alt="book.title" />
             </div>
+            
+            <div class="thumbnails" v-if="book.images && book.images.length > 0">
+              <div 
+                class="thumbnail" 
+                v-for="img in book.images" 
+                :key="img.maHinhAnh"
+                @click="book.image = img.duongDan"
+                :class="{ active: book.image === img.duongDan }"
+              >
+                <img :src="img.duongDan" :alt="img.loaiHinhAnh" />
+                <span class="img-type-badge">{{ img.loaiHinhAnh === 'BIA_TRUOC' ? 'Bìa trước' : img.loaiHinhAnh === 'BIA_SAU' ? 'Bìa sau' : img.loaiHinhAnh === 'MUC_LUC' ? 'Mục lục' : 'Khác' }}</span>
+              </div>
+            </div>
+            
             <div class="visual-actions">
               <button 
                 v-if="book.soLuongKho > 0" 

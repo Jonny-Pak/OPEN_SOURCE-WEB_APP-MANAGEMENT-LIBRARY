@@ -6,8 +6,8 @@ import com.hcmunre.library.entity.ThongBao;
 import com.hcmunre.library.enums.LoaiThongBao;
 import com.hcmunre.library.exception.ErrorCode;
 import com.hcmunre.library.exception.LibraryException;
+import com.hcmunre.library.repository.NguoiDungRepository;
 import com.hcmunre.library.repository.ThongBaoRepository;
-import com.hcmunre.library.service.NguoiDungService;
 import com.hcmunre.library.service.ThongBaoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,11 +20,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ThongBaoServiceImplement implements ThongBaoService {
     private final ThongBaoRepository thongBaoRepository;
-    private final NguoiDungService nguoiDungService;
+    private final NguoiDungRepository nguoiDungRepository;
 
     @Override
     public void taoThongBao(UUID maNguoiDung, String tieuDe, String noiDung, LoaiThongBao loaiThongBao) {
-        NguoiDung nguoiDung = nguoiDungService.getNguoiDungActive(maNguoiDung);
+        // Dùng repository trực tiếp để không bị lỗi khi tài khoản chưa active (VD: vừa khóa)
+        NguoiDung nguoiDung = nguoiDungRepository.findById(maNguoiDung)
+                .orElseThrow(() -> new LibraryException(ErrorCode.NGUOI_DUNG_KHONG_TON_TAI));
 
         ThongBao thongBao = ThongBao.builder()
                 .nguoiDung(nguoiDung)

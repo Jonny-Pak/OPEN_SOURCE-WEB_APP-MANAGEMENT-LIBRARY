@@ -22,10 +22,16 @@ spring:
     password: 123456 # đổi mật khẩu ở đây nhé
     driver-class-name: org.postgresql.Driver
 
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB      # Giới hạn mỗi file (ZIP + ảnh)
+      max-request-size: 55MB   # Giới hạn toàn bộ request
+
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
 
 # ===== Cấu hình JWT =====
 # Khóa bí mật mã hóa Base64 (thay đổi trong môi trường production!)
@@ -44,8 +50,8 @@ logging:
       max-file-size: 10MB
       max-history: 30
   level:
-    # Log của ứng dụng (INFO trở lên)
-    com.hcmunre.library: INFO
+    # Log của ứng dụng — DEBUG để bắt exception chi tiết khi import
+    com.hcmunre.library: DEBUG
     # Tắt log SQL chi tiết khi production (chỉ bật khi debug)
     org.hibernate.SQL: WARN
     org.hibernate.type.descriptor.sql: WARN

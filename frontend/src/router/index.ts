@@ -148,14 +148,9 @@ const router = createRouter({
           ]
         },
         {
-          path: 'nhan-su',
-          name: 'nhan-su',
-          component: () => import('@/views/admin/DashboardView.vue'),
-        },
-        {
           path: 'settings',
           name: 'settings',
-          component: () => import('@/views/admin/DashboardView.vue'),
+          component: () => import('@/views/admin/SettingsView.vue'),
         },
         {
           path: 'sach',
@@ -205,6 +200,11 @@ const router = createRouter({
           path: 'tra-sach',
           name: 'tra-sach',
           component: () => import('@/views/admin/tra-sach/TraSachView.vue'),
+        },
+        {
+          path: 'duyet-gia-han',
+          name: 'duyet-gia-han',
+          component: () => import('@/views/admin/duyet-gia-han/DuyetGiaHanView.vue'),
         },
         {
           path: 'phat',

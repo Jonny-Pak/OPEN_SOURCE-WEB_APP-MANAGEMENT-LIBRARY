@@ -3,6 +3,14 @@
  */
 import type { TacGia, NhaXuatBan, TheLoai } from './danhmuc'
 
+export interface HinhAnhSach {
+  maHinhAnh: number;
+  duongDan: string;
+  loaiHinhAnh: string;
+  thuTuHienThi: number;
+  maSach?: number;
+}
+
 // ===== ĐẦU SÁCH =====
 export interface Sach {
   maSach: number
@@ -19,7 +27,7 @@ export interface Sach {
   nhaXuatBan: NhaXuatBan
   danhSachTacGia: TacGia[]
   danhSachTheLoai: TheLoai[]
-  danhSachHinhAnhUrl?: string[]
+  danhSachHinhAnh?: HinhAnhSach[]
   soLuongCoSan?: number
   soLuongKho?: number
   tongSoLuong?: number

@@ -38,8 +38,13 @@ const thaoTacItem = ref<NguoiDung | null>(null)
 const thaoTacLoai = ref<'kich-hoat' | 'khoa' | 'mo-khoa' | null>(null)
 const dangXuLyTrangThai = ref(false)
 
-const formThem = ref({ hoDem: '', ten: '', email: '', matKhau: '123', soDienThoai: '' })
+const formThem = ref({ hoDem: '', ten: '', email: '', soDienThoai: '' })
 const formSua = ref({ hoDem: '', ten: '', soDienThoai: '' })
+
+// ===== Admin đổi mật khẩu =====
+const doiMatKhauItem = ref<NguoiDung | null>(null)
+const matKhauMoi = ref('')
+const dangDoiMatKhau = ref(false)
 
 const showImportModal = ref(false)
 const fileInputRef = ref<HTMLInputElement | null>(null)
@@ -93,25 +98,34 @@ function moSua(item: NguoiDung) {
 
 async function luuThem() {
   const f = formThem.value
-  if (!f.hoDem.trim() || !f.ten.trim() || !f.email.trim() || !f.soDienThoai.trim()) {
-    toast.canhBao('Vui long dien du cac truong bat buoc')
+  if (!f.hoDem.trim() || !f.ten.trim() || !f.email.trim()) {
+    toast.canhBao('Vui lòng điền đủ họ tên và email')
+    return
+  }
+  if (!/^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}$/.test(f.email)) {
+    toast.canhBao('Email không đúng định dạng')
+    return
+  }
+  if (f.soDienThoai && !/^0\d{9}$/.test(f.soDienThoai)) {
+    toast.canhBao('Số điện thoại phải có 10 chữ số và bắt đầu bằng 0')
     return
   }
 
   dangGui.value = true
   try {
     await docGiaService.taoCai({
-      ...f,
+      hoDem: f.hoDem.trim(),
+      ten: f.ten.trim(),
+      email: f.email.trim().toLowerCase(),
+      soDienThoai: f.soDienThoai.trim() || undefined,
       vaiTro: 'DOC_GIA',
       trangThai: 'CHUA_KICH_HOAT',
-      isDefaultPassword: true,
-      matKhau: f.matKhau || '123',
-    })
-    toast.thanhCong('Them doc gia thanh cong')
+    } as any)
+    toast.thanhCong('Thêm độc giả thành công (mật khẩu mặc định: Password@123)')
     modal.dongModal()
     await taiDanhSach()
-  } catch {
-    toast.loi('Them doc gia that bai')
+  } catch (err: any) {
+    toast.loi(err?.message || 'Thêm độc giả thất bại')
   } finally {
     dangGui.value = false
   }
@@ -211,6 +225,26 @@ async function handleExcelImport(file: File) {
   }
 }
 
+async function luuDoiMatKhau() {
+  if (!doiMatKhauItem.value) return
+  if (!matKhauMoi.value || matKhauMoi.value.length < 6) {
+    toast.canhBao('Mật khẩu phải có ít nhất 6 ký tự')
+    return
+  }
+  dangDoiMatKhau.value = true
+  try {
+    await docGiaService.adminDoiMatKhau(doiMatKhauItem.value.maNguoiDung, matKhauMoi.value)
+    toast.thanhCong('Đổi mật khẩu thành công!')
+    doiMatKhauItem.value = null
+    matKhauMoi.value = ''
+  } catch (err: any) {
+    toast.loi(err?.message || 'Đổi mật khẩu thất bại')
+  } finally {
+    dangDoiMatKhau.value = false
+  }
+}
+
+
 watch([tuKhoaDebounced, filterTrangThai], () => {
   phanTrang.datLaiTrang()
   taiDanhSach()
@@ -224,12 +258,12 @@ onMounted(taiDanhSach)
 <template>
   <div class="doc-gia">
     <div class="thanh-cong-cu">
-      <input v-model="tuKhoaTimKiem" class="input-tk" placeholder="Tim theo ten, email, so dien thoai..." />
+      <input v-model="tuKhoaTimKiem" class="input-tk" placeholder="Tìm theo tên, email, số điện thoại..." />
       <select v-model="filterTrangThai" class="select-filter">
-        <option value="all">Tat ca trang thai</option>
-        <option value="chua_kich_hoat">Chua kich hoat</option>
-        <option value="da_kich_hoat">Da kich hoat</option>
-        <option value="bi_khoa">Bi khoa</option>
+        <option value="all">Tất cả trạng thái</option>
+        <option value="chua_kich_hoat">Chưa kích hoạt</option>
+        <option value="da_kich_hoat">Đã kích hoạt</option>
+        <option value="bi_khoa">Bị khóa</option>
       </select>
       <button class="nut-them nut-import" @click="showImportModal = true">
         <font-awesome-icon icon="fa-solid fa-file-excel" /> Import Excel
@@ -237,11 +271,11 @@ onMounted(taiDanhSach)
       <button
         class="nut-them"
         @click="() => {
-          formThem = { hoDem: '', ten: '', email: '', matKhau: '123', soDienThoai: '' }
+          formThem = { hoDem: '', ten: '', email: '', soDienThoai: '' }
           modal.moModalThem()
         }"
       >
-        + Them doc gia
+        <font-awesome-icon icon="fa-solid fa-user-plus" /> Thêm độc giả
       </button>
     </div>
     
@@ -274,11 +308,11 @@ onMounted(taiDanhSach)
         <table v-else class="bang">
           <thead>
             <tr>
-              <th>Ho ten</th>
+              <th>Họ tên</th>
               <th>Email</th>
-              <th>So dien thoai</th>
-              <th>Trang thai</th>
-              <th>Hanh dong</th>
+              <th>Số điện thoại</th>
+              <th>Trạng thái</th>
+              <th>Hành động</th>
             </tr>
           </thead>
           <tbody>
@@ -299,11 +333,19 @@ onMounted(taiDanhSach)
               </td>
               <td>
                 <div class="hanh-dong">
-                  <button class="nut-hd" @click="moSua(item)">Sua</button>
-                  <button class="nut-hd" @click="moXacNhanTrangThai(item)">
-                    {{ chuanHoaTrangThai(item.trangThai) === 'chua_kich_hoat' ? 'Kich hoat' : chuanHoaTrangThai(item.trangThai) === 'da_kich_hoat' ? 'Khoa' : 'Mo khoa' }}
+                  <button class="nut-hd" title="Sửa thông tin" @click="moSua(item)">
+                    <font-awesome-icon icon="fa-solid fa-pen" />
                   </button>
-                  <button v-if="authStore.isAdmin" class="nut-hd nut-xoa-btn" @click="xoaItem = item">Xoa</button>
+                  <button class="nut-hd" :title="chuanHoaTrangThai(item.trangThai) === 'chua_kich_hoat' ? 'Kích hoạt' : chuanHoaTrangThai(item.trangThai) === 'da_kich_hoat' ? 'Khóa tài khoản' : 'Mở khóa'" @click="moXacNhanTrangThai(item)">
+                    <font-awesome-icon :icon="chuanHoaTrangThai(item.trangThai) === 'chua_kich_hoat' ? 'fa-solid fa-circle-check' : chuanHoaTrangThai(item.trangThai) === 'da_kich_hoat' ? 'fa-solid fa-lock' : 'fa-solid fa-lock-open'" />
+                    {{ chuanHoaTrangThai(item.trangThai) === 'chua_kich_hoat' ? 'Kích hoạt' : chuanHoaTrangThai(item.trangThai) === 'da_kich_hoat' ? 'Khóa' : 'Mở khóa' }}
+                  </button>
+                  <button v-if="authStore.isAdmin" class="nut-hd nut-mat-khau" title="Đổi mật khẩu" @click="() => { doiMatKhauItem = item; matKhauMoi = '' }">
+                    <font-awesome-icon icon="fa-solid fa-key" />
+                  </button>
+                  <button v-if="authStore.isAdmin" class="nut-hd nut-xoa-btn" title="Xóa" @click="xoaItem = item">
+                    <font-awesome-icon icon="fa-solid fa-trash" />
+                  </button>
                 </div>
               </td>
             </tr>
@@ -320,29 +362,28 @@ onMounted(taiDanhSach)
       </template>
     </div>
 
-    <ModalDialog :dang-mo="modal.dangMo.value && modal.dangThem() && !fileToImport" tieu-de="Them doc gia moi" @dong="modal.dongModal()">
+    <ModalDialog :dang-mo="modal.dangMo.value && modal.dangThem() && !fileToImport" tieu-de="Thêm độc giả mới" @dong="modal.dongModal()">
       <div class="form-modal">
         <div class="hang-doi">
           <div class="form-group">
-            <label>Ho dem *</label>
-            <input v-model="formThem.hoDem" class="form-input" placeholder="Nguyen Van" />
+            <label>Họ đệm *</label>
+            <input v-model="formThem.hoDem" class="form-input" placeholder="Nguyễn Văn" />
           </div>
           <div class="form-group">
-            <label>Ten *</label>
+            <label>Tên *</label>
             <input v-model="formThem.ten" class="form-input" placeholder="A" />
           </div>
         </div>
         <div class="form-group">
           <label>Email *</label>
-          <input v-model="formThem.email" type="email" class="form-input" placeholder="mssv@sv.hcmunre.edu.vn" />
+          <input v-model="formThem.email" type="email" class="form-input" placeholder="ten@example.com" />
         </div>
         <div class="form-group">
-          <label>Mat khau mac dinh *</label>
-          <input v-model="formThem.matKhau" class="form-input" placeholder="123" />
-        </div>
-        <div class="form-group">
-          <label>So dien thoai</label>
+          <label>Số điện thoại</label>
           <input v-model="formThem.soDienThoai" class="form-input" placeholder="09xxxxxxxx" />
+        </div>
+        <div class="form-group">
+          <small style="color: #6b7280; font-size: 0.82rem;">Mật khẩu mặc định: <strong>Password@123</strong> (yêu cầu đổi khi đăng nhập lần đầu)</small>
         </div>
       </div>
       <template #footer>
@@ -365,6 +406,25 @@ onMounted(taiDanhSach)
       </template>
     </ModalDialog>
 
+    <!-- Modal Admin đổi mật khẩu -->
+    <ModalDialog :dang-mo="doiMatKhauItem !== null" tieu-de="Đổi mật khẩu (Admin)" @dong="doiMatKhauItem = null">
+      <div class="form-modal">
+        <p style="font-size:0.9rem;color:#374151;margin:0">
+          Đổi mật khẩu cho <b>{{ doiMatKhauItem?.hoDem }} {{ doiMatKhauItem?.ten }}</b>
+        </p>
+        <div class="form-group">
+          <label>Mật khẩu mới *</label>
+          <input v-model="matKhauMoi" type="password" class="form-input" placeholder="Tối thiểu 6 ký tự" />
+        </div>
+      </div>
+      <template #footer>
+        <button class="nut-huy" @click="doiMatKhauItem = null">Hủy</button>
+        <button class="nut-luu" :disabled="dangDoiMatKhau" @click="luuDoiMatKhau">
+          {{ dangDoiMatKhau ? 'Đang xử lý...' : 'Đổi mật khẩu' }}
+        </button>
+      </template>
+    </ModalDialog>
+
     <!-- Import Excel Modal -->
     <ImportDocGiaExcelModal
       v-if="showImportModal"
@@ -374,8 +434,8 @@ onMounted(taiDanhSach)
 
     <ConfirmDialog
       :dang-mo="thaoTacItem !== null"
-      :tieu-de="thaoTacLoai === 'kich-hoat' ? 'Kich hoat tai khoan' : thaoTacLoai === 'khoa' ? 'Khoa tai khoan' : 'Mo khoa tai khoan'"
-      :thong-diep="`Ban co chac muon thuc hien thao tac voi tai khoan '${thaoTacItem?.hoDem} ${thaoTacItem?.ten}'?`"
+      :tieu-de="thaoTacLoai === 'kich-hoat' ? 'Kích hoạt tài khoản' : thaoTacLoai === 'khoa' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'"
+      :thong-diep="`Bạn có chắc muốn thực hiện thao tác với tài khoản '${thaoTacItem?.hoDem} ${thaoTacItem?.ten}'?`"
       loai="canh-bao"
       :dang-xu-ly="dangXuLyTrangThai"
       @xac-nhan="xuLyTrangThaiTaiKhoan"
@@ -384,7 +444,7 @@ onMounted(taiDanhSach)
 
     <ConfirmDialog
       :dang-mo="xoaItem !== null"
-      :thong-diep="`Xoa tai khoan '${xoaItem?.hoDem} ${xoaItem?.ten}'?`"
+      :thong-diep="`Xóa tài khoản '${xoaItem?.hoDem} ${xoaItem?.ten}'?`"
       :dang-xu-ly="dangXoa"
       @xac-nhan="xacNhanXoa"
       @huy="xoaItem = null"
@@ -526,6 +586,9 @@ onMounted(taiDanhSach)
   color: #dc2626;
 }
 .an-input-file { display: none; }
+.nut-mat-khau { color: #7c3aed; }
+.nut-mat-khau:hover { border-color: #7c3aed; color: #7c3aed; background: rgba(124,58,237,0.06); }
+
 @media (max-width: 800px) {
   .hang-doi { grid-template-columns: 1fr; }
 }

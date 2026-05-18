@@ -32,6 +32,23 @@ const soTienHienThi = ref('')
 // Modal thanh toán
 const modalThanhToan = ref<PhieuPhat | null>(null)
 const phuongThucTT = ref<PhuongThucThanhToan>('TIEN_MAT')
+const qrImageUrl = ref('')
+
+onMounted(() => {
+  taiDanhSach()
+  const qr = localStorage.getItem('library_qr_url')
+  if (qr) qrImageUrl.value = qr
+  const maChiTiet = route.query.maChiTietPhieuMuon as string
+  if (maChiTiet) {
+    modalTao.value = true
+    formTao.value = {
+      maChiTietPhieuMuon: maChiTiet,
+      lyDo: 'TRA_TRE',
+      soTienPhat: 50000
+    }
+    soTienHienThi.value = '50.000'
+  }
+})
 
 const LY_DO_LABEL: Record<LyDoPhat, string> = { TRA_TRE: 'Trả trễ', HU_HONG: 'Hư hỏng', MAT_SACH: 'Mất sách' }
 
@@ -83,19 +100,6 @@ async function xacNhanThanhToan() {
 }
 
 watch(() => phanTrang.trangHienTai.value, taiDanhSach)
-onMounted(() => {
-  taiDanhSach()
-  const maChiTiet = route.query.maChiTietPhieuMuon as string
-  if (maChiTiet) {
-    modalTao.value = true
-    formTao.value = {
-      maChiTietPhieuMuon: maChiTiet,
-      lyDo: 'TRA_TRE',
-      soTienPhat: 50000
-    }
-    soTienHienThi.value = '50.000'
-  }
-})
 </script>
 
 <template>
@@ -214,6 +218,13 @@ onMounted(() => {
             </label>
           </div>
         </div>
+        <!-- Hiển thị QR nếu chọn chuyển khoản -->
+        <div v-if="phuongThucTT === 'CHUYEN_KHOAN'" class="qr-section">
+          <img v-if="qrImageUrl" :src="qrImageUrl" alt="QR Thanh toán" class="qr-thanh-toan" />
+          <div v-else class="qr-empty">
+            💳 Chưa có ảnh QR. Admin có thể cấu hình tại mãn hình <strong>Cài đặt hệ thống</strong>.
+          </div>
+        </div>
       </div>
       <template #footer>
         <button class="nut-huy-modal" @click="modalThanhToan = null">Hủy</button>
@@ -269,4 +280,10 @@ onMounted(() => {
 .nut-huy-modal { padding:0.65rem 1.25rem; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu-mo); cursor:pointer; font-family:inherit; }
 .nut-luu-modal { padding:0.65rem 1.5rem; background:var(--color-primary); border:none; border-radius:8px; color:white; cursor:pointer; font-family:inherit; font-weight:600; }
 .nut-luu-modal:disabled { opacity:0.6; cursor:not-allowed; }
+
+/* QR Thanh toán */
+.qr-section { display:flex; justify-content:center; margin-top:0.5rem; }
+.qr-thanh-toan { width:200px; height:200px; object-fit:contain; border:2px solid rgba(6,182,212,0.3); border-radius:12px; background:white; padding:8px; }
+.qr-empty { text-align:center; padding:1.25rem; background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.15); border-radius:10px; color:var(--mau-chu-mo); font-size:0.85rem; width:100%; }
+
 </style>

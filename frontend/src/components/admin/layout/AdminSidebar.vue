@@ -48,6 +48,7 @@ const menuItems: MenuItem[] = [
     children: [
       { label: 'Phiếu mượn', icon: 'fa-solid fa-arrows-rotate', route: '/admin/muon-sach', permission: 'muon-sach:view' },
       { label: 'Trả sách', icon: 'fa-solid fa-rotate-left', route: '/admin/tra-sach', permission: 'tra-sach:process' },
+      { label: 'Duyệt gia hạn', icon: 'fa-solid fa-calendar-plus', route: '/admin/duyet-gia-han', permission: 'muon-sach:view' },
     ]
   },
   {
@@ -79,13 +80,6 @@ const menuItems: MenuItem[] = [
       { label: 'Thể loại', icon: 'fa-solid fa-layer-group', route: '/admin/danh-muc/the-loai', permission: 'the-loai:view' },
       { label: 'Vị trí kệ sách', icon: 'fa-solid fa-location-dot', route: '/admin/danh-muc/vi-tri', permission: 'vi-tri:view' },
     ]
-  },
-  {
-    label: 'Nhân sự',
-    icon: 'fa-solid fa-user-shield',
-    route: '/admin/nhan-su',
-    onlyAdmin: true,
-    permission: 'nhan-su:view',
   },
   {
     label: 'Cài đặt hệ thống',

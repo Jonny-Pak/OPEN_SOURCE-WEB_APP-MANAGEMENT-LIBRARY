@@ -97,7 +97,11 @@ export const docGiaService = {
 
   getBorrowHistory: (id: string) => {
     return apiClient.get<any>(`/api/v1/doc-gia/${id}/lich-su-muon`)
-  }
+  },
+
+  /** Admin đổi mật khẩu không cần OTP */
+  adminDoiMatKhau: (id: string, matKhauMoi: string) =>
+    apiClient.patch<void>(`/api/v1/nguoi-dung/${id}/doi-mat-khau?matKhauMoi=${encodeURIComponent(matKhauMoi)}`, {}),
 }
 
 export default docGiaService

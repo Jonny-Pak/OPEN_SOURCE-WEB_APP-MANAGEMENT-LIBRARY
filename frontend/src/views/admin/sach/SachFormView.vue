@@ -31,22 +31,84 @@ const dangGui = ref(false)
 const dangTai = ref(false)
 
 // Upload ảnh bìa
-const anhBiaCu = ref('')
-const anhBiaPreview = ref('')
-const fileDaChon = ref<File | null>(null)
-
-function chonFile(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0]
-  if (!file) return
-  fileDaChon.value = file
-  anhBiaPreview.value = URL.createObjectURL(file)
+interface ImageUpload {
+  id?: number;         // Có id = ảnh đã tồn tại trên server
+  previewUrl: string;  // URL hiển thị preview (full URL hoặc blob URL)
+  file?: File;         // Có file = ảnh mới cần upload
+  loaiHinhAnh: string;
 }
 
-async function uploadAnhBia(id: number) {
-  if (!fileDaChon.value) return
+// Lưu lại danh sách ID ảnh gốc (khi load form edit) để biết cái nào cần xóa
+const anhGocIds = ref<Set<number>>(new Set())
+
+const danhSachAnh = ref<ImageUpload[]>([])
+const loaiHinhAnhOptions = [
+  { value: 'BIA_TRUOC', label: 'Bìa trước' },
+  { value: 'BIA_SAU', label: 'Bìa sau' },
+  { value: 'MUC_LUC', label: 'Mục lục' },
+  { value: 'KHAC', label: 'Khác' }
+]
+
+function chonFile(e: Event) {
+  const files = (e.target as HTMLInputElement).files
+  if (!files) return
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i] as File
+    danhSachAnh.value.push({
+      previewUrl: URL.createObjectURL(file),
+      file: file,
+      loaiHinhAnh: danhSachAnh.value.length === 0 ? 'BIA_TRUOC' : 'KHAC'
+    })
+  }
+  // Reset input để có thể chọn cùng file lần nữa
+  ;(e.target as HTMLInputElement).value = ''
+}
+
+function xoaAnh(index: number) {
+  danhSachAnh.value.splice(index, 1)
+}
+
+/**
+ * Chiến lược đúng để upload/sync ảnh:
+ * 1. Xác định ảnh nào đã bị xóa khỏi danh sách (so với danh sách gốc) → gọi API xóa từng ảnh đó
+ * 2. Upload các ảnh mới (có File object)
+ * 3. Cập nhật thuộc tính (loại, thứ tự) các ảnh giữ lại (có id, không có file)
+ */
+async function uploadTatCaAnh(id: number) {
   try {
-    await sachService.uploadAnhBia(id, fileDaChon.value)
-  } catch { toast.canhBao('Upload ảnh bìa thất bại, bạn có thể thử lại sau') }
+    // Bước 1: Xác định và xóa các ảnh đã bị user remove
+    const anhHienTaiIds = new Set(
+      danhSachAnh.value.filter(a => a.id).map(a => a.id as number)
+    )
+    for (const originalId of anhGocIds.value) {
+      if (!anhHienTaiIds.has(originalId)) {
+        // Ảnh đã bị user xóa khỏi danh sách
+        try {
+          await sachService.xoaMotHinhAnh(originalId)
+        } catch (e) {
+          console.warn('Không thể xóa ảnh id:', originalId, e)
+        }
+      }
+    }
+
+    // Bước 2: Xử lý lần lượt từng ảnh trong danh sách hiện tại
+    for (let i = 0; i < danhSachAnh.value.length; i++) {
+      const anh = danhSachAnh.value[i]
+      if (!anh) continue
+
+      if (anh.file) {
+        // Ảnh mới → upload file lên server rồi tạo record
+        await sachService.uploadHinhAnh(id, anh.file, anh.loaiHinhAnh, i)
+      } else if (anh.id) {
+        // Ảnh cũ còn giữ lại → cập nhật loại và thứ tự nếu user thay đổi
+        await sachService.capNhatHinhAnh(anh.id, anh.loaiHinhAnh, i)
+      }
+    }
+  } catch (error: any) {
+    console.error('Lỗi upload ảnh:', error)
+    toast.canhBao('Upload ảnh thất bại, vui lòng kiểm tra lại kích thước ảnh.')
+    throw error
+  }
 }
 
 async function taiDuLieu() {
@@ -80,7 +142,16 @@ async function taiDuLieu() {
         kichThuoc: (sach as any).kichThuoc || '',
         dichGia: (sach as any).dichGia || ''
       }
-      anhBiaCu.value = sach.danhSachHinhAnhUrl?.[0] || ''
+      if (sach.danhSachHinhAnh && sach.danhSachHinhAnh.length > 0) {
+        danhSachAnh.value = sach.danhSachHinhAnh.map((ha: any) => ({
+          id: ha.maHinhAnh,
+          // duongDan đã được formatSachHinhAnh chuyển sang full URL
+          previewUrl: ha.duongDan,
+          loaiHinhAnh: typeof ha.loaiHinhAnh === 'string' ? ha.loaiHinhAnh : String(ha.loaiHinhAnh)
+        }))
+        // Lưu lại IDs gốc để phát hiện ảnh nào bị xóa
+        anhGocIds.value = new Set(sach.danhSachHinhAnh.map((ha: any) => ha.maHinhAnh as number))
+      }
     }
   } catch { toast.loi('Không thể tải dữ liệu') }
   finally { dangTai.value = false }
@@ -108,27 +179,42 @@ async function luuSach() {
   if (form.value.maTheLoais.length === 0) return toast.canhBao('Vui lòng chọn ít nhất 1 thể loại')
 
   dangGui.value = true
+  let savedId = sachId.value
   try {
-    let id = sachId.value
     if (isEdit.value) {
-      await sachService.capNhat(id, form.value)
+      await sachService.capNhat(savedId, form.value)
       toast.thanhCong('Cập nhật đầu sách thành công')
     } else {
       const sach = await sachService.taoCai(form.value)
-      id = sach.maSach
+      savedId = sach.maSach
       toast.thanhCong('Thêm đầu sách thành công')
     }
-    await uploadAnhBia(id)
+    // Upload / sync ảnh (chỉ gọi khi có ảnh mới hoặc ảnh đã bị xóa)
+    const coAnhMoi = danhSachAnh.value.some(a => !!a.file)
+    const coAnhBiXoa = [...anhGocIds.value].some(
+      id => !danhSachAnh.value.find(a => a.id === id)
+    )
+    if (coAnhMoi || coAnhBiXoa || danhSachAnh.value.some(a => a.id)) {
+      await uploadTatCaAnh(savedId)
+    }
     router.push('/admin/sach')
   } catch (err: any) {
     if (err && err.details) {
       const detailsText = Object.values(err.details).join(', ')
       toast.loi(`Lỗi: ${detailsText}`)
+    } else if (err?.message) {
+      toast.loi(err.message)
     } else {
-      toast.loi(err?.message || 'Lưu thất bại, vui lòng kiểm tra lại')
+      toast.loi('Lưu thất bại, vui lòng kiểm tra lại')
     }
+    // Nếu tạo sách mới thành công nhưng upload ảnh lỗi → chuyển sang chế độ sửa
+    // để user không cần tạo lại sách khi thử lại
+    if (!isEdit.value && savedId) {
+      router.push(`/admin/sach/${savedId}/chinh-sua`)
+    }
+  } finally {
+    dangGui.value = false
   }
-  finally { dangGui.value = false }
 }
 
 onMounted(taiDuLieu)
@@ -237,17 +323,25 @@ onMounted(taiDuLieu)
         <!-- Cột phải: ảnh bìa -->
         <div class="cot-phu">
           <div class="the-nhom">
-            <h3 class="tieu-de-nhom">Ảnh bìa</h3>
+            <h3 class="tieu-de-nhom">Hình ảnh sách</h3>
             <div class="vung-upload">
-              <div class="preview-anh">
-                <img v-if="anhBiaPreview || anhBiaCu" :src="anhBiaPreview || anhBiaCu" alt="Ảnh bìa" />
-                <div v-else class="placeholder-anh">📚<br /><span>Chưa có ảnh</span></div>
+              <div class="danh-sach-anh">
+                <div v-for="(anh, index) in danhSachAnh" :key="index" class="item-anh">
+                  <div class="preview-anh-nho">
+                    <img :src="anh.previewUrl" />
+                    <button class="nut-xoa-anh" @click.stop="xoaAnh(index)">X</button>
+                  </div>
+                  <select v-model="anh.loaiHinhAnh" class="form-input form-select" style="padding: 0.3rem; font-size: 0.75rem;">
+                    <option v-for="opt in loaiHinhAnhOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                  </select>
+                </div>
               </div>
+              
               <label class="nut-chon-anh">
-                <input type="file" accept="image/*" class="input-file" @change="chonFile" />
-                📁 Chọn ảnh bìa
+                <input type="file" accept="image/*" class="input-file" multiple @change="chonFile" />
+                📁 Chọn hình ảnh
               </label>
-              <p class="ghi-chu-anh">Định dạng: JPG, PNG, WebP. Tối đa 5MB.</p>
+              <p class="ghi-chu-anh">Định dạng: JPG, PNG, WebP. Có thể chọn nhiều ảnh.</p>
             </div>
           </div>
         </div>
@@ -290,9 +384,12 @@ onMounted(taiDuLieu)
 .nhan-checkbox:hover { border-color:var(--mau-chinh); background:rgba(6,182,212,0.08); }
 .nhan-checkbox input { accent-color:var(--mau-chinh); }
 /* Upload ảnh bìa */
-.vung-upload { display:flex; flex-direction:column; gap:0.75rem; align-items:center; }
-.preview-anh { width:160px; height:220px; border-radius:8px; overflow:hidden; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; }
-.preview-anh img { width:100%; height:100%; object-fit:cover; }
+.vung-upload { display:flex; flex-direction:column; gap:0.75rem; align-items:stretch; }
+.danh-sach-anh { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
+.item-anh { display: flex; flex-direction: column; gap: 0.4rem; }
+.preview-anh-nho { position: relative; width:100%; aspect-ratio: 3/4; border-radius:8px; overflow:hidden; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; }
+.preview-anh-nho img { width:100%; height:100%; object-fit:cover; }
+.nut-xoa-anh { position: absolute; top: 4px; right: 4px; background: rgba(255,0,0,0.7); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; }
 .placeholder-anh { text-align:center; font-size:2rem; color:var(--mau-chu-rat-mo); line-height:2; }
 .placeholder-anh span { font-size:0.8rem; display:block; }
 .nut-chon-anh { cursor:pointer; padding:0.6rem 1rem; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:8px; font-size:0.8rem; color:var(--mau-chu); transition:all 0.2s; text-align:center; }

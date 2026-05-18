@@ -127,6 +127,19 @@ export const cuonSachService = {
     }
     const res = await apiClient.put<BackendCuonSachResponse>(`/api/v1/cuon-sach/${cuonSachId}`, backendBody)
     return mapToCuonSach(res)
+  },
+
+  importExcel: (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return apiClient.upload('/api/v1/cuon-sach/import-excel', formData).then((res: any) => {
+      const rawList = res.danhSachLoi || []
+      return {
+        thanhCong: res.thanhCong || 0,
+        thatBai: res.thatBai || 0,
+        loi: rawList.map((s: string) => ({ message: s }))
+      }
+    })
   }
 }
 

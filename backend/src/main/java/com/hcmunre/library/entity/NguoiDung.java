@@ -41,9 +41,8 @@ public class NguoiDung extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @NotBlank(message = "Số điện thoại không được để trống")
     @Pattern(regexp = "^0\\d{9}$", message = "Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0")
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String soDienThoai;
 
     @NotBlank(message = "Mật khẩu không được để trống")

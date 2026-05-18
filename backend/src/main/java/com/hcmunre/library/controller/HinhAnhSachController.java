@@ -1,6 +1,7 @@
 package com.hcmunre.library.controller;
 
 import com.hcmunre.library.dto.request.HinhAnhSachRequest;
+import com.hcmunre.library.dto.request.HinhAnhSachUpdateRequest;
 import com.hcmunre.library.dto.response.HinhAnhSachResponse;
 import com.hcmunre.library.service.HinhAnhSachService;
 import jakarta.validation.Valid;
@@ -42,6 +43,15 @@ public class HinhAnhSachController {
     @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
     public ResponseEntity<HinhAnhSachResponse> create(@Valid @RequestBody HinhAnhSachRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(hinhAnhSachService.createHinhAnh(request));
+    }
+
+    // API cập nhật loại ảnh và thứ tự hiển thị
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
+    public ResponseEntity<HinhAnhSachResponse> update(
+            @PathVariable Long id,
+            @RequestBody HinhAnhSachUpdateRequest request) {
+        return ResponseEntity.ok(hinhAnhSachService.updateHinhAnh(id, request));
     }
 
     // API xóa bỏ một hình ảnh sách khỏi hệ thống

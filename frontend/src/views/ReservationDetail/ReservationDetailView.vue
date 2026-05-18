@@ -17,9 +17,9 @@ const isCancelling = ref(false)
 const loadData = async () => {
   isLoading.value = true
   try {
-    const id = Number(route.params.id)
+    const id = route.params.id as string  // UUID is a string
     const myReservations = await datChoService.getMy()
-    const found = myReservations.find((r: any) => r.maDatCho === id)
+    const found = myReservations.find((r: any) => String(r.maDatCho) === String(id))
     if (found) {
       reservation.value = {
         id: found.maDatCho,
@@ -40,26 +40,30 @@ const loadData = async () => {
       }
     } else {
       // If not in personal reservations, try loading all (for librarian role)
-      const allReservations = await datChoService.getAll()
-      const foundAll = allReservations.find((r: any) => r.maDatCho === id)
-      if (foundAll) {
-        reservation.value = {
-          id: foundAll.maDatCho,
-          userName: foundAll.nguoiDung ? `${foundAll.nguoiDung.hoDem} ${foundAll.nguoiDung.ten}` : 'Độc giả',
-          userId: foundAll.nguoiDung?.maNguoiDung || 'N/A',
-          bookingTime: foundAll.ngayDatCho ? new Date(foundAll.ngayDatCho).toLocaleString('vi-VN') : 'Vừa xong',
-          expiryTime: foundAll.ngayHetHan ? new Date(foundAll.ngayHetHan).toLocaleString('vi-VN') : 'Chưa rõ',
-          status: foundAll.trangThai,
-          books: [
-            {
-              id: foundAll.sach?.maSach || 0,
-              title: foundAll.sach?.tenSach || 'Đầu sách',
-              author: 'Đang cập nhật',
-              image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=200',
-              category: 'Thư viện'
-            }
-          ]
+      try {
+        const allReservations = await datChoService.getAll()
+        const foundAll = allReservations.find((r: any) => String(r.maDatCho) === String(id))
+        if (foundAll) {
+          reservation.value = {
+            id: foundAll.maDatCho,
+            userName: foundAll.nguoiDung ? `${foundAll.nguoiDung.hoDem} ${foundAll.nguoiDung.ten}` : 'Độc giả',
+            userId: foundAll.nguoiDung?.maNguoiDung || 'N/A',
+            bookingTime: foundAll.ngayDatCho ? new Date(foundAll.ngayDatCho).toLocaleString('vi-VN') : 'Vừa xong',
+            expiryTime: foundAll.ngayHetHan ? new Date(foundAll.ngayHetHan).toLocaleString('vi-VN') : 'Chưa rõ',
+            status: foundAll.trangThai,
+            books: [
+              {
+                id: foundAll.sach?.maSach || 0,
+                title: foundAll.sach?.tenSach || 'Đầu sách',
+                author: 'Đang cập nhật',
+                image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=200',
+                category: 'Thư viện'
+              }
+            ]
+          }
         }
+      } catch (_) {
+        // not a librarian, ignore
       }
     }
   } catch (err) {

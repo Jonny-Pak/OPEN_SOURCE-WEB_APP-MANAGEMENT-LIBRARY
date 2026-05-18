@@ -34,6 +34,8 @@ public interface NguoiDungRepository extends JpaRepository<NguoiDung, UUID> {
     boolean existsByEmail(String email);
 
     boolean existsBySoDienThoai(String soDienThoai);
+
+    boolean existsByCccd(String cccd);
     
     org.springframework.data.domain.Page<NguoiDung> findByNgayXoaIsNull(org.springframework.data.domain.Pageable pageable);
 

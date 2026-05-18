@@ -5,7 +5,7 @@
 import { ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { sachService } from '@/services/sachService'
-import { theLoaiService, tacGiaService, nhaXuatBanService } from '@/services/danhMucService'
+import { theLoaiService } from '@/services/danhMucService'
 import { useSearch } from '@/composables/useSearch'
 import { usePagination } from '@/composables/usePagination'
 import { useToast } from '@/composables/useToast'
@@ -16,7 +16,7 @@ import ConfirmDialog from '@/components/admin/shared/ConfirmDialog.vue'
 import Pagination from '@/components/admin/shared/Pagination.vue'
 import SkeletonLoader from '@/components/admin/shared/SkeletonLoader.vue'
 import EmptyState from '@/components/admin/shared/EmptyState.vue'
-import ImportExcelModal from '@/components/admin/shared/ImportExcelModal.vue'
+import ImportSachExcelModal from '@/components/admin/shared/ImportSachExcelModal.vue'
 
 const router = useRouter()
 const toast = useToast()
@@ -60,70 +60,14 @@ async function xacNhanXoa() {
 
 async function taiDuLieuDanhMuc() {
   try {
-    const [tl, tg, nxb] = await Promise.all([
-      theLoaiService.danhSach(),
-      tacGiaService.danhSach(),
-      nhaXuatBanService.danhSach(),
-    ])
-    danhSachTheLoai.value = tl
-    // Lưu tạm để dùng lúc import
-    ;(window as any).__danhSachTacGia = tg
-    ;(window as any).__danhSachNXB = nxb
+    danhSachTheLoai.value = await theLoaiService.danhSach()
   } catch { /* im lặng */ }
 }
 
-async function handleExcelImport(rows: Record<string, unknown>[]) {
-  try {
-    let successCount = 0
-    for (const row of rows) {
-      const tenSach = String(row['Tên sách'])
-      const maIsbn = String(row['ISBN'] || `ISBN-${Date.now()}`)
-      const tacGiaStr = String(row['Tác giả'])
-      const nxbStr = String(row['NXB'])
-      const theLoaiStr = String(row['Thể loại'] || '')
-      const namXuatBan = Number(row['Năm XB']) || new Date().getFullYear()
-
-      // Map tên thành ID
-      const tgList = (window as any).__danhSachTacGia || []
-      const nxbList = (window as any).__danhSachNXB || []
-      const tlList = danhSachTheLoai.value || []
-
-      const tacGiaMatch = tgList.find((t: any) => `${t.hoDem} ${t.ten}`.toLowerCase() === tacGiaStr.toLowerCase())
-      const nxbMatch = nxbList.find((n: any) => n.tenNhaXuatBan.toLowerCase() === nxbStr.toLowerCase())
-      const tlMatch = tlList.find((t: any) => t.tenTheLoai.toLowerCase() === theLoaiStr.toLowerCase())
-
-      const dto = {
-        tenSach,
-        maIsbn,
-        namXuatBan,
-        lanTaiBan: 1,
-        soTrang: 100,
-        giaTien: 100000,
-        donGiaPhatTheoNgay: 5000,
-        moTa: String(row['Mô tả'] || ''),
-        maNhaXuatBan: nxbMatch ? nxbMatch.maNhaXuatBan : 1, // fallback ID
-        maTacGias: tacGiaMatch ? [tacGiaMatch.maTacGia] : [1],
-        maTheLoais: tlMatch ? [tlMatch.maTheLoai] : [1]
-      }
-
-      try {
-        const createdSach = await sachService.taoCai(dto)
-        const hinhAnhUrl = String(row['Hình ảnh'] || '').trim()
-        if (createdSach && createdSach.maSach && hinhAnhUrl) {
-          try {
-            await sachService.lienKetAnhUrl(createdSach.maSach, hinhAnhUrl)
-          } catch (imgErr) {
-            console.error('Lỗi gán hình ảnh cho sách:', createdSach.maSach, imgErr)
-          }
-        }
-        successCount++
-      } catch (e) {
-        console.error('Lỗi import dòng:', row, e)
-      }
-    }
-    toast.thanhCong(`Đã import thành công ${successCount} sách`)
-    taiDanhSach()
-  } catch (err) { toast.loi('Lỗi import Excel') }
+async function onImportDone() {
+  toast.thanhCong('Import đầu sách hoàn tất!')
+  showImportModal.value = false
+  taiDanhSach()
 }
 
 watch([tuKhoaDebounced, filterTheLoai], () => { phanTrang.datLaiTrang(); taiDanhSach() })
@@ -165,7 +109,11 @@ onMounted(() => { taiDanhSach(); taiDuLieuDanhMuc() })
             <tr v-for="item in danhSach" :key="item.maSach">
               <td>
                 <div class="anh-bia-nho">
-                  <img v-if="item.danhSachHinhAnhUrl?.[0]" :src="item.danhSachHinhAnhUrl[0]" alt="Ảnh bìa" />
+                  <img
+                    v-if="item.danhSachHinhAnh?.find(h => h.loaiHinhAnh === 'BIA_TRUOC') || item.danhSachHinhAnh?.[0]"
+                    :src="(item.danhSachHinhAnh?.find(h => h.loaiHinhAnh === 'BIA_TRUOC') ?? item.danhSachHinhAnh?.[0])?.duongDan"
+                    alt="Ảnh bìa trước"
+                  />
                   <span v-else class="anh-placeholder"><font-awesome-icon icon="fa-solid fa-book" /></span>
                 </div>
               </td>
@@ -194,10 +142,10 @@ onMounted(() => { taiDanhSach(); taiDuLieuDanhMuc() })
     <ConfirmDialog :dang-mo="xoaItem !== null" :thong-diep="`Xóa đầu sách '${xoaItem?.tenSach}'? Tất cả cuốn sách liên quan cũng sẽ bị xóa.`" :dang-xu-ly="dangXoa" @xac-nhan="xacNhanXoa" @huy="xoaItem = null" />
 
     <!-- Import Excel Modal -->
-    <ImportExcelModal
+    <ImportSachExcelModal
       v-if="showImportModal"
       @close="showImportModal = false"
-      @imported="handleExcelImport"
+      @done="onImportDone"
     />
   </div>
 </template>

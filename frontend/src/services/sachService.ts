@@ -9,12 +9,19 @@ const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
 function formatSachHinhAnh(sach: Sach): Sach {
   if (!sach) return sach
-  if (sach.danhSachHinhAnhUrl && Array.isArray(sach.danhSachHinhAnhUrl)) {
-    sach.danhSachHinhAnhUrl = sach.danhSachHinhAnhUrl.map((url: string) => {
-      if (url && url.startsWith('/api/v1/files/')) {
-        return `${baseUrl}${url}`
+  if (sach.danhSachHinhAnh && Array.isArray(sach.danhSachHinhAnh)) {
+    sach.danhSachHinhAnh = sach.danhSachHinhAnh.map((img: any) => {
+      if (img.duongDan && img.duongDan.startsWith('/api/v1/files/')) {
+        img.duongDan = `${baseUrl}${img.duongDan}`
       }
-      return url
+      return img
+    })
+    
+    // Sort to prioritize BIA_TRUOC at index 0
+    sach.danhSachHinhAnh.sort((a, b) => {
+      if (a.loaiHinhAnh === 'BIA_TRUOC' && b.loaiHinhAnh !== 'BIA_TRUOC') return -1;
+      if (b.loaiHinhAnh === 'BIA_TRUOC' && a.loaiHinhAnh !== 'BIA_TRUOC') return 1;
+      return (a.thuTuHienThi || 0) - (b.thuTuHienThi || 0);
     })
   }
   return sach
@@ -88,11 +95,11 @@ export const sachService = {
     })
   },
 
-  lienKetAnhUrl: async (id: number, url: string) => {
+  lienKetAnhUrl: async (id: number, url: string, loaiHinhAnh: string = 'BIA_TRUOC', thuTuHienThi: number = 0) => {
     return apiClient.post<any>('/api/v1/hinh-anh-sach', {
       duongDan: url,
-      loaiHinhAnh: 'BIA_TRUOC',
-      thuTuHienThi: 0,
+      loaiHinhAnh: loaiHinhAnh,
+      thuTuHienThi: thuTuHienThi,
       maSach: id
     })
   },
@@ -107,6 +114,49 @@ export const sachService = {
         }
       }
     }
+  },
+
+  uploadHinhAnh: async (id: number, file: File, loaiHinhAnh: string, thuTuHienThi: number = 0) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const uploadRes = await apiClient.upload<{ url: string }>('/api/v1/files/upload', formData)
+    const fileUrl = uploadRes.url
+
+    return apiClient.post<any>('/api/v1/hinh-anh-sach', {
+      duongDan: fileUrl,
+      loaiHinhAnh: loaiHinhAnh,
+      thuTuHienThi: thuTuHienThi,
+      maSach: id
+    })
+  },
+  
+  xoaHinhAnhCuaSach: async (id: number) => {
+    // Xóa tất cả ảnh của sách
+    try {
+      const list = await apiClient.get<any[]>(`/api/v1/hinh-anh-sach/sach/${id}`)
+      if (list && list.length > 0) {
+        for (const img of list) {
+          if (img.maHinhAnh) {
+            await apiClient.delete(`/api/v1/hinh-anh-sach/${img.maHinhAnh}`)
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Could not clear existing covers:', err)
+    }
+  },
+
+  /** Xóa một ảnh cụ thể theo ID */
+  xoaMotHinhAnh: async (maHinhAnh: number) => {
+    return apiClient.delete<void>(`/api/v1/hinh-anh-sach/${maHinhAnh}`)
+  },
+
+  /** Cập nhật loại hình ảnh và thứ tự hiển thị của một ảnh đã tồn tại */
+  capNhatHinhAnh: async (maHinhAnh: number, loaiHinhAnh: string, thuTuHienThi: number) => {
+    return apiClient.patch<any>(`/api/v1/hinh-anh-sach/${maHinhAnh}`, {
+      loaiHinhAnh,
+      thuTuHienThi
+    })
   },
 
   /** Advanced search & filter */

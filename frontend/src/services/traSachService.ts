@@ -48,15 +48,32 @@ const mockGiaHan: LichSuGiaHan[] = [
 ]
 
 export const giaHanService = {
-  danhSach: async () => { await delay(500); return [...mockGiaHan] },
-
-  duyet: async (id: number, body: DuyetGiaHanRequest) => {
-    await delay(500)
-    return mockGiaHan[0]
+  danhSach: async (): Promise<LichSuGiaHan[]> => {
+    const res: any = await apiClient.get<any[]>('/api/v1/phieu-muon/gia-han/danh-sach')
+    if (Array.isArray(res)) {
+      return res.map((item: any) => ({
+        maGiaHan: item.maLichSuGiaHan,
+        nguoiDung: {
+          maNguoiDung: '',
+          hoDem: item.tenDocGia || '',
+          ten: ''
+        },
+        tenSach: item.tenSach || 'N/A',
+        maBarcodeVatLy: item.maChiTietPhieuMuon ? String(item.maChiTietPhieuMuon).substring(0, 8).toUpperCase() : 'N/A',
+        hanTraHienTai: item.hanTraCu || '',
+        hanTraXinGiaHan: item.hanTraMoi || '',
+        trangThai: item.trangThai || 'CHO_DUYET',
+        lyDoTuChoi: item.lyDo || ''
+      }))
+    }
+    return []
   },
 
-  tuChoi: async (id: number, body: TuChoiGiaHanRequest) => {
-    await delay(500)
-    return mockGiaHan[0]
+  duyet: async (id: any, body: DuyetGiaHanRequest) => {
+    return apiClient.post(`/api/v1/phieu-muon/gia-han/duyet/${id}?dongY=true`, {})
+  },
+
+  tuChoi: async (id: any, body: TuChoiGiaHanRequest) => {
+    return apiClient.post(`/api/v1/phieu-muon/gia-han/duyet/${id}?dongY=false`, {})
   }
 }

@@ -91,7 +91,7 @@ const loadBooks = async () => {
         author: b.danhSachTacGia?.map((t: any) => `${t.hoDem} ${t.ten}`).join(', ') || 'Đang cập nhật',
         category: b.danhSachTheLoai?.[0]?.tenTheLoai || 'Chưa phân loại',
         allCategories: b.danhSachTheLoai?.map((t: any) => t.tenTheLoai) || [],
-        image: b.danhSachHinhAnhUrl?.[0] || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=400',
+        image: b.danhSachHinhAnh?.[0]?.duongDan || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=400',
         rating: 5,
         stockStatus: b.soLuongKho > 0 ? 'ConSach' : 'HetSach'
       }))

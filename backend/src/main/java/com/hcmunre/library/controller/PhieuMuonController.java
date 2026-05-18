@@ -7,8 +7,10 @@ import com.hcmunre.library.dto.request.TraToanBoRequest;
 import com.hcmunre.library.dto.response.GiaHanResponse;
 import com.hcmunre.library.dto.response.PhieuMuonResponse;
 import com.hcmunre.library.dto.response.PhieuPhatResponse;
+import com.hcmunre.library.security.CustomUserDetails;
 import com.hcmunre.library.service.PhieuMuonService;
 import com.hcmunre.library.service.PhieuPhatService;
+import com.hcmunre.library.enums.TrangThaiGiaHan;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,6 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -59,6 +62,38 @@ public class PhieuMuonController {
             @Valid @RequestBody GiaHanRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(phieuMuonService.createGiaHan(request));
+    }
+
+    @PostMapping("/gia-han/doc-gia/{maChiTietPhieuMuon}")
+    @PreAuthorize("hasRole('DOC_GIA')")
+    public ResponseEntity<GiaHanResponse> giaHanDocGia(
+            @PathVariable UUID maChiTietPhieuMuon,
+            @RequestParam(defaultValue = "7") int soNgayGiaHan,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(phieuMuonService.yeuCauGiaHanDocGia(maChiTietPhieuMuon, userDetails.getNguoiDung().getMaNguoiDung(), soNgayGiaHan));
+    }
+
+    @GetMapping("/gia-han/danh-sach")
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
+    public ResponseEntity<List<GiaHanResponse>> getDanhSachYeuCauGiaHan(
+            @RequestParam(required = false) TrangThaiGiaHan trangThai) {
+        return ResponseEntity.ok(phieuMuonService.getDanhSachYeuCauGiaHan(trangThai));
+    }
+
+    @PostMapping("/gia-han/duyet/{maLichSuGiaHan}")
+    @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN')")
+    public ResponseEntity<GiaHanResponse> duyetYeuCauGiaHan(
+            @PathVariable UUID maLichSuGiaHan,
+            @RequestParam boolean dongY,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(phieuMuonService.duyetYeuCauGiaHan(maLichSuGiaHan, userDetails.getNguoiDung().getMaNguoiDung(), dongY));
     }
 
     @GetMapping("/gia-han/{maChiTietPhieuMuon}")
@@ -126,6 +161,23 @@ public class PhieuMuonController {
     @GetMapping("/{maPhieuMuon}")
     public ResponseEntity<PhieuMuonResponse> getPhieuMuonById(@PathVariable UUID maPhieuMuon) {
         return ResponseEntity.ok(phieuMuonService.getPhieuMuonById(maPhieuMuon));
+    }
+
+    @GetMapping("/cua-toi")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<PhieuMuonResponse>> getCuaToi(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "ngayMuon") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Sort sort = direction.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return ResponseEntity.ok(phieuMuonService.getPhieuMuonByNguoiDung(
+                userDetails.getNguoiDung().getMaNguoiDung(), pageable));
     }
 
     @GetMapping("/nguoi-dung/{maNguoiDung}")
