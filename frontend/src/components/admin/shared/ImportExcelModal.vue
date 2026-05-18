@@ -119,7 +119,7 @@ const fileInput = ref<HTMLInputElement>()
 const previewData = ref<Record<string, unknown>[]>([])
 const isImporting = ref(false)
 
-const columns = ['ISBN', 'Tên sách', 'Tác giả', 'NXB', 'Thể loại', 'Năm XB', 'Số lượng']
+const columns = ['ISBN', 'Tên sách', 'Tác giả', 'NXB', 'Thể loại', 'Năm XB', 'Số lượng', 'Mô tả', 'Hình ảnh']
 
 const validCount = computed(() => previewData.value.filter(r => !r._error).length)
 const errorCount = computed(() => previewData.value.filter(r => r._error).length)
@@ -129,7 +129,7 @@ const downloadTemplate = () => {
   try {
     const ws = XLSX.utils.aoa_to_sheet([
       columns,
-      ['978-604-1-12345-6', 'Lập trình Vue 3', 'Nguyễn Văn A', 'NXB Trẻ', 'Công nghệ', 2024, 5],
+      ['978-604-1-12345-6', 'Lập trình Vue 3', 'Nguyễn Văn A', 'NXB Trẻ', 'Công nghệ', 2024, 5, 'Sách hướng dẫn lập trình Vue 3 toàn tập', 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e'],
     ])
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'DanhSachSach')

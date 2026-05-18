@@ -107,7 +107,15 @@ async function handleExcelImport(rows: Record<string, unknown>[]) {
       }
 
       try {
-        await sachService.taoCai(dto)
+        const createdSach = await sachService.taoCai(dto)
+        const hinhAnhUrl = String(row['Hình ảnh'] || '').trim()
+        if (createdSach && createdSach.maSach && hinhAnhUrl) {
+          try {
+            await sachService.lienKetAnhUrl(createdSach.maSach, hinhAnhUrl)
+          } catch (imgErr) {
+            console.error('Lỗi gán hình ảnh cho sách:', createdSach.maSach, imgErr)
+          }
+        }
         successCount++
       } catch (e) {
         console.error('Lỗi import dòng:', row, e)

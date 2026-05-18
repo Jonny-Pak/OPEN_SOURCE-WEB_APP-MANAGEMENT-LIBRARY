@@ -88,6 +88,15 @@ export const sachService = {
     })
   },
 
+  lienKetAnhUrl: async (id: number, url: string) => {
+    return apiClient.post<any>('/api/v1/hinh-anh-sach', {
+      duongDan: url,
+      loaiHinhAnh: 'BIA_TRUOC',
+      thuTuHienThi: 0,
+      maSach: id
+    })
+  },
+
   xoaAnhBia: async (id: number) => {
     // Fetch all cover images associated with the book
     const list = await apiClient.get<any[]>(`/api/v1/hinh-anh-sach/sach/${id}`)
