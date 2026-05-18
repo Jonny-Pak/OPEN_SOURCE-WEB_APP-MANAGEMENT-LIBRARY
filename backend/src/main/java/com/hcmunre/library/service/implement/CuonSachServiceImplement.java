@@ -26,12 +26,18 @@ public class CuonSachServiceImplement implements CuonSachService {
 
     @Override
     public List<CuonSachResponse> getAllCuonSach() {
-        return cuonSachRepository.findAll().stream().map(this::toResponse).collect(Collectors.toList());
+        return cuonSachRepository.findAll().stream()
+                .filter(c -> c.getSach() != null)
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<CuonSachResponse> getCuonSachBySach(Long maSach) {
-        return cuonSachRepository.findBySach_MaSach(maSach).stream().map(this::toResponse).collect(Collectors.toList());
+        return cuonSachRepository.findBySach_MaSach(maSach).stream()
+                .filter(c -> c.getSach() != null)
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -128,8 +134,8 @@ public class CuonSachServiceImplement implements CuonSachService {
     private CuonSachResponse toResponse(CuonSach cuonSach) {
         return CuonSachResponse.builder()
                 .maCuonSach(cuonSach.getMaCuonSach())
-                .maSach(cuonSach.getSach().getMaSach())
-                .tenSach(cuonSach.getSach().getTenSach())
+                .maSach(cuonSach.getSach() != null ? cuonSach.getSach().getMaSach() : null)
+                .tenSach(cuonSach.getSach() != null ? cuonSach.getSach().getTenSach() : "Đầu sách đã bị xóa")
                 .maVach(cuonSach.getMaVach())
                 .viTriKe(cuonSach.getViTriKe())
                 .trangThai(cuonSach.getTrangThai())
