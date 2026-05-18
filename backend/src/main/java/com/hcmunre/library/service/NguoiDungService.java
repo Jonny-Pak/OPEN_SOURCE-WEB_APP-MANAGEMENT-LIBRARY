@@ -15,7 +15,7 @@ public interface NguoiDungService {
     // Queries
     NguoiDung getNguoiDungActive(UUID maNugoiDung);
 
-    Page<NguoiDungResponse> getAllNguoiDung(Pageable pageable);
+    Page<NguoiDungResponse> getAllNguoiDung(Pageable pageable, String keyword, TrangThaiNguoiDung trangThai);
 
     NguoiDungResponse getMyProfile(UUID maNguoiDung);
 

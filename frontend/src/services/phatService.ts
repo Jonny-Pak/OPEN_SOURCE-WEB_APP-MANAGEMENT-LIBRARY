@@ -15,14 +15,14 @@ export const phatService = {
       sortBy,
       direction
     })
-    return apiClient.get<PageResponse<PhieuPhat>>(`/api/phat?${params.toString()}`)
+    return apiClient.get<PageResponse<PhieuPhat>>(`/api/v1/phieu-muon/phieu-phat?${params.toString()}`)
   },
 
   taoCai: (body: TaoPhieuPhatRequest) =>
-    apiClient.post<PhieuPhat>('/api/phat', body),
+    apiClient.post<PhieuPhat>('/api/v1/phieu-muon/phieu-phat', body),
 
   thanhToan: (id: string, body?: ThanhToanRequest) =>
-    apiClient.put<PhieuPhat>(`/api/phat/${id}/thanh-toan`, body),
+    apiClient.patch<PhieuPhat>(`/api/v1/phieu-muon/phieu-phat/${id}/thanh-toan`, body),
 
   // Requested English methods
   getAll: (page: number = 0, size: number = 10) => {
@@ -30,7 +30,7 @@ export const phatService = {
       page: page.toString(),
       size: size.toString()
     })
-    return apiClient.get<PageResponse<PhieuPhat>>(`/api/phat?${params.toString()}`)
+    return apiClient.get<PageResponse<PhieuPhat>>(`/api/v1/phieu-muon/phieu-phat?${params.toString()}`)
   },
 
   getMy: () => {
@@ -40,7 +40,7 @@ export const phatService = {
   },
 
   pay: (phatId: string) => {
-    return apiClient.put<PhieuPhat>(`/api/phat/${phatId}/thanh-toan`)
+    return apiClient.patch<PhieuPhat>(`/api/v1/phieu-muon/phieu-phat/${phatId}/thanh-toan`)
   }
 }
 

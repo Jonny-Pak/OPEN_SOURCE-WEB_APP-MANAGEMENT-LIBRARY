@@ -6,11 +6,19 @@ import type { PageResponse } from '@/types/common'
 import type { NguoiDung, TaoNguoiDungExcelRequest, TaoNguoiDungRequest, SuaNguoiDungRequest } from '@/types/nguoidung'
 
 export const docGiaService = {
-  danhSach: (page: number = 0, size: number = 10, keyword: string = '', sortBy: string = '', direction: string = '') => {
+  danhSach: (page: number = 0, size: number = 10, keyword: string = '', trangThai: string = '', sortBy: string = '', direction: string = '') => {
     const params = new URLSearchParams()
     params.append('page', page.toString())
     params.append('size', size.toString())
     if (keyword) params.append('keyword', keyword)
+    if (trangThai && trangThai !== 'all') {
+      let statusParam = ''
+      if (trangThai === 'chua_kich_hoat') statusParam = 'CHUA_KICH_HOAT'
+      else if (trangThai === 'da_kich_hoat') statusParam = 'HOAT_DONG'
+      else if (trangThai === 'bi_khoa') statusParam = 'KHOA'
+      
+      if (statusParam) params.append('trangThai', statusParam)
+    }
     if (sortBy) params.append('sortBy', sortBy)
     if (direction) params.append('direction', direction)
     return apiClient.get<PageResponse<NguoiDung>>(`/api/v1/nguoi-dung?${params.toString()}`)

@@ -154,15 +154,43 @@ public class DatChoServiceImplement implements DatChoService {
     }
 
     private DatChoResponse toDatChoResponse(DatCho datCho){
+        Long maSach = null;
+        String tenSach = "Đầu sách đã bị xóa";
+        String maIsbn = "N/A";
+        try {
+            if (datCho.getSach() != null) {
+                maSach = datCho.getSach().getMaSach();
+                tenSach = datCho.getSach().getTenSach();
+                maIsbn = datCho.getSach().getMaIsbn();
+            }
+        } catch (jakarta.persistence.EntityNotFoundException | org.hibernate.ObjectNotFoundException e) {
+            // Gracefully handle deleted book
+        }
+
+        UUID maNguoiDung = null;
+        String hoDemNguoiDung = "";
+        String tenNguoiDung = "Độc giả đã bị xóa";
+        String emailNguoiDung = "N/A";
+        try {
+            if (datCho.getNguoiDung() != null) {
+                maNguoiDung = datCho.getNguoiDung().getMaNguoiDung();
+                hoDemNguoiDung = datCho.getNguoiDung().getHoDem();
+                tenNguoiDung = datCho.getNguoiDung().getTen();
+                emailNguoiDung = datCho.getNguoiDung().getEmail();
+            }
+        } catch (jakarta.persistence.EntityNotFoundException | org.hibernate.ObjectNotFoundException e) {
+            // Gracefully handle deleted user
+        }
+
         return DatChoResponse.builder()
                 .maDatCho(datCho.getMaDatCho())
-                .maSach(datCho.getSach().getMaSach())
-                .tenSach(datCho.getSach().getTenSach())
-                .maIsbn(datCho.getSach().getMaIsbn())
-                .maNguoiDung(datCho.getNguoiDung().getMaNguoiDung())
-                .hoDemNguoiDung(datCho.getNguoiDung().getHoDem())
-                .tenNguoiDung(datCho.getNguoiDung().getTen())
-                .emailNguoiDung(datCho.getNguoiDung().getEmail())
+                .maSach(maSach)
+                .tenSach(tenSach)
+                .maIsbn(maIsbn)
+                .maNguoiDung(maNguoiDung)
+                .hoDemNguoiDung(hoDemNguoiDung)
+                .tenNguoiDung(tenNguoiDung)
+                .emailNguoiDung(emailNguoiDung)
                 .thoiGianDatCho(datCho.getThoiGianDatCho())
                 .hanGiuCho(datCho.getHanGiuCho())
                 .trangThaiDatCho(datCho.getTrangThai())

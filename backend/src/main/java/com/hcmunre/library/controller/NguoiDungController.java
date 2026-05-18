@@ -60,10 +60,12 @@ public class NguoiDungController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "maNguoiDung") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction) {
+            @RequestParam(defaultValue = "desc") String direction,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) TrangThaiNguoiDung trangThai) {
         Sort sort = direction.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        return ResponseEntity.ok(nguoiDungService.getAllNguoiDung(pageable));
+        return ResponseEntity.ok(nguoiDungService.getAllNguoiDung(pageable, keyword, trangThai));
     }
 
     @PatchMapping("/{id}/trang-thai")

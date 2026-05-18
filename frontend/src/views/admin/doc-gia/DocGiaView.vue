@@ -72,7 +72,8 @@ async function taiDanhSach() {
     const response = await docGiaService.danhSach(
       phanTrang.trangHienTai.value,
       phanTrang.kichThuocTrang.value,
-      tuKhoaDebounced.value
+      tuKhoaDebounced.value,
+      filterTrangThai.value
     )
     danhSach.value = response.content
     phanTrang.capNhatTong(response.totalElements)

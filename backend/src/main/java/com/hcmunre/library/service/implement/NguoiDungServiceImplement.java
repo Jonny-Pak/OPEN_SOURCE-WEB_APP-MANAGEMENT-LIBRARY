@@ -38,8 +38,20 @@ public class NguoiDungServiceImplement implements NguoiDungService {
     }
 
     @Override
-    public Page<NguoiDungResponse> getAllNguoiDung(Pageable pageable) {
-        return nguoiDungRepository.findByNgayXoaIsNull(pageable).map(this::toRespone);
+    public Page<NguoiDungResponse> getAllNguoiDung(Pageable pageable, String keyword, TrangThaiNguoiDung trangThai) {
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            if (trangThai != null) {
+                return nguoiDungRepository.searchNguoiDungWithStatus(keyword.trim(), trangThai, pageable).map(this::toRespone);
+            } else {
+                return nguoiDungRepository.searchNguoiDung(keyword.trim(), pageable).map(this::toRespone);
+            }
+        } else {
+            if (trangThai != null) {
+                return nguoiDungRepository.findByNgayXoaIsNullAndTrangThai(trangThai, pageable).map(this::toRespone);
+            } else {
+                return nguoiDungRepository.findByNgayXoaIsNull(pageable).map(this::toRespone);
+            }
+        }
     }
 
     @Override
