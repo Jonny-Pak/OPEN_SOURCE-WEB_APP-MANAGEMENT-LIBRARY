@@ -1,4 +1,4 @@
-﻿package com.hcmunre.library.config;
+package com.hcmunre.library.config;
 
 import com.hcmunre.library.entity.*;
 import com.hcmunre.library.enums.*;
