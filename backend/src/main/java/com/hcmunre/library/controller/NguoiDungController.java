@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -44,6 +45,13 @@ public class NguoiDungController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody UpdateProfileRequest request) {
         return ResponseEntity.ok(nguoiDungService.updateProfile(userDetails.getNguoiDung().getMaNguoiDung(), request));
+    }
+
+    @PatchMapping("/me/avatar")
+    public ResponseEntity<NguoiDungResponse> updateAvatar(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody Map<String, String> request) {
+        return ResponseEntity.ok(nguoiDungService.updateAvatar(userDetails.getNguoiDung().getMaNguoiDung(), request.get("avatar")));
     }
 
     // Đổi mật khẩu

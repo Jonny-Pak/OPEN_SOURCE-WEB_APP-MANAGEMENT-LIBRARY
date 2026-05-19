@@ -88,6 +88,15 @@ public class NguoiDungServiceImplement implements NguoiDungService {
     }
 
     @Override
+    public NguoiDungResponse updateAvatar(UUID maNguoiDung, String avatar) {
+        NguoiDung nguoiDung = nguoiDungRepository.findById(maNguoiDung).orElseThrow(
+                () -> new LibraryException(ErrorCode.NGUOI_DUNG_KHONG_TON_TAI));
+
+        nguoiDung.setAvatar(avatar);
+        return toRespone(nguoiDungRepository.save(nguoiDung));
+    }
+
+    @Override
     public void changePassword(UUID maNguoiDung, ChangePasswordRequest request) {
         NguoiDung nguoiDung = nguoiDungRepository.findById(maNguoiDung).orElseThrow(
                 () -> new LibraryException(ErrorCode.NGUOI_DUNG_KHONG_TON_TAI));

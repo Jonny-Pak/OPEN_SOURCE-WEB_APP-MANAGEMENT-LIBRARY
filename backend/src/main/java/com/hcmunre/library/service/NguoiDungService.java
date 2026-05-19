@@ -22,6 +22,7 @@ public interface NguoiDungService {
 
     // Commands
     NguoiDungResponse updateProfile(UUID maNguoiDung, UpdateProfileRequest request);
+    NguoiDungResponse updateAvatar(UUID maNguoiDung, String avatar);
 
     void changePassword(UUID maNguoiDung, ChangePasswordRequest request);
 

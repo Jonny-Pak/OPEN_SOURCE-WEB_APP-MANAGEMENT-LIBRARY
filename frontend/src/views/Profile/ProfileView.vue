@@ -79,14 +79,7 @@ const handleSaveAvatar = async () => {
   if (!tempAvatar.value) return
   savingAvatar.value = true
   try {
-    const res: any = await apiClient.put('/api/v1/nguoi-dung/me', {
-      hoDem: editableProfile.value.hoDem || '',
-      ten: editableProfile.value.ten || '',
-      soDienThoai: editableProfile.value.soDienThoai || '',
-      ngaySinh: editableProfile.value.ngaySinh || null,
-      gioiTinh: editableProfile.value.gioiTinh || 'NAM',
-      cccd: editableProfile.value.cccd || null,
-      diaChi: editableProfile.value.diaChi || null,
+    const res: any = await apiClient.patch('/api/v1/nguoi-dung/me/avatar', {
       avatar: tempAvatar.value
     })
     if (res) {
