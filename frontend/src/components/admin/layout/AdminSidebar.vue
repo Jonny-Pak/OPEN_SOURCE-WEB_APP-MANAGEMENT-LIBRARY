@@ -24,67 +24,66 @@ const route = useRoute()
 
 const menuItems: MenuItem[] = [
   {
+    label: 'Xem Website',
+    icon: 'fa-solid fa-globe',
+    route: '/',
+  },
+  {
     label: 'Dashboard',
-    icon: 'fas fa-gauge-high',
+    icon: 'fa-solid fa-gauge-high',
     route: '/admin/dashboard',
     permission: 'dashboard:full-stats', // Chỉ admin thấy full, librarian thấy bản rút gọn nhưng vẫn truy cập được
   },
   {
     label: 'Quản lý Sách',
-    icon: 'fas fa-book',
+    icon: 'fa-solid fa-book',
     children: [
-      { label: 'Danh sách đầu sách', icon: 'fas fa-list', route: '/admin/sach', permission: 'sach:view' },
-      { label: 'Quản lý bản sao', icon: 'fas fa-copy', route: '/admin/cuon-sach', permission: 'cuon-sach:view' },
+      { label: 'Danh sách đầu sách', icon: 'fa-solid fa-book-open-reader', route: '/admin/sach', permission: 'sach:view' },
+      { label: 'Quản lý bản sao', icon: 'fa-solid fa-book', route: '/admin/cuon-sach', permission: 'cuon-sach:view' },
     ]
   },
   {
     label: 'Mượn / Trả sách',
-    icon: 'fas fa-arrow-right-arrow-left',
+    icon: 'fa-solid fa-arrows-rotate',
     children: [
-      { label: 'Phiếu mượn', icon: 'fas fa-file-lines', route: '/admin/muon-sach', permission: 'muon-sach:view' },
-      { label: 'Trả sách', icon: 'fas fa-rotate-left', route: '/admin/tra-sach', permission: 'tra-sach:process' },
+      { label: 'Phiếu mượn', icon: 'fa-solid fa-arrows-rotate', route: '/admin/muon-sach', permission: 'muon-sach:view' },
+      { label: 'Trả sách', icon: 'fa-solid fa-rotate-left', route: '/admin/tra-sach', permission: 'tra-sach:process' },
+      { label: 'Duyệt gia hạn', icon: 'fa-solid fa-calendar-plus', route: '/admin/duyet-gia-han', permission: 'muon-sach:view' },
     ]
   },
   {
     label: 'Đặt chỗ',
-    icon: 'fas fa-calendar-check',
+    icon: 'fa-solid fa-calendar-days',
     route: '/admin/dat-cho',
     permission: 'dat-cho:view',
   },
   {
     label: 'Quản lý Phạt',
-    icon: 'fas fa-circle-exclamation',
+    icon: 'fa-solid fa-gavel',
     route: '/admin/phat',
     permission: 'phat:view',
   },
   {
     label: 'Độc giả',
-    icon: 'fas fa-users',
+    icon: 'fa-solid fa-users',
     route: '/admin/doc-gia',
     permission: 'doc-gia:view',
   },
   // ---- CHỈ ADMIN ----
   {
     label: 'Danh mục',
-    icon: 'fas fa-layer-group',
+    icon: 'fa-solid fa-layer-group',
     onlyAdmin: true,
     children: [
-      { label: 'Tác giả', icon: 'fas fa-pen-nib', route: '/admin/danh-muc/tac-gia', permission: 'tac-gia:view' },
-      { label: 'Nhà xuất bản', icon: 'fas fa-building', route: '/admin/danh-muc/nha-xuat-ban', permission: 'nha-xuat-ban:view' },
-      { label: 'Thể loại', icon: 'fas fa-tag', route: '/admin/danh-muc/the-loai', permission: 'the-loai:view' },
-      { label: 'Vị trí kệ sách', icon: 'fas fa-map-pin', route: '/admin/danh-muc/vi-tri', permission: 'vi-tri:view' },
+      { label: 'Tác giả', icon: 'fa-solid fa-pen-nib', route: '/admin/danh-muc/tac-gia', permission: 'tac-gia:view' },
+      { label: 'Nhà xuất bản', icon: 'fa-solid fa-building-columns', route: '/admin/danh-muc/nha-xuat-ban', permission: 'nha-xuat-ban:view' },
+      { label: 'Thể loại', icon: 'fa-solid fa-layer-group', route: '/admin/danh-muc/the-loai', permission: 'the-loai:view' },
+      { label: 'Vị trí kệ sách', icon: 'fa-solid fa-location-dot', route: '/admin/danh-muc/vi-tri', permission: 'vi-tri:view' },
     ]
   },
   {
-    label: 'Nhân sự',
-    icon: 'fas fa-user-gear',
-    route: '/admin/nhan-su',
-    onlyAdmin: true,
-    permission: 'nhan-su:view',
-  },
-  {
     label: 'Cài đặt hệ thống',
-    icon: 'fas fa-gear',
+    icon: 'fa-solid fa-screwdriver-wrench',
     route: '/admin/settings',
     onlyAdmin: true,
     permission: 'system:settings',
@@ -111,8 +110,10 @@ const duongDanHienTai = computed(() => route.path)
 /** Check if menu item is active */
 const isActive = (item: MenuItem): boolean => {
   if (!item.route) return false
-  return duongDanHienTai.value === item.route || duongDanHienTai.value.startsWith(item.route)
+  if (item.route === '/') return duongDanHienTai.value === '/'
+  return duongDanHienTai.value === item.route || (item.route !== '/' && duongDanHienTai.value.startsWith(item.route))
 }
+
 
 /** Check if parent has active child */
 const hasActiveChild = (item: MenuItem): boolean => {
@@ -125,7 +126,7 @@ const hasActiveChild = (item: MenuItem): boolean => {
   <aside class="sidebar" :class="{ 'sidebar--thu-gon': thuGon }">
     <!-- Logo -->
     <div class="sidebar__logo">
-      <span class="sidebar__logo-icon"><i class="fas fa-book-open"></i></span>
+      <span class="sidebar__logo-icon"><font-awesome-icon icon="fa-solid fa-book-open" /></span>
       <Transition name="fade-text">
         <span v-if="!thuGon" class="sidebar__logo-text">LibraryAdmin</span>
       </Transition>
@@ -142,7 +143,7 @@ const hasActiveChild = (item: MenuItem): boolean => {
           :class="{ 'sidebar__menu-item--active': isActive(item) }"
           :title="thuGon ? item.label : ''"
         >
-          <span class="sidebar__menu-icon"><i :class="item.icon"></i></span>
+          <span class="sidebar__menu-icon"><font-awesome-icon :icon="item.icon" /></span>
           <Transition name="fade-text">
             <span v-if="!thuGon" class="sidebar__menu-text">{{ item.label }}</span>
           </Transition>
@@ -158,12 +159,12 @@ const hasActiveChild = (item: MenuItem): boolean => {
           :open="hasActiveChild(item)"
         >
           <summary class="sidebar__menu-item sidebar__menu-item--parent">
-            <span class="sidebar__menu-icon"><i :class="item.icon"></i></span>
+            <span class="sidebar__menu-icon"><font-awesome-icon :icon="item.icon" /></span>
             <Transition name="fade-text">
               <span v-if="!thuGon" class="sidebar__menu-text">{{ item.label }}</span>
             </Transition>
             <span v-if="!thuGon" class="sidebar__menu-chevron">
-              <i class="fas fa-chevron-down"></i>
+              <font-awesome-icon icon="fa-solid fa-angle-right" />
             </span>
             <!-- Tooltip khi thu gọn -->
             <span v-if="thuGon" class="sidebar__tooltip">{{ item.label }}</span>
@@ -178,7 +179,7 @@ const hasActiveChild = (item: MenuItem): boolean => {
               class="sidebar__submenu-item"
               :class="{ 'sidebar__submenu-item--active': isActive(child) }"
             >
-              <span class="sidebar__submenu-icon"><i :class="child.icon"></i></span>
+              <span class="sidebar__submenu-icon"><font-awesome-icon :icon="child.icon" /></span>
               <span class="sidebar__submenu-text">{{ child.label }}</span>
             </RouterLink>
           </div>
@@ -193,7 +194,7 @@ const hasActiveChild = (item: MenuItem): boolean => {
       :aria-label="thuGon ? 'Mở rộng sidebar' : 'Thu gọn sidebar'"
     >
       <span :style="{ transform: thuGon ? 'rotate(180deg)' : 'none', display: 'inline-block', transition: 'transform 0.3s' }">
-        <i class="fas fa-chevron-left"></i>
+        <font-awesome-icon icon="fa-solid fa-angle-left" />
       </span>
       <Transition name="fade-text">
         <span v-if="!thuGon" style="margin-left: 0.5rem;">Thu gọn</span>

@@ -28,11 +28,7 @@ public class Sach extends BaseEntity {
 
     @NotBlank(message = "Tên sách không được để trống")
     private String tenSach;
-    @NotBlank(message = "Mã ISBN không được để trống")
-    @Pattern(
-        regexp = "^(\\d{9}[\\dX]|\\d{13})$",
-        message = "Mã ISBN phải là ISBN-10 (10 ký tự) hoặc ISBN-13 (13 chữ số)"
-    )
+    // Giữ unique constraint ở DB nhưng bỏ Bean Validation để cho phép import với ISBN tự sinh
     @Column(unique = true, nullable = false)
     private String maIsbn;
     @Min(value = 1, message = "Số trang phải là số nguyên dương")
@@ -58,7 +54,6 @@ public class Sach extends BaseEntity {
 
     private LocalDateTime ngayXoa;
 
-    @NotNull(message = "Nhà xuất bản không được để trống")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ma_nha_xuat_ban")
     private NhaXuatBan nhaXuatBan;
@@ -66,7 +61,7 @@ public class Sach extends BaseEntity {
     @OneToMany(mappedBy = "sach")
     private List<CuonSach> danhSachCuonSach;
 
-    @OneToMany(mappedBy = "sach", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "sach", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<HinhAnhSach> danhSachHinhAnh;
 
     @ManyToMany

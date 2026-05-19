@@ -136,7 +136,7 @@
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2.5rem;
 }
@@ -295,7 +295,43 @@
   font-size: 0.85rem;
 }
 
+.btn-danger {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #fecaca;
+}
+
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.badge-count {
+  background: var(--accent);
+  color: white;
+  border-radius: 99px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.1rem 0.5rem;
+  margin-left: 0.25rem;
+}
+
+.stat-icon.orange { background: #ffedd5; color: #ea580c; }
+.status-tag.purple { background: #f3e8ff; color: #9333ea; }
+
 .mt-xl { margin-top: 2.5rem; }
+
 
 .settings-form {
   display: flex;

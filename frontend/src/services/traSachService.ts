@@ -1,36 +1,41 @@
-// /**
-//  * traSachService.ts — Service Trả sách và Gia hạn.
-//  */
-// import apiClient from './apiClient'
-// import type { PageResponse } from '@/types/common'
-// import type { TraSachRequest } from '@/types/muonsach'
-// import type { LichSuGiaHan, DuyetGiaHanRequest, TuChoiGiaHanRequest, TrangThaiGiaHan } from '@/types/giahan'
-
-// export const traSachService = {
-//   /** Xác nhận trả sách và tình trạng từng cuốn */
-//   traSach: (phieuMuonId: number, body: TraSachRequest) =>
-//     apiClient.put<void>(`/api/v1/phieu-muon/${phieuMuonId}/tra`, body),
-// }
-
-// export const giaHanService = {
-//   danhSach: () =>
-//     apiClient.get<LichSuGiaHan[]>('/api/v1/gia-han'),
-
-//   duyet: (id: number, body: DuyetGiaHanRequest) =>
-//     apiClient.put<LichSuGiaHan>(`/api/v1/gia-han/${id}/duyet`, body),
-
-//   tuChoi: (id: number, body: TuChoiGiaHanRequest) =>
-//     apiClient.put<LichSuGiaHan>(`/api/v1/gia-han/${id}/tu-choi`, body)
-// }
 /**
- * traSachService.ts — (MOCK DATA) Service Trả sách và Gia hạn.
+ * traSachService.ts — Service Trả sách và Gia hạn.
  */
-import type { TraSachRequest } from '@/types/muonsach'
+import apiClient from './apiClient'
+import type { PageResponse } from '@/types/common'
+import type { TraSachRequest, TraCuonSachRequest, TraToanBoRequest } from '@/types/muonsach'
 import type { LichSuGiaHan, DuyetGiaHanRequest, TuChoiGiaHanRequest } from '@/types/giahan'
+
+const mapTinhTrang = (t: string): string => {
+  if (t === 'TOT') return 'BINH_THUONG'
+  if (t === 'HU_HONG') return 'RACH_TRANG'
+  if (t === 'MAT') return 'HONG_NANG'
+  return 'BINH_THUONG'
+}
+
+export const traSachService = {
+  /** Xác nhận trả toàn bộ sách trong phiếu */
+  traToanBo: (body: TraToanBoRequest) =>
+    apiClient.post<void>('/api/v1/phieu-muon/tra-toan-bo', {
+      maPhieuMuon: body.maPhieuMuon,
+      tinhTrangLucTra: 'BINH_THUONG'
+    }),
+
+  /** Xác nhận trả 1 cuốn sách (kèm tình trạng) */
+  traCuonSach: (body: TraCuonSachRequest) =>
+    apiClient.post<void>('/api/v1/phieu-muon/tra-sach', {
+      maChiTietPhieuMuon: body.maChiTietPhieuMuon,
+      tinhTrangLucTra: mapTinhTrang(body.tinhTrangVatLyKhiTra)
+    }),
+
+  /** Báo mất sách */
+  baoMatSach: (maChiTietPhieuMuon: string) =>
+    apiClient.post<void>(`/api/v1/phieu-muon/mat-sach/${maChiTietPhieuMuon}`),
+}
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
-let mockGiaHan: LichSuGiaHan[] = [
+const mockGiaHan: LichSuGiaHan[] = [
   {
     maGiaHan: 1,
     nguoiDung: { maNguoiDung: '1', hoDem: 'Nguyễn Văn', ten: 'A' },
@@ -39,55 +44,36 @@ let mockGiaHan: LichSuGiaHan[] = [
     hanTraHienTai: '2026-05-17T08:00:00Z',
     hanTraXinGiaHan: '2026-05-24T08:00:00Z',
     trangThai: 'CHO_DUYET'
-  },
-  {
-    maGiaHan: 2,
-    nguoiDung: { maNguoiDung: '2', hoDem: 'Trần Thị', ten: 'B' },
-    tenSach: 'Clean Code',
-    maBarcodeVatLy: 'CLEAN-001',
-    hanTraHienTai: '2026-04-27T08:00:00Z',
-    hanTraXinGiaHan: '2026-05-04T08:00:00Z',
-    trangThai: 'TU_CHOI',
-    lyDoTuChoi: 'Sách đang có nhiều người đặt hàng chờ mượn'
   }
 ]
 
-export const traSachService = {
-  traSach: async (phieuMuonId: number, body: TraSachRequest) => {
-    await delay(800)
-    // Giả lập logic trả sách thành công
-    console.log(`Đã xử lý trả sách cho phiếu ${phieuMuonId}`, body.chiTietList)
-    return Promise.resolve()
-  },
-}
-
 export const giaHanService = {
-  danhSach: async () => { await delay(500); return [...mockGiaHan] },
-
-  duyet: async (id: number, body: DuyetGiaHanRequest) => {
-    await delay(500)
-    const index = mockGiaHan.findIndex(g => g.maGiaHan === id)
-    if (index !== -1) {
-      const giaHan = mockGiaHan[index]
-      if (giaHan) {
-        giaHan.trangThai = 'DA_DUYET'
-        // Cập nhật mốc thời gian để UI thay đổi
-        giaHan.hanTraHienTai = body.hanTraMoi
-      }
+  danhSach: async (): Promise<LichSuGiaHan[]> => {
+    const res: any = await apiClient.get<any[]>('/api/v1/phieu-muon/gia-han/danh-sach')
+    if (Array.isArray(res)) {
+      return res.map((item: any) => ({
+        maGiaHan: item.maLichSuGiaHan,
+        nguoiDung: {
+          maNguoiDung: '',
+          hoDem: item.tenDocGia || '',
+          ten: ''
+        },
+        tenSach: item.tenSach || 'N/A',
+        maBarcodeVatLy: item.maChiTietPhieuMuon ? String(item.maChiTietPhieuMuon).substring(0, 8).toUpperCase() : 'N/A',
+        hanTraHienTai: item.hanTraCu || '',
+        hanTraXinGiaHan: item.hanTraMoi || '',
+        trangThai: item.trangThai || 'CHO_DUYET',
+        lyDoTuChoi: item.lyDo || ''
+      }))
     }
-    return mockGiaHan[index]
+    return []
   },
 
-  tuChoi: async (id: number, body: TuChoiGiaHanRequest) => {
-    await delay(500)
-    const index = mockGiaHan.findIndex(g => g.maGiaHan === id)
-    if (index !== -1) {
-      const giaHan = mockGiaHan[index]
-      if (giaHan) {
-        giaHan.trangThai = 'TU_CHOI'
-        giaHan.lyDoTuChoi = body.lyDo
-      }
-    }
-    return mockGiaHan[index]
+  duyet: async (id: any, body: DuyetGiaHanRequest) => {
+    return apiClient.post(`/api/v1/phieu-muon/gia-han/duyet/${id}?dongY=true`, {})
+  },
+
+  tuChoi: async (id: any, body: TuChoiGiaHanRequest) => {
+    return apiClient.post(`/api/v1/phieu-muon/gia-han/duyet/${id}?dongY=false`, {})
   }
 }

@@ -2,6 +2,7 @@ package com.hcmunre.library.exception;
 
 import com.hcmunre.library.dto.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(LibraryException.class)
@@ -50,16 +52,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(code.getHttpStatus()).body(errorResponse);
     }
 
+    @ExceptionHandler({org.springframework.security.access.AccessDeniedException.class, org.springframework.security.core.AuthenticationException.class})
+    public void handleSecurityException(Exception ex) throws Exception {
+        throw ex; // Nhường lại cho CustomAccessDeniedHandler và CustomAuthenticationEntryPoint xử lý
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, HttpServletRequest request){
-        ex.printStackTrace();
+        // Log full stack trace server-side only — never expose to API consumers
+        log.error("Unhandled exception at {}: {}", request.getRequestURI(), ex.getMessage(), ex);
 
         ErrorCode code = ErrorCode.SERVER_ERROR;
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(code.getHttpStatus().value())
                 .error(code.name())
-                .message(code.getMessage())
+                .message(ex.getMessage() != null ? ex.getMessage() : code.getMessage())
                 .path(request.getRequestURI())
                 .build();
 

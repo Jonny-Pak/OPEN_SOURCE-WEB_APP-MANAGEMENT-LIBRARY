@@ -13,3 +13,17 @@ Thumbs.db
 
 # Dependencies
 node_modules/
+
+# Local logs and uploads
+logs/
+backend/logs/
+uploads/
+backend/uploads/
+backend/run_output.txt
+backend/run_output_utf8.txt
+scratch/
+
+# Specific files requested not to push
+PROJECT_STRUCTURE.md
+import_sach.zip
+

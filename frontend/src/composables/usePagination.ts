@@ -47,6 +47,29 @@ export function usePagination(defaultSize = 10) {
     tongPhanTu.value = total
   }
 
+  // Requested English interface
+  const currentPage = computed({
+    get: () => trangHienTai.value + 1,
+    set: (val: number) => {
+      denTrang(val)
+    }
+  })
+  
+  const pageSize = kichThuocTrang
+  const totalPages = tongTrang
+
+  function goToPage(page: number): void {
+    denTrang(page)
+  }
+
+  function nextPage(): void {
+    trangTiepTheo()
+  }
+
+  function prevPage(): void {
+    trangTruoc()
+  }
+
   return {
     trangHienTai,
     kichThuocTrang,
@@ -60,5 +83,15 @@ export function usePagination(defaultSize = 10) {
     trangTruoc,
     datLaiTrang,
     capNhatTong,
+
+    // English Interface
+    currentPage,
+    pageSize,
+    totalPages,
+    goToPage,
+    nextPage,
+    prevPage
   }
 }
+
+export default usePagination

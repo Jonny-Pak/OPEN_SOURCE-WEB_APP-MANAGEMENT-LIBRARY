@@ -42,12 +42,24 @@ public enum ErrorCode {
     KHONG_THE_BAO_MAT_SACH_DA_TRA(HttpStatus.BAD_REQUEST, "Không thể báo mất cuốn sách đã được trả"),
 
     DAT_CHO_DA_XU_LY(HttpStatus.BAD_REQUEST, "Lượt đặt chỗ này đã được xử lý hoặc hủy bỏ trước đó"),
+    SACH_DA_CO_NGUOI_DAT_CHO(HttpStatus.BAD_REQUEST, "Sách này đã được độc giả khác đặt chỗ, không thể gia hạn"),
 
     MAT_KHAU_KHONG_KHOP(HttpStatus.BAD_REQUEST, "Mật khẩu mới và xác nhận mật khẩu không trùng khớp"),
     MAT_KHAU_CU_SAI(HttpStatus.BAD_REQUEST, "Mật khẩu cũ không chính xác"),
 
     SACH_DA_CO_TRONG_YEU_THICH(HttpStatus.BAD_REQUEST, "Cuốn sách này đã có trong danh sách yêu thích của bạn"),
-    THONG_BAO_KHONG_TON_TAI(HttpStatus.NOT_FOUND, "Không tìm thấy thông báo này"),
+
+    OTP_KHONG_HOP_LE(HttpStatus.BAD_REQUEST, "Mã OTP không hợp lệ hoặc đã hết hạn"),
+    OTP_DA_HET_HAN(HttpStatus.BAD_REQUEST, "Mã OTP đã hết hạn, vui lòng yêu cầu mã mới"),
+
+    FILE_EXCEL_KHONG_HOP_LE(HttpStatus.BAD_REQUEST, "File không đúng định dạng Excel (.xlsx)"),
+    LOI_DOC_FILE_EXCEL(HttpStatus.BAD_REQUEST, "Có lỗi xảy ra khi đọc file Excel"),
+    EXCEL_THIEU_HO_DEM(HttpStatus.BAD_REQUEST, "Họ đệm không được để trống"),
+    EXCEL_THIEU_TEN(HttpStatus.BAD_REQUEST, "Tên không được để trống"),
+    EXCEL_THIEU_EMAIL(HttpStatus.BAD_REQUEST, "Email không được để trống"),
+    EXCEL_THIEU_SDT(HttpStatus.BAD_REQUEST, "Số điện thoại không được để trống"),
+    EXCEL_NGAY_SINH_SAI_FORMAT(HttpStatus.BAD_REQUEST, "Ngày sinh không đúng định dạng dd/MM/yyyy"),
+    EXCEL_GIOI_TINH_KHONG_HOP_LE(HttpStatus.BAD_REQUEST, "Giới tính không hợp lệ (NAM hoặc NU)"),
 
     /** 401 - Unauthorized */
     CHUA_DANG_NHAP(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn"),
@@ -58,18 +70,25 @@ public enum ErrorCode {
 
     /** 404 - Not Found */
     NGUOI_DUNG_KHONG_TON_TAI(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng"),
+    THONG_BAO_KHONG_TON_TAI(HttpStatus.NOT_FOUND, "Không tìm thấy thông báo này"),
 
     /** 409 - Conflict */
     ISBN_DA_TON_TAI(HttpStatus.CONFLICT, "Mã ISBN này đã được sử dụng bởi một đầu sách khác"),
     MA_VACH_DA_TON_TAI(HttpStatus.CONFLICT, "Mã vạch này đã được gắn cho một cuốn sách khác"),
     EMAIL_DA_TON_TAI(HttpStatus.CONFLICT, "Địa chỉ email này đã được sử dụng"),
     SDT_DA_TON_TAI(HttpStatus.CONFLICT, "Số điện thoại này đã được sử dụng"),
+    CCCD_DA_TON_TAI(HttpStatus.CONFLICT, "Số CCCD này đã được sử dụng"),
+    CCCD_KHONG_HOP_LE(HttpStatus.BAD_REQUEST, "Số CCCD phải đúng 12 chữ số"),
+    EMAIL_KHONG_HOP_LE(HttpStatus.BAD_REQUEST, "Địa chỉ email không đúng định dạng"),
+    SDT_KHONG_HOP_LE(HttpStatus.BAD_REQUEST, "Số điện thoại phải có 10 chữ số và bắt đầu bằng 0"),
+    MA_VACH_TRONG(HttpStatus.BAD_REQUEST, "Mã vạch cuốn sách không được để trống"),
     DA_DAT_CHO(HttpStatus.CONFLICT, "Bạn đã có một lượt đặt chỗ đang chờ cho đầu sách này"),
 
     SACH_YEU_THICH_KHONG_TON_TAI(HttpStatus.NOT_FOUND, "Không tìm thấy sách trong danh sách yêu thích"),
 
     /** 423 - Locked */
     TAI_KHOAN_BI_KHOA(HttpStatus.LOCKED, "Tài khoản của bạn đã bị khóa"),
+    TAI_KHOAN_CHUA_KICH_HOAT(HttpStatus.UNAUTHORIZED, "Tài khoản của bạn chưa được kích hoạt"),
 
     /** 500 - Internal Server Error */
     SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Hệ thống đang gặp sự cố, vui lòng thử lại sau");

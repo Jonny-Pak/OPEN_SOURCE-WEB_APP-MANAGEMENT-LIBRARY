@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import Navbar from '../../components/Navbar/Navbar.vue'
 import Footer from '../../components/Footer/Footer.vue'
 
@@ -10,10 +10,10 @@ const toggleFaq = (id: string) => {
   activeFaq.value = activeFaq.value === id ? null : id
 }
 
-const faqCategories = [
+const defaultFaqs = [
   {
     title: 'Tài khoản & Đăng nhập',
-    icon: 'fa-user-circle',
+    icon: 'fa-solid fa-circle-user',
     questions: [
       {
         id: 'acc-1',
@@ -29,7 +29,7 @@ const faqCategories = [
   },
   {
     title: 'Mượn & Trả sách',
-    icon: 'fa-book',
+    icon: 'fa-solid fa-book',
     questions: [
       {
         id: 'borrow-1',
@@ -50,7 +50,7 @@ const faqCategories = [
   },
   {
     title: 'Dịch vụ khác',
-    icon: 'fa-concierge-bell',
+    icon: 'fa-solid fa-bell',
     questions: [
       {
         id: 'svc-1',
@@ -66,18 +66,43 @@ const faqCategories = [
   }
 ]
 
+const settings = ref({
+  faqTitle: 'Chúng tôi có thể giúp gì cho bạn?',
+  faqSubtitle: 'Tìm kiếm câu trả lời nhanh chóng cho các thắc mắc thường gặp nhất',
+  faqsJson: JSON.stringify(defaultFaqs, null, 2)
+})
+
+onMounted(() => {
+  const saved = localStorage.getItem('library_settings')
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved)
+      Object.assign(settings.value, parsed)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+})
+
+const faqCategories = computed(() => {
+  try {
+    return JSON.parse(settings.value.faqsJson)
+  } catch (e) {
+    return defaultFaqs
+  }
+})
+
 const filteredFaqs = computed(() => {
-  if (!searchQuery.value) return faqCategories
+  if (!searchQuery.value) return faqCategories.value
   
-  return faqCategories.map(cat => ({
+  return faqCategories.value.map((cat: any) => ({
     ...cat,
-    questions: cat.questions.filter(q => 
+    questions: cat.questions.filter((q: any) => 
       q.question.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       q.answer.toLowerCase().includes(searchQuery.value.toLowerCase())
     )
-  })).filter(cat => cat.questions.length > 0)
+  })).filter((cat: any) => cat.questions.length > 0)
 })
-
 </script>
 
 <template>
@@ -88,11 +113,11 @@ const filteredFaqs = computed(() => {
       <div class="container">
         <!-- Hero Section -->
         <header class="faq-hero text-center">
-          <h1>Chúng tôi có thể <span class="text-accent">giúp gì cho bạn?</span></h1>
-          <p>Tìm kiếm câu trả lời nhanh chóng cho các thắc mắc thường gặp nhất</p>
+          <h1>{{ settings.faqTitle }}</h1>
+          <p>{{ settings.faqSubtitle }}</p>
           
           <div class="faq-search">
-            <i class="fas fa-search search-icon"></i>
+            <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="search-icon" />
             <input 
               v-model="searchQuery" 
               type="text" 
@@ -104,14 +129,14 @@ const filteredFaqs = computed(() => {
         <!-- FAQ Categories -->
         <div class="faq-container">
           <div v-if="filteredFaqs.length === 0" class="no-results">
-            <i class="fas fa-search"></i>
+            <font-awesome-icon icon="fa-solid fa-magnifying-glass" />
             <p>Không tìm thấy câu hỏi nào phù hợp với "{{ searchQuery }}"</p>
             <button @click="searchQuery = ''" class="btn btn-outline">Xem tất cả câu hỏi</button>
           </div>
 
           <div v-for="category in filteredFaqs" :key="category.title" class="faq-category">
             <div class="category-header">
-              <i :class="['fas', category.icon]"></i>
+              <font-awesome-icon :icon="category.icon" />
               <h2>{{ category.title }}</h2>
             </div>
             
@@ -125,7 +150,7 @@ const filteredFaqs = computed(() => {
                 <div class="faq-question" @click="toggleFaq(faq.id)">
                   <h3>{{ faq.question }}</h3>
                   <div class="toggle-icon">
-                    <i class="fas fa-plus"></i>
+                    <font-awesome-icon icon="fa-solid fa-plus" />
                   </div>
                 </div>
                 <div class="faq-answer">
@@ -142,7 +167,7 @@ const filteredFaqs = computed(() => {
         <section class="support-cta">
           <div class="support-card">
             <div class="support-icon">
-              <i class="fas fa-headset"></i>
+              <font-awesome-icon icon="fa-solid fa-headset" />
             </div>
             <div class="support-text">
               <h3>Vẫn còn thắc mắc?</h3>

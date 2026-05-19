@@ -72,16 +72,19 @@ const router = createRouter({
       path: '/borrow/cart',
       name: 'borrow-cart',
       component: CartView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/favorites',
       name: 'favorites',
       component: FavoritesView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/reservation/:id',
       name: 'reservation-detail',
       component: ReservationDetailView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/authors',
@@ -107,6 +110,7 @@ const router = createRouter({
       path: '/profile',
       name: 'profile',
       component: ProfileView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/login',
@@ -118,6 +122,7 @@ const router = createRouter({
     {
       path: '/admin',
       component: () => import('@/components/admin/layout/AdminLayout.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
       children: [
         {
           path: '',
@@ -143,14 +148,9 @@ const router = createRouter({
           ]
         },
         {
-          path: 'nhan-su',
-          name: 'nhan-su',
-          component: () => import('@/views/admin/DashboardView.vue'),
-        },
-        {
           path: 'settings',
           name: 'settings',
-          component: () => import('@/views/admin/DashboardView.vue'),
+          component: () => import('@/views/admin/SettingsView.vue'),
         },
         {
           path: 'sach',
@@ -202,6 +202,11 @@ const router = createRouter({
           component: () => import('@/views/admin/tra-sach/TraSachView.vue'),
         },
         {
+          path: 'duyet-gia-han',
+          name: 'duyet-gia-han',
+          component: () => import('@/views/admin/duyet-gia-han/DuyetGiaHanView.vue'),
+        },
+        {
           path: 'phat',
           name: 'phat',
           component: () => import('@/views/admin/phat/PhatView.vue'),
@@ -224,9 +229,39 @@ const router = createRouter({
   ],
 })
 
+import { useAuthStore } from '@/stores/auth'
+
 // ===== NAVIGATION GUARDS =====
-router.beforeEach((to) => {
-  // Add any global guard logic here if needed
+router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore()
+
+  // Bắt buộc đăng nhập nếu route yêu cầu requiresAuth
+  if (to.matched.some(record => record.meta.requiresAuth)) {
+    if (!authStore.daXacThuc) {
+      return next({
+        name: 'login',
+        query: { redirect: to.fullPath }
+      })
+    }
+  }
+
+  // Yêu cầu quyền Admin/Librarian đối với route admin
+  if (to.matched.some(record => record.meta.requiresAdmin)) {
+    if (authStore.currentRole === 'DOC_GIA') {
+      return next({ path: '/403' })
+    }
+  }
+
+  // Đã đăng nhập nhưng cố tình vào /login
+  if (authStore.daXacThuc && to.name === 'login') {
+    if (authStore.isAdmin || authStore.isLibrarian) {
+      return next({ path: '/admin/dashboard' })
+    } else {
+      return next({ path: '/' })
+    }
+  }
+
+  next()
 })
 
 export default router

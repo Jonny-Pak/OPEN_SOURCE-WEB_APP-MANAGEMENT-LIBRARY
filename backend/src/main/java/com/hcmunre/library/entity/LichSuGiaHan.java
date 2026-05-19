@@ -5,6 +5,8 @@ import lombok.*;
 import jakarta.validation.constraints.NotNull;
 import org.hibernate.annotations.CreationTimestamp;
 
+import com.hcmunre.library.enums.TrangThaiGiaHan;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -24,6 +26,13 @@ public class LichSuGiaHan {
     private LocalDateTime hanTraCu;
     private LocalDateTime hanTraMoi;
     private String lyDo;
+
+    @Enumerated(EnumType.STRING)
+    private TrangThaiGiaHan trangThai;
+
+    public TrangThaiGiaHan getTrangThai() {
+        return trangThai == null ? TrangThaiGiaHan.CHO_DUYET : trangThai;
+    }
 
     @Column(updatable = false)
     @CreationTimestamp

@@ -12,6 +12,9 @@ const matKhauCu = ref('')
 const matKhauMoi = ref('')
 const xacNhan = ref('')
 const dangGui = ref(false)
+const showMatKhauCu = ref(false)
+const showMatKhauMoi = ref(false)
+const showXacNhan = ref(false)
 const thongBao = ref<{ loai: 'ok' | 'loi'; noi: string } | null>(null)
 
 async function xuLyDoiMatKhau(): Promise<void> {
@@ -60,15 +63,60 @@ async function xuLyDoiMatKhau(): Promise<void> {
       <form class="form-grid" @submit.prevent="xuLyDoiMatKhau">
         <div class="field">
           <label class="label">Mat khau hien tai</label>
-          <input v-model="matKhauCu" type="password" class="input" placeholder="Nhap mat khau hien tai" />
+          <div style="position: relative; display: flex; align-items: center; width: 100%;">
+            <input 
+              v-model="matKhauCu" 
+              :type="showMatKhauCu ? 'text' : 'password'" 
+              class="input" 
+              placeholder="Nhap mat khau hien tai" 
+              style="width: 100%; padding-right: 40px;"
+            />
+            <button 
+              type="button" 
+              @click="showMatKhauCu = !showMatKhauCu" 
+              style="position: absolute; right: 12px; background: none; border: none; color: #9ca3af; cursor: pointer; display: flex; align-items: center;"
+            >
+              <font-awesome-icon :icon="showMatKhauCu ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'" />
+            </button>
+          </div>
         </div>
         <div class="field">
           <label class="label">Mat khau moi</label>
-          <input v-model="matKhauMoi" type="password" class="input" placeholder="Toi thieu 6 ky tu" />
+          <div style="position: relative; display: flex; align-items: center; width: 100%;">
+            <input 
+              v-model="matKhauMoi" 
+              :type="showMatKhauMoi ? 'text' : 'password'" 
+              class="input" 
+              placeholder="Toi thieu 6 ky tu" 
+              style="width: 100%; padding-right: 40px;"
+            />
+            <button 
+              type="button" 
+              @click="showMatKhauMoi = !showMatKhauMoi" 
+              style="position: absolute; right: 12px; background: none; border: none; color: #9ca3af; cursor: pointer; display: flex; align-items: center;"
+            >
+              <font-awesome-icon :icon="showMatKhauMoi ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'" />
+            </button>
+          </div>
         </div>
         <div class="field">
           <label class="label">Xac nhan mat khau moi</label>
-          <input v-model="xacNhan" type="password" class="input" placeholder="Nhap lai mat khau moi" />
+          <div style="position: relative; display: flex; align-items: center; width: 100%;">
+            <input 
+              v-model="xacNhan" 
+              :type="showXacNhan ? 'text' : 'password'" 
+              class="input" 
+              placeholder="Nhap lai mat khau moi" 
+              style="width: 100%; padding-right: 40px;"
+            />
+            <button 
+              type="button" 
+              @click="showXacNhan = !showXacNhan" 
+              style="position: absolute; right: 12px; background: none; border: none; color: #9ca3af; cursor: pointer; display: flex; align-items: center;"
+            >
+              <font-awesome-icon :icon="showXacNhan ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'" />
+            </button>
+          </div>
         </div>
 
         <button type="submit" class="btn-submit" :disabled="dangGui">

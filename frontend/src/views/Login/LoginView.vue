@@ -1,40 +1,41 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { dangNhap } from '@/services/authService'
+import type { ErrorResponse } from '@/types/auth'
 import Navbar from '../../components/Navbar/Navbar.vue'
 import Footer from '../../components/Footer/Footer.vue'
-import * as authService from '../../services/authService'
-import { useAuthStore } from '../../stores/auth'
-
-const router = useRouter()
-const authStore = useAuthStore()
 
 const email = ref('')
 const password = ref('')
 const rememberMe = ref(false)
-const isLoading = ref(false)
+const isSubmitting = ref(false)
 const errorMessage = ref('')
 
+const showPassword = ref(false)
+const router = useRouter()
+const authStore = useAuthStore()
+
 const handleLogin = async () => {
-  isLoading.value = true
+  isSubmitting.value = true
   errorMessage.value = ''
   
   try {
-    const response = await authService.dangNhap({
-      email: email.value,
-      matKhau: password.value
-    })
-    
-    // Lưu thông tin vào store
+    const response = await dangNhap({ email: email.value, matKhau: password.value })
     authStore.luuXacThuc(response)
     
-    // Điều hướng về trang chủ
-    router.push('/')
-  } catch (err: any) {
-    console.error('Login failed:', err)
-    errorMessage.value = err.message || 'Email hoặc mật khẩu không chính xác'
+    // Redirect theo role
+    if (authStore.isAdmin || authStore.isLibrarian) {
+      router.push('/admin/dashboard')
+    } else {
+      router.push('/')
+    }
+  } catch (error) {
+    const err = error as ErrorResponse
+    errorMessage.value = err.message || 'Đăng nhập thất bại. Vui lòng thử lại.'
   } finally {
-    isLoading.value = false
+    isSubmitting.value = false
   }
 }
 
@@ -63,11 +64,10 @@ const handleLogin = async () => {
             </div>
             
             <form @submit.prevent="handleLogin" class="auth-form">
-              <div v-if="errorMessage" class="error-alert">
-                <i class="fas fa-exclamation-circle"></i>
-                {{ errorMessage }}
+              <div v-if="errorMessage" class="error-message" style="color: #ef4444; background: #fee2e2; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem;">
+                <font-awesome-icon icon="fa-solid fa-circle-xmark" /> {{ errorMessage }}
               </div>
-
+              
               <div class="form-group">
                 <label for="email">Email</label>
                 <div class="input-wrapper">
@@ -77,7 +77,6 @@ const handleLogin = async () => {
                     type="email" 
                     placeholder="Nhập địa chỉ email" 
                     required 
-                    :disabled="isLoading"
                   />
                 </div>
               </div>
@@ -88,27 +87,36 @@ const handleLogin = async () => {
                   <input 
                     id="password" 
                     v-model="password" 
-                    type="password" 
+                    :type="showPassword ? 'text' : 'password'" 
                     placeholder="Nhập mật khẩu" 
                     required 
-                    :disabled="isLoading"
+                    style="padding-right: 40px;"
                   />
+                  <button 
+                    type="button"
+                    @click="showPassword = !showPassword"
+                    style="position: absolute; right: 12px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; padding: 4px;"
+                  >
+                    <font-awesome-icon :icon="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'" />
+                  </button>
                 </div>
               </div>
               
               <div class="form-options">
                 <label class="checkbox-container">
-                  <input type="checkbox" v-model="rememberMe" :disabled="isLoading" />
+                  <input type="checkbox" v-model="rememberMe" />
                   <span class="checkmark"></span>
                   Ghi nhớ đăng nhập
                 </label>
                 <a href="#" class="link forgot-password">Quên mật khẩu?</a>
               </div>
               
-              <button type="submit" class="btn btn-primary btn-block" :disabled="isLoading">
-                <span v-if="isLoading" class="spinner-small"></span>
-                {{ isLoading ? 'Đang đăng nhập...' : 'Đăng nhập' }}
+              <button type="submit" class="btn btn-primary btn-block" :disabled="isSubmitting">
+                <span v-if="isSubmitting"><font-awesome-icon icon="fa-solid fa-spinner" class="fa-spin" /> Đang đăng nhập...</span>
+                <span v-else>Đăng nhập</span>
               </button>
+              
+
             </form>
           </div>
         </div>

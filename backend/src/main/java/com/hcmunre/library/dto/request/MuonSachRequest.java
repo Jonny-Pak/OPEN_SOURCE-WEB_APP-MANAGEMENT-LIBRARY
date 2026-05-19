@@ -14,6 +14,6 @@ public class MuonSachRequest {
     @NotNull(message = "Mã người dùng không được để trống")
     private UUID maNguoiDung;
 
-    @NotEmpty(message = "Vui lòng chọn ít nhất một đầu sách")
-    private List<Long> danhSachMaSach;
+    @NotEmpty(message = "Vui lòng quét ít nhất một cuốn sách")
+    private List<String> danhSachMaVach;
 }

@@ -1,8 +1,6 @@
 package com.hcmunre.library.service;
 
-import com.hcmunre.library.dto.request.AuthRequest;
-import com.hcmunre.library.dto.request.RegisterRequest;
-import com.hcmunre.library.dto.request.RefreshTokenRequest;
+import com.hcmunre.library.dto.request.*;
 import com.hcmunre.library.dto.response.AuthResponse;
 
 /**
@@ -30,4 +28,7 @@ public interface AuthService {
      * Cấp lại access token mới từ refresh token.
      */
     AuthResponse refreshToken(RefreshTokenRequest request);
+
+    void quenMatKhau(ForgotPasswordRequest request);
+    void datLaiMatKhau(ResetPasswordRequest request);
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import Navbar from '../../components/Navbar/Navbar.vue'
 import Footer from '../../components/Footer/Footer.vue'
 import { useAuthStore } from '../../stores/auth'
@@ -14,10 +14,30 @@ const form = ref({
   message: ''
 })
 
+const settings = ref({
+  contactTitle: 'Liên hệ với chúng tôi',
+  contactSubtitle: 'Mọi góp ý hoặc thắc mắc của bạn đều là động lực để thư viện hoàn thiện hơn mỗi ngày',
+  contactDiaChi: 'Số 123, Đường Tri Thức, Quận Cầu Giấy, Hà Nội',
+  contactDienThoai: '(024) 3456 7890',
+  contactEmail: 'thuvien@school.edu.vn',
+  contactGioLamViec: 'Thứ 2 - Thứ 7: 07:30 - 21:00',
+  contactMapImage: 'https://images.unsplash.com/photo-1524666041070-9d87656c25bb?auto=format&fit=crop&q=80&w=600'
+})
+
 onMounted(() => {
   if (authStore.daXacThuc && authStore.thongTinNguoiDung) {
     form.value.name = `${authStore.thongTinNguoiDung.hoDem} ${authStore.thongTinNguoiDung.ten}`
     form.value.email = authStore.thongTinNguoiDung.email
+  }
+
+  const saved = localStorage.getItem('library_settings')
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved)
+      Object.assign(settings.value, parsed)
+    } catch (e) {
+      console.error(e)
+    }
   }
 })
 
@@ -45,29 +65,28 @@ const handleSubmit = async () => {
   }
 }
 
-const contactInfo = [
+const contactInfo = computed(() => [
   {
-    icon: 'fa-map-marker-alt',
+    icon: 'fa-solid fa-location-dot',
     title: 'Địa chỉ',
-    content: 'Số 123, Đường Tri Thức, Quận Cầu Giấy, Hà Nội'
+    content: settings.value.contactDiaChi
   },
   {
-    icon: 'fa-phone-alt',
+    icon: 'fa-solid fa-phone',
     title: 'Điện thoại',
-    content: '(024) 3456 7890'
+    content: settings.value.contactDienThoai
   },
   {
-    icon: 'fa-envelope',
+    icon: 'fa-solid fa-envelope',
     title: 'Email',
-    content: 'thuvien@school.edu.vn'
+    content: settings.value.contactEmail
   },
   {
-    icon: 'fa-clock',
+    icon: 'fa-solid fa-clock',
     title: 'Giờ làm việc',
-    content: 'Thứ 2 - Thứ 7: 07:30 - 21:00'
+    content: settings.value.contactGioLamViec
   }
-]
-
+])
 </script>
 
 <template>
@@ -77,8 +96,8 @@ const contactInfo = [
     <main class="main-content">
       <div class="container">
         <header class="contact-header text-center">
-          <h1>Liên hệ với <span class="text-accent">chúng tôi</span></h1>
-          <p>Mọi góp ý hoặc thắc mắc của bạn đều là động lực để thư viện hoàn thiện hơn mỗi ngày</p>
+          <h1>{{ settings.contactTitle }}</h1>
+          <p>{{ settings.contactSubtitle }}</p>
         </header>
 
         <div class="contact-grid">
@@ -86,7 +105,7 @@ const contactInfo = [
           <aside class="contact-info">
             <div v-for="info in contactInfo" :key="info.title" class="info-card">
               <div class="info-icon">
-                <i :class="['fas', info.icon]"></i>
+                <font-awesome-icon :icon="info.icon" />
               </div>
               <div class="info-content">
                 <h3>{{ info.title }}</h3>
@@ -95,9 +114,9 @@ const contactInfo = [
             </div>
 
             <div class="map-placeholder">
-              <img src="https://images.unsplash.com/photo-1524666041070-9d87656c25bb?auto=format&fit=crop&q=80&w=600" alt="Map Location" />
+              <img :src="settings.contactMapImage" alt="Map Location" />
               <div class="map-overlay">
-                <i class="fas fa-map-marked-alt"></i>
+                <font-awesome-icon icon="fa-solid fa-location-dot" />
                 <span>Xem trên bản đồ</span>
               </div>
             </div>
@@ -107,7 +126,7 @@ const contactInfo = [
           <section class="contact-form-section">
             <div v-if="isSuccess" class="success-message">
               <div class="success-icon">
-                <i class="fas fa-check-circle"></i>
+                <font-awesome-icon icon="fa-solid fa-circle-check" />
               </div>
               <h2>Cảm ơn bạn đã liên hệ!</h2>
               <p>Chúng tôi đã nhận được tin nhắn và sẽ phản hồi sớm nhất có thể.</p>
@@ -139,7 +158,7 @@ const contactInfo = [
                 <textarea v-model="form.message" rows="6" placeholder="Nhập nội dung chi tiết..." required></textarea>
               </div>
               <button type="submit" class="btn btn-primary submit-btn" :disabled="isSubmitting">
-                <i v-if="isSubmitting" class="fas fa-spinner fa-spin"></i>
+                <font-awesome-icon v-if="isSubmitting" icon="fa-solid fa-spinner" class="fa-spin" />
                 <span v-else>Gửi tin nhắn</span>
               </button>
               </form>

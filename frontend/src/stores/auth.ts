@@ -3,62 +3,39 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { AuthResponse, ThongTinNguoiDung } from '@/types/auth'
+import type { AuthResponse, ThongTinNguoiDung, DangNhapRequest, DangKyRequest } from '@/types/auth'
+import * as authService from '@/services/authService'
 
-// ===== TYPES & CONSTANTS =====
-
-export type UserRole = 'QUAN_TRI_VIEN' | 'THU_THU' | 'DOC_GIA'
-
-const LIBRARIAN_PERMISSIONS = [
-  'doc-gia:view', 'doc-gia:activate', 'doc-gia:lock',
-  'sach:view', 'sach:create', 'sach:edit', 'sach:import-excel',
-  'cuon-sach:view', 'cuon-sach:update-status', 'cuon-sach:print-barcode',
-  'cuon-sach:update-location',
-  'muon-sach:view', 'muon-sach:create', 'muon-sach:approve',
-  'tra-sach:process', 'dat-cho:view', 'dat-cho:approve', 'dat-cho:reject',
-  'gia-han:approve', 'gia-han:reject',
-  'phat:view', 'phat:create', 'phat:confirm', 'phat:mark-paid',
-] as const
-
-const ADMIN_PERMISSIONS = [
-  ...LIBRARIAN_PERMISSIONS,
-  'danh-muc:view', 'danh-muc:create', 'danh-muc:edit', 'danh-muc:delete',
-  'tac-gia:view', 'tac-gia:create', 'tac-gia:edit', 'tac-gia:delete',
-  'nha-xuat-ban:view', 'nha-xuat-ban:create', 'nha-xuat-ban:edit', 'nha-xuat-ban:delete',
-  'the-loai:view', 'the-loai:create', 'the-loai:edit', 'the-loai:delete',
-  'vi-tri:view', 'vi-tri:create', 'vi-tri:edit', 'vi-tri:delete',
-  'system:settings',
-  'nhan-su:view', 'nhan-su:create', 'nhan-su:lock', 'nhan-su:unlock',
-  'sach:delete', 'cuon-sach:delete',
-  'dashboard:full-stats',
-] as const
-
-const USER_PERMISSIONS = [
-  'profile:view', 'profile:update', 'my-loans:view'
-] as const
-
-export const ROLE_PERMISSIONS: Record<UserRole, readonly string[]> = {
-  QUAN_TRI_VIEN: ADMIN_PERMISSIONS,
-  THU_THU: LIBRARIAN_PERMISSIONS,
-  DOC_GIA: USER_PERMISSIONS,
-}
+export type UserRole = 'ADMIN' | 'LIBRARIAN' | 'DOC_GIA'
 
 export const useAuthStore = defineStore('auth', () => {
   // ===== STATE =====
-
   const token = ref<string | null>(localStorage.getItem('accessToken'))
+  
   const thongTinNguoiDung = ref<ThongTinNguoiDung | null>(
     (() => {
       const saved = localStorage.getItem('userInfo')
       return saved ? (JSON.parse(saved) as ThongTinNguoiDung) : null
-    })(),
+    })()
   )
 
   const mustChangePassword = ref<boolean>(localStorage.getItem('mustChangePassword') === 'true')
-  const devRole = ref<string | null>(null)
+
+  // Mapped English State/Getters for the requested interface
+  const user = computed(() => thongTinNguoiDung.value)
+  const isAuthenticated = computed(() => daXacThuc.value)
+  const role = computed<UserRole>(() => currentRole.value)
+
+  /** Ánh xạ vai trò từ backend sang store */
+  const currentRole = computed<UserRole>(() => {
+    if (!thongTinNguoiDung.value) return 'DOC_GIA'
+    const role = thongTinNguoiDung.value.vaiTro
+    if (role === 'QUAN_TRI_VIEN') return 'ADMIN'
+    if (role === 'THU_THU') return 'LIBRARIAN'
+    return 'DOC_GIA'
+  })
 
   // ===== GETTERS =====
-
   const daXacThuc = computed(() => {
     if (!token.value) return false
 
@@ -74,7 +51,10 @@ export const useAuthStore = defineStore('auth', () => {
       const chuaHetHan = payload.exp * 1000 > Date.now()
 
       if (!chuaHetHan) {
-        xoaXacThuc()
+        token.value = null
+        thongTinNguoiDung.value = null
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('userInfo')
       }
 
       return chuaHetHan
@@ -88,25 +68,11 @@ export const useAuthStore = defineStore('auth', () => {
     return `${thongTinNguoiDung.value.hoDem} ${thongTinNguoiDung.value.ten}`
   })
 
-  const currentRole = computed(() => {
-    if (devRole.value) return devRole.value
-    const role = thongTinNguoiDung.value?.vaiTro
-    if (role === 'QUAN_TRI_VIEN') return 'ADMIN'
-    if (role === 'THU_THU') return 'LIBRARIAN'
-    return 'USER'
-  })
-
   const isAdmin = computed(() => currentRole.value === 'ADMIN')
-  const isLibrarian = computed(() => currentRole.value === 'LIBRARIAN' || currentRole.value === 'ADMIN')
-  const isUser = computed(() => currentRole.value === 'USER')
-
-  const hasPermission = (permission: string): boolean => {
-    const role = thongTinNguoiDung.value?.vaiTro as UserRole
-    return ROLE_PERMISSIONS[role]?.includes(permission as never) ?? false
-  }
+  const isLibrarian = computed(() => currentRole.value === 'LIBRARIAN')
+  const isUser = computed(() => currentRole.value === 'DOC_GIA')
 
   // ===== ACTIONS =====
-
   function luuXacThuc(response: AuthResponse): void {
     token.value = response.accessToken
     localStorage.setItem('accessToken', response.accessToken)
@@ -117,12 +83,13 @@ export const useAuthStore = defineStore('auth', () => {
       ten: response.ten,
       email: response.email,
       vaiTro: response.vaiTro,
-      trangThaiTaiKhoan: response.trangThaiTaiKhoan || 'da_kich_hoat',
+      trangThaiTaiKhoan: response.trangThaiTaiKhoan,
+      avatar: response.avatar,
     }
     thongTinNguoiDung.value = userInfo
     localStorage.setItem('userInfo', JSON.stringify(userInfo))
 
-    mustChangePassword.value = Boolean(response.mustChangePassword)
+    mustChangePassword.value = Boolean(response.mustChangePassword ?? response.isDefaultPassword)
     localStorage.setItem('mustChangePassword', String(mustChangePassword.value))
   }
 
@@ -140,8 +107,56 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('mustChangePassword', 'false')
   }
 
-  function switchRole(role: string) {
-    devRole.value = role
+  // Requested English actions
+  async function login(request: DangNhapRequest): Promise<void> {
+    const res = await authService.login(request)
+    luuXacThuc(res)
+  }
+
+  async function register(request: DangKyRequest): Promise<void> {
+    const res = await authService.register(request)
+    luuXacThuc(res)
+  }
+
+  async function logout(): Promise<void> {
+    try {
+      await authService.logout()
+    } finally {
+      xoaXacThuc()
+    }
+  }
+
+  async function fetchMe(): Promise<void> {
+    const me = await authService.getMe()
+    if (me && thongTinNguoiDung.value) {
+      thongTinNguoiDung.value.hoDem = me.hoDem || thongTinNguoiDung.value.hoDem
+      thongTinNguoiDung.value.ten = me.ten || thongTinNguoiDung.value.ten
+      thongTinNguoiDung.value.email = me.email || thongTinNguoiDung.value.email
+      localStorage.setItem('userInfo', JSON.stringify(thongTinNguoiDung.value))
+    }
+  }
+
+  function checkAuth(): boolean {
+    return daXacThuc.value
+  }
+
+  function hasPermission(permission: string): boolean {
+    if (isAdmin.value) return true
+    if (isLibrarian.value) {
+      return !permission.startsWith('nhan-su') && !permission.startsWith('system')
+    }
+    return false
+  }
+
+  function switchRole(newRole: 'ADMIN' | 'LIBRARIAN' | 'DOC_GIA'): void {
+    if (!thongTinNguoiDung.value) return
+    const vaiTroMap = {
+      ADMIN: 'QUAN_TRI_VIEN' as const,
+      LIBRARIAN: 'THU_THU' as const,
+      DOC_GIA: 'DOC_GIA' as const
+    }
+    thongTinNguoiDung.value.vaiTro = vaiTroMap[newRole]
+    localStorage.setItem('userInfo', JSON.stringify(thongTinNguoiDung.value))
   }
 
   return {
@@ -149,19 +164,26 @@ export const useAuthStore = defineStore('auth', () => {
     token,
     thongTinNguoiDung,
     mustChangePassword,
-    devRole,
+    currentRole,
+    user,
+    isAuthenticated,
+    role,
     // Getters
     daXacThuc,
     tenDayDu,
-    currentRole,
     isAdmin,
     isLibrarian,
     isUser,
-    hasPermission,
     // Actions
     luuXacThuc,
     xoaXacThuc,
     daDoiMatKhauBatBuoc,
-    switchRole,
+    login,
+    register,
+    logout,
+    fetchMe,
+    checkAuth,
+    hasPermission,
+    switchRole
   }
 })

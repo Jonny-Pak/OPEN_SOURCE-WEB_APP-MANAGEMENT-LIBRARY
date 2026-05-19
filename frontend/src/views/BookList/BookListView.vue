@@ -1,68 +1,121 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import Navbar from '../../components/Navbar/Navbar.vue'
 import Footer from '../../components/Footer/Footer.vue'
 import BookCard from '../../components/BookCard/BookCard.vue'
-import { sachService } from '../../services/sachService'
-import { theLoaiService } from '../../services/danhMucService'
+import { sachService } from '@/services/sachService'
+import { danhMucService } from '@/services/danhMucService'
+import { useSearch } from '@/composables/useSearch'
+import { usePagination } from '@/composables/usePagination'
 
-const categories = ref<any[]>([{ name: 'Tất cả', count: 0 }])
+const route = useRoute()
+const router = useRouter()
+
+// 1. Search composable
+const { tuKhoaTimKiem: searchQuery, tuKhoaDebounced } = useSearch()
+
+// 2. Pagination composable
+const { currentPage, totalPages, capNhatTong } = usePagination(9) // 9 books per page
+
+// 3. Category state synced with URL
+const activeCategoryId = ref<number | null>(
+  route.query.category ? Number(route.query.category) : null
+)
+
+const rawCategories = ref<any[]>([])
 const books = ref<any[]>([])
 const isLoading = ref(true)
-const error = ref<string | null>(null)
+const isError = ref(false)
 
-const activeCategory = ref('Tất cả')
-const searchQuery = ref('')
-const sortBy = ref('Mới nhất')
+// Sync category to URL and reset page
+watch(activeCategoryId, (newCatId) => {
+  if (router && route) {
+    router.replace({
+      query: {
+        ...route.query,
+        category: newCatId || undefined,
+        page: 1
+      }
+    })
+  }
+  currentPage.value = 1
+})
 
-const fetchData = async () => {
-  isLoading.value = true
-  error.value = null
+// Sync page change to URL
+watch(currentPage, (newPage) => {
+  if (router && route) {
+    router.replace({
+      query: {
+        ...route.query,
+        page: newPage || undefined
+      }
+    })
+  }
+})
+
+const categoriesWithCount = computed(() => {
+  return [
+    { id: null, name: 'Tất cả' },
+    ...rawCategories.value.map(c => ({
+      id: c.maTheLoai || c.maDanhMuc,
+      name: c.tenTheLoai || c.tenDanhMuc || c.ten
+    }))
+  ]
+})
+
+const loadCategories = async () => {
   try {
-    const [booksData, theLoaiData] = await Promise.all([
-      sachService.danhSach(),
-      theLoaiService.danhSach()
-    ])
+    const fetched = await danhMucService.getAll()
+    rawCategories.value = fetched || []
+  } catch (err) {
+    console.error('Lỗi khi tải danh mục:', err)
+  }
+}
 
-    // Map books
-    books.value = (booksData as any[]).map(book => ({
-      id: book.maSach,
-      title: book.tenSach,
-      author: book.tacGias?.[0]?.tenTacGia || 'Ẩn danh',
-      category: book.theLoais?.[0]?.tenTheLoai || 'Chưa phân loại',
-      image: book.anhBiaUrl || 'https://images.unsplash.com/photo-1543004629-ff56ec21d2e2?auto=format&fit=crop&q=80&w=400',
-      rating: 5
-    }))
+const loadBooks = async () => {
+  isLoading.value = true
+  isError.value = false
+  try {
+    const fetched = await sachService.advancedSearch({
+      page: currentPage.value - 1, // Backend is 0-indexed
+      size: 9,
+      keyword: tuKhoaDebounced.value || undefined,
+      maTheLoai: activeCategoryId.value || undefined
+    })
 
-    // Map categories
-    const mappedCategories = (theLoaiData as any[]).map(tl => ({
-      name: tl.tenTheLoai,
-      count: books.value.filter(b => b.category === tl.tenTheLoai).length
-    }))
-    
-    categories.value = [
-      { name: 'Tất cả', count: books.value.length },
-      ...mappedCategories
-    ]
-  } catch (err: any) {
-    console.error('Failed to fetch books:', err)
-    error.value = 'Không thể tải danh sách sách. Vui lòng thử lại sau.'
+    if (fetched && fetched.content) {
+      books.value = fetched.content.map((b: any) => ({
+        id: b.maSach,
+        title: b.tenSach,
+        author: b.danhSachTacGia?.map((t: any) => `${t.hoDem} ${t.ten}`).join(', ') || 'Đang cập nhật',
+        category: b.danhSachTheLoai?.[0]?.tenTheLoai || 'Chưa phân loại',
+        allCategories: b.danhSachTheLoai?.map((t: any) => t.tenTheLoai) || [],
+        image: b.danhSachHinhAnh?.[0]?.duongDan || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=400',
+        rating: 5,
+        stockStatus: b.soLuongKho > 0 ? 'ConSach' : 'HetSach'
+      }))
+      capNhatTong(fetched.totalElements || 0)
+    } else {
+      books.value = []
+      capNhatTong(0)
+    }
+  } catch (err) {
+    console.error('Lỗi khi tải đầu sách:', err)
+    isError.value = true
   } finally {
     isLoading.value = false
   }
 }
 
-onMounted(() => {
-  fetchData()
+// Watch for search or page or category change to refetch
+watch([tuKhoaDebounced, activeCategoryId, currentPage], () => {
+  loadBooks()
 })
 
-const filteredBooks = computed(() => {
-  return books.value.filter(book => {
-    const matchesCategory = activeCategory.value === 'Tất cả' || book.category === activeCategory.value
-    const matchesSearch = book.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                        book.author.toLowerCase().includes(searchQuery.value.toLowerCase())
-    return matchesCategory && matchesSearch
-  })
+onMounted(() => {
+  loadCategories()
+  loadBooks()
 })
 
 </script>
@@ -77,36 +130,16 @@ const filteredBooks = computed(() => {
         <aside class="sidebar">
           <div class="filter-section">
             <h3>Thể loại</h3>
-            <div v-if="isLoading" class="loading-mini">
-              <div class="spinner-small"></div>
-            </div>
-            <ul v-else class="category-list">
+            <ul class="category-list">
               <li 
-                v-for="cat in categories" 
-                :key="cat.name"
-                :class="{ active: activeCategory === cat.name }"
-                @click="activeCategory = cat.name"
+                v-for="cat in categoriesWithCount" 
+                :key="cat.id || 'all'"
+                :class="{ active: activeCategoryId === cat.id }"
+                @click="activeCategoryId = cat.id"
               >
                 <span>{{ cat.name }}</span>
-                <span class="count">{{ cat.count }}</span>
               </li>
             </ul>
-          </div>
-          
-          <div class="filter-section">
-            <h3>Trạng thái</h3>
-            <div class="checkbox-group">
-              <label class="checkbox-container">
-                <input type="checkbox" checked />
-                <span class="checkmark"></span>
-                Còn sách
-              </label>
-              <label class="checkbox-container">
-                <input type="checkbox" />
-                <span class="checkmark"></span>
-                Đã được mượn
-              </label>
-            </div>
           </div>
         </aside>
         
@@ -114,63 +147,59 @@ const filteredBooks = computed(() => {
         <section class="main-list">
           <div class="list-header">
             <div class="search-bar">
+              <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="search-icon" />
               <input 
                 v-model="searchQuery" 
                 type="text" 
                 placeholder="Tìm kiếm sách hoặc tác giả..." 
               />
             </div>
-            <div class="sort-options">
-              <span>Sắp xếp theo:</span>
-              <select v-model="sortBy">
-                <option>Mới nhất</option>
-                <option>Phổ biến</option>
-                <option>Đánh giá cao</option>
-              </select>
-            </div>
           </div>
           
-          <div v-if="isLoading" class="loading-state">
-            <div class="spinner"></div>
-            <p>Đang tải danh sách sách...</p>
+          <div class="results-info">
+            <p>Tìm thấy <span>{{ books.length }}</span> kết quả</p>
           </div>
-
-          <div v-else-if="error" class="error-state">
-            <i class="fas fa-exclamation-circle"></i>
-            <p>{{ error }}</p>
-            <button @click="fetchData" class="btn btn-outline">Thử lại</button>
+          
+          <div v-if="isLoading" class="loading-state" style="padding: 40px; text-align: center; color: var(--mau-chu-mo);">
+            <font-awesome-icon icon="fa-solid fa-spinner" class="fa-spin fa-2x" />
+            <p style="margin-top: 10px;">Đang tải dữ liệu...</p>
           </div>
-
-          <template v-else>
-            <div class="results-info">
-              <p>Tìm thấy <span>{{ filteredBooks.length }}</span> kết quả cho "{{ activeCategory }}"</p>
+          
+          <div v-else class="grid grid-cols-3">
+            <BookCard 
+              v-for="book in books" 
+              :key="book.id"
+              v-bind="book"
+            />
+          </div>
+          
+          <div v-if="!isLoading && books.length === 0" class="no-results">
+            <div class="no-results-icon"><font-awesome-icon icon="fa-solid fa-magnifying-glass" /></div>
+            <h3>Không tìm thấy sách nào</h3>
+            <p>Hãy thử thay đổi từ khóa hoặc bộ lọc của bạn</p>
+            <button @click="activeCategoryId = null; searchQuery = ''" class="btn btn-outline">Xóa bộ lọc</button>
+          </div>
+          
+          <!-- Dynamic Pagination -->
+          <div v-if="totalPages > 1" class="pagination">
+            <button class="btn btn-outline" :disabled="currentPage === 1" @click="currentPage--">
+              <font-awesome-icon icon="fa-solid fa-angle-left" /> Trước
+            </button>
+            <div class="pages">
+              <button 
+                v-for="p in totalPages" 
+                :key="p" 
+                class="page-btn"
+                :class="{ active: currentPage === p }"
+                @click="currentPage = p"
+              >
+                {{ p }}
+              </button>
             </div>
-            
-            <div class="grid grid-cols-3">
-              <BookCard 
-                v-for="book in filteredBooks" 
-                :key="book.id"
-                v-bind="book"
-              />
-            </div>
-            
-            <div v-if="filteredBooks.length === 0" class="no-results">
-              <div class="no-results-icon"><i class="fas fa-search"></i></div>
-              <h3>Không tìm thấy sách nào</h3>
-              <p>Hãy thử thay đổi từ khóa hoặc bộ lọc của bạn</p>
-              <button @click="activeCategory = 'Tất cả'; searchQuery = ''" class="btn btn-outline">Xóa bộ lọc</button>
-            </div>
-            
-            <div v-if="filteredBooks.length > 0" class="pagination">
-              <button class="btn btn-outline" disabled><i class="fas fa-chevron-left"></i> Trước</button>
-              <div class="pages">
-                <button class="page-btn active">1</button>
-                <button class="page-btn">2</button>
-                <button class="page-btn">3</button>
-              </div>
-              <button class="btn btn-outline">Sau <i class="fas fa-chevron-right"></i></button>
-            </div>
-          </template>
+            <button class="btn btn-outline" :disabled="currentPage === totalPages" @click="currentPage++">
+              Sau <font-awesome-icon icon="fa-solid fa-angle-right" />
+            </button>
+          </div>
         </section>
       </div>
     </main>

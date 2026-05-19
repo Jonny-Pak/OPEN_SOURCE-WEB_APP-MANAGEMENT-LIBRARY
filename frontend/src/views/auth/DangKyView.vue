@@ -82,7 +82,8 @@ async function xuLyDangKy(): Promise<void> {
   loiServer.value = ''
 
   try {
-    const ketQua = await dangKy({
+    // Integrate directly with authStore register action
+    await authStore.register({
       hoDem: form.hoDem,
       ten: form.ten,
       email: form.email,
@@ -90,24 +91,17 @@ async function xuLyDangKy(): Promise<void> {
       soDienThoai: form.soDienThoai,
     })
 
-    // Lưu thông tin xác thực và chuyển sang trang xác nhận email
-    authStore.luuXacThuc(ketQua)
     await router.push('/xac-nhan-email')
-  } catch (err) {
-    const loiBackend = err as ErrorResponse
-    // Hiển thị lỗi đúng field tương ứng
-    switch (loiBackend.error) {
-      case 'EMAIL_DA_TON_TAI':
-        loi.email = 'Email này đã được sử dụng'
-        break
-      case 'SO_DIEN_THOAI_DA_TON_TAI':
-        loi.soDienThoai = 'Số điện thoại này đã được sử dụng'
-        break
-      case 'INVALID_INPUT':
-        loiServer.value = 'Dữ liệu không hợp lệ, vui lòng kiểm tra lại'
-        break
-      default:
-        loiServer.value = loiBackend.message || 'Đã xảy ra lỗi, vui lòng thử lại'
+  } catch (err: any) {
+    const errorResponse = err.response?.data || err
+    if (errorResponse.error === 'EMAIL_DA_TON_TAI' || errorResponse.message?.includes('Email')) {
+      loi.email = 'Email này đã được sử dụng'
+    } else if (errorResponse.error === 'SO_DIEN_THOAI_DA_TON_TAI' || errorResponse.message?.includes('Số điện thoại')) {
+      loi.soDienThoai = 'Số điện thoại này đã được sử dụng'
+    } else if (errorResponse.error === 'INVALID_INPUT') {
+      loiServer.value = 'Dữ liệu không hợp lệ, vui lòng kiểm tra lại'
+    } else {
+      loiServer.value = errorResponse.message || 'Đã xảy ra lỗi, vui lòng thử lại'
     }
   } finally {
     dangGui.value = false

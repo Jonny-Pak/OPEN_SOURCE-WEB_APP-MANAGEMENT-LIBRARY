@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { phieuMuonService } from '@/services/phieuMuonService'
 import { useAuthStore } from './auth'
+import { datChoService } from '@/services/datChoService'
 
 export interface Book {
   id: number
@@ -14,8 +14,6 @@ export interface Book {
 export const useCartStore = defineStore('cart', () => {
   const items = ref<Book[]>([])
   const maxItems = 3
-  const authStore = useAuthStore()
-  const isSubmitting = ref(false)
 
   const itemCount = computed(() => items.value.length)
   const isFull = computed(() => items.value.length >= maxItems)
@@ -43,40 +41,39 @@ export const useCartStore = defineStore('cart', () => {
     items.value = []
   }
 
-  async function checkout() {
-    if (!authStore.daXacThuc || !authStore.thongTinNguoiDung?.maNguoiDung) {
-      alert('Vui lòng đăng nhập để mượn sách!')
-      return null
+  // Requested English actions
+  function addBook(book: Book) {
+    return addItem(book)
+  }
+
+  function removeBook(bookId: number) {
+    removeItem(bookId)
+  }
+
+  async function borrowAll() {
+    const authStore = useAuthStore()
+    if (!authStore.daXacThuc) {
+      alert('Vui lòng đăng nhập để thực hiện mượn sách!')
+      return
     }
 
-    if (items.value.length === 0) return null
-
-    isSubmitting.value = true
-    try {
-      const request = {
-        maNguoiDung: authStore.thongTinNguoiDung.maNguoiDung,
-        danhSachMaSach: items.value.map(item => item.id)
-      }
-      const response = await phieuMuonService.createPhieuMuon(request)
-      clearCart()
-      return response
-    } catch (error: any) {
-      console.error('Lỗi khi mượn sách:', error)
-      alert(error.message || 'Có lỗi xảy ra khi mượn sách. Vui lòng thử lại.')
-      return null
-    } finally {
-      isSubmitting.value = false
+    // Process borrow book for each item in the cart (reserving them)
+    for (const item of items.value) {
+      await datChoService.reserve(item.id)
     }
+    clearCart()
   }
 
   return {
     items,
     itemCount,
     isFull,
-    isSubmitting,
     addItem,
     removeItem,
     clearCart,
-    checkout
+    addBook,
+    removeBook,
+    borrowAll
   }
 })
+export default useCartStore

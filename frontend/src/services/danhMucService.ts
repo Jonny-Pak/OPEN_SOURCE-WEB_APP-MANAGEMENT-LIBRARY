@@ -1,5 +1,5 @@
 /**
- * danhMucService.ts — Service quản lý Danh mục: Tác giả, Nhà xuất bản, Thể loại.
+ * danhMucService.ts — Service quản lý Danh mục: Tác giả, Nhà xuất bản, Thể loại, Danh mục chung.
  */
 import apiClient from './apiClient'
 import type {
@@ -7,6 +7,20 @@ import type {
   NhaXuatBan, TaoNhaXuatBanRequest,
   TheLoai, TaoTheLoaiRequest,
 } from '@/types/danhmuc'
+
+// ===== GENERAL DANH MỤC =====
+export const danhMucService = {
+  getAll: () =>
+    apiClient.get<TheLoai[]>('/api/danh-muc'),
+  getById: (id: number) =>
+    apiClient.get<TheLoai>(`/api/danh-muc/${id}`),
+  create: (body: TaoTheLoaiRequest) =>
+    apiClient.post<TheLoai>('/api/danh-muc', body),
+  update: (id: number, body: TaoTheLoaiRequest) =>
+    apiClient.put<TheLoai>(`/api/danh-muc/${id}`, body),
+  delete: (id: number) =>
+    apiClient.delete<void>(`/api/danh-muc/${id}`),
+}
 
 // ===== TÁC GIẢ =====
 export const tacGiaService = {
@@ -43,3 +57,5 @@ export const theLoaiService = {
   xoa: (id: number) =>
     apiClient.delete<void>(`/api/v1/the-loai/${id}`),
 }
+
+export default danhMucService

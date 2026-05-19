@@ -1,15 +1,16 @@
 /**
- * useSearch.ts — Composable tìm kiếm có debounce.
- * Tránh gọi API liên tục khi người dùng đang gõ.
+ * useSearch.ts — Composable tìm kiếm có debounce và đồng bộ URL query.
  */
 import { ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 export function useSearch(treSoMs = 300) {
-  /** Giá trị search tức thời (ràng buộc với input) */
-  const tuKhoaTimKiem = ref('')
+  const route = useRoute()
+  const router = useRouter()
 
-  /** Giá trị search sau debounce (dùng để gọi API) */
-  const tuKhoaDebounced = ref('')
+  // Read search term from URL query initially
+  const tuKhoaTimKiem = ref((route?.query?.search as string) || '')
+  const tuKhoaDebounced = ref(tuKhoaTimKiem.value)
 
   let boDem: ReturnType<typeof setTimeout> | null = null
 
@@ -18,6 +19,18 @@ export function useSearch(treSoMs = 300) {
     boDem = setTimeout(() => {
       tuKhoaDebounced.value = giaTriMoi
     }, treSoMs)
+  })
+
+  // Synchronize with URL query params
+  watch(tuKhoaDebounced, (val) => {
+    if (router && route) {
+      router.replace({
+        query: {
+          ...route.query,
+          search: val || undefined
+        }
+      })
+    }
   })
 
   /** Đặt lại ô tìm kiếm */
@@ -29,3 +42,5 @@ export function useSearch(treSoMs = 300) {
 
   return { tuKhoaTimKiem, tuKhoaDebounced, xoaTimKiem }
 }
+
+export default useSearch

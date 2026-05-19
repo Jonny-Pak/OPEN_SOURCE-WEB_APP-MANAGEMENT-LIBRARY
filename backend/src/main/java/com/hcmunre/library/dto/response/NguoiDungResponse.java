@@ -24,5 +24,6 @@ public class NguoiDungResponse {
     private String diaChi;
     private VaiTro vaiTro;
     private TrangThaiNguoiDung trangThai;
+    private String avatar;
     private LocalDateTime ngayTao;
 }

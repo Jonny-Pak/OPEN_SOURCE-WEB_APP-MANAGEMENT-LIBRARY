@@ -53,35 +53,30 @@ async function xuLyDangNhap(): Promise<void> {
   loiServer.value = ''
 
   try {
-    const ketQua = await dangNhap({
+    // Integrate directly with authStore
+    await authStore.login({
       email: form.email,
       matKhau: form.matKhau,
     })
 
-    // Lưu thông tin xác thực vào store
-    authStore.luuXacThuc(ketQua)
-
+    const userInfo = authStore.thongTinNguoiDung
     // Redirect sau đăng nhập: ưu tiên ?redirect=, sau đó theo role
     const redirectPath = route.query.redirect as string | undefined
     if (redirectPath) {
       await router.push(redirectPath)
-    } else if (ketQua.vaiTro === 'QUAN_TRI_VIEN') {
+    } else if (userInfo?.vaiTro === 'QUAN_TRI_VIEN' || userInfo?.vaiTro === 'THU_THU') {
       await router.push('/admin/dashboard')
     } else {
-      await router.push('/403')
+      await router.push('/')
     }
-  } catch (err) {
-    const loi = err as ErrorResponse
-    // Xử lý từng mã lỗi từ backend
-    switch (loi.error) {
-      case 'DANG_NHAP_THAT_BAI':
-        loiServer.value = 'Email hoặc mật khẩu không đúng'
-        break
-      case 'TAI_KHOAN_BI_KHOA':
-        loiServer.value = 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.'
-        break
-      default:
-        loiServer.value = loi.message || 'Đã xảy ra lỗi, vui lòng thử lại'
+  } catch (err: any) {
+    const errorResponse = err.response?.data || err
+    if (errorResponse.error === 'DANG_NHAP_THAT_BAI' || errorResponse.message?.includes('không đúng') || errorResponse.message?.includes('Email')) {
+      loiServer.value = 'Email hoặc mật khẩu không đúng'
+    } else if (errorResponse.error === 'TAI_KHOAN_BI_KHOA') {
+      loiServer.value = 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.'
+    } else {
+      loiServer.value = errorResponse.message || 'Đã xảy ra lỗi, vui lòng thử lại'
     }
   } finally {
     dangGui.value = false

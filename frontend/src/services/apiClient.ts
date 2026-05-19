@@ -1,108 +1,91 @@
-/**
- * apiClient.ts — Fetch wrapper dùng chung cho toàn bộ admin module.
- * Tự động đính kèm JWT token, xử lý lỗi 401 (hết phiên) và 403 (không có quyền).
- */
+import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 import router from '@/router'
 
-const BASE_URL = 'http://localhost:8080'
+// Create Axios instance with baseURL from env VITE_API_BASE_URL
+const apiClient = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
+})
 
-/** Kiểu dữ liệu tuỳ chọn cho request */
-interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
-  body?: unknown
-  params?: Record<string, string | number | boolean | undefined>
-  isFormData?: boolean  // Dùng cho upload file
-}
+// Request Interceptor: Attach JWT token as Authorization: Bearer {token}
+apiClient.interceptors.request.use(
+  (config) => {
+    const authStore = useAuthStore()
+    if (authStore.token) {
+      config.headers.Authorization = `Bearer ${authStore.token}`
+    }
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
 
-/**
- * Xây dựng URL với query params.
- */
-function xayDungUrl(path: string, params?: Record<string, string | number | boolean | undefined>): string {
-  const url = new URL(`${BASE_URL}${path}`)
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        url.searchParams.append(key, String(value))
+// Response Interceptor: Automatically extract data, and handle 401/403 redirects
+apiClient.interceptors.response.use(
+  (response) => {
+    return response.data
+  },
+  async (error) => {
+    const authStore = useAuthStore()
+
+    if (error.response) {
+      const { status } = error.response
+
+      // 401 Redirects to /login
+      if (status === 401) {
+        authStore.xoaXacThuc()
+        
+        // Save redirect path if possible
+        const currentPath = router.currentRoute.value.fullPath
+        if (currentPath && currentPath !== '/login') {
+          await router.push(`/login?redirect=${encodeURIComponent(currentPath)}`)
+        } else {
+          await router.push('/login')
+        }
+        
+        return Promise.reject(new Error('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại'))
       }
-    })
+
+      // 403 Redirects to /403 (KhongCoQuyen)
+      if (status === 403) {
+        await router.push('/403')
+        return Promise.reject(new Error('Bạn không có quyền thực hiện thao tác này'))
+      }
+
+      return Promise.reject(error.response.data || error.message)
+    }
+
+    return Promise.reject(error)
   }
-  return url.toString()
+)
+
+// Add upload custom method for compatibility with the existing service usages
+;(apiClient as any).upload = function <T>(path: string, formData: FormData): Promise<T> {
+  return apiClient.post<T>(path, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  }) as unknown as Promise<T>
 }
 
-/**
- * Hàm gọi API chính.
- * Tự động thêm Authorization header, xử lý response chuẩn.
- */
-async function goiApi<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const authStore = useAuthStore()
+import type { AxiosRequestConfig } from 'axios'
 
-  // Chuẩn bị headers
-  const headers: Record<string, string> = {}
-
-  if (authStore.token) {
-    headers['Authorization'] = `Bearer ${authStore.token}`
-  }
-
-  if (!options.isFormData) {
-    headers['Content-Type'] = 'application/json'
-  }
-
-  // Chuẩn bị body
-  let body: BodyInit | undefined
-  if (options.body) {
-    body = options.isFormData
-      ? (options.body as FormData)
-      : JSON.stringify(options.body)
-  }
-
-  const url = xayDungUrl(path, options.params)
-
-  const response = await fetch(url, {
-    method: options.method ?? 'GET',
-    headers,
-    body,
-  })
-
-  // Xử lý lỗi 401 — hết phiên đăng nhập
-  if (response.status === 401) {
-    authStore.xoaXacThuc()
-    await router.push('/login')
-    throw new Error('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại')
-  }
-
-  // Xử lý lỗi 403 — không có quyền
-  if (response.status === 403) {
-    throw new Error('Bạn không có quyền thực hiện thao tác này')
-  }
-
-  // Parse JSON
-  const data = await response.json().catch(() => ({}))
-
-  if (!response.ok) {
-    throw data
-  }
-
-  return data as T
+interface CustomAxiosInstance {
+  defaults: any;
+  interceptors: any;
+  get<T = any, R = T, D = any>(url: string, config?: AxiosRequestConfig<D>): Promise<R>;
+  delete<T = any, R = T, D = any>(url: string, config?: AxiosRequestConfig<D>): Promise<R>;
+  head<T = any, R = T, D = any>(url: string, config?: AxiosRequestConfig<D>): Promise<R>;
+  options<T = any, R = T, D = any>(url: string, config?: AxiosRequestConfig<D>): Promise<R>;
+  post<T = any, R = T, D = any>(url: string, data?: any, config?: AxiosRequestConfig<D>): Promise<R>;
+  put<T = any, R = T, D = any>(url: string, data?: any, config?: AxiosRequestConfig<D>): Promise<R>;
+  patch<T = any, R = T, D = any>(url: string, data?: any, config?: AxiosRequestConfig<D>): Promise<R>;
+  postForm<T = any, R = T, D = any>(url: string, data?: any, config?: AxiosRequestConfig<D>): Promise<R>;
+  putForm<T = any, R = T, D = any>(url: string, data?: any, config?: AxiosRequestConfig<D>): Promise<R>;
+  patchForm<T = any, R = T, D = any>(url: string, data?: any, config?: AxiosRequestConfig<D>): Promise<R>;
+  upload<T = any>(path: string, formData: FormData): Promise<T>;
+  request<T = any, R = T, D = any>(config: AxiosRequestConfig<D>): Promise<R>;
 }
 
-// ===== XUẤT CÁC HÀM HTTP TIỆN ÍCH =====
-
-export const apiClient = {
-  get: <T>(path: string, params?: Record<string, string | number | boolean | undefined>) =>
-    goiApi<T>(path, { method: 'GET', params }),
-
-  post: <T>(path: string, body?: unknown) =>
-    goiApi<T>(path, { method: 'POST', body }),
-
-  put: <T>(path: string, body?: unknown) =>
-    goiApi<T>(path, { method: 'PUT', body }),
-
-  delete: <T>(path: string) =>
-    goiApi<T>(path, { method: 'DELETE' }),
-
-  upload: <T>(path: string, formData: FormData) =>
-    goiApi<T>(path, { method: 'POST', body: formData, isFormData: true }),
-}
-
-export default apiClient
+export default (apiClient as unknown as CustomAxiosInstance)

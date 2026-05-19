@@ -12,15 +12,17 @@ const router = useRouter()
     <div class="err-decor err-decor-2"></div>
     <div class="err-content">
       <div class="err-code">404</div>
-      <div class="err-icon">🔍</div>
+      <div class="err-icon">
+        <font-awesome-icon icon="fa-solid fa-magnifying-glass" />
+      </div>
       <h1 class="err-title">Không tìm thấy trang</h1>
       <p class="err-desc">Trang bạn đang tìm kiếm không tồn tại hoặc đã bị di chuyển.</p>
       <div class="err-actions">
         <button class="err-btn-primary" @click="router.push({ name: 'trang-chu' })">
-          🏠 Về trang chủ
+          <font-awesome-icon icon="fa-solid fa-house" /> Về trang chủ
         </button>
         <button class="err-btn-ghost" @click="router.back()">
-          ← Quay lại
+          <font-awesome-icon icon="fa-solid fa-arrow-left" /> Quay lại
         </button>
       </div>
     </div>

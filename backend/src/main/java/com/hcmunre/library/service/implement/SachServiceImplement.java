@@ -5,6 +5,7 @@ import com.hcmunre.library.dto.response.SachResponse;
 import com.hcmunre.library.dto.response.NhaXuatBanResponse;
 import com.hcmunre.library.dto.response.TacGiaResponse;
 import com.hcmunre.library.dto.response.TheLoaiResponse;
+import com.hcmunre.library.dto.response.HinhAnhSachResponse;
 import com.hcmunre.library.entity.NhaXuatBan;
 import com.hcmunre.library.entity.Sach;
 import com.hcmunre.library.entity.TacGia;
@@ -54,7 +55,7 @@ public class SachServiceImplement implements SachService {
 
     @Override
     public SachResponse getSachById(Long id) {
-        return sachRepository.findById(id)
+        return sachRepository.findWithImagesByMaSach(id)
                 .map(this::toResponse)
                 .orElseThrow(() -> new LibraryException(ErrorCode.SACH_KHONG_TON_TAI));
     }
@@ -62,7 +63,7 @@ public class SachServiceImplement implements SachService {
     @Override
     @Transactional
     public SachResponse createSach(SachRequest request) {
-        if (!sachRepository.findByMaIsbn(request.getMaIsbn()).isEmpty()) {
+        if (sachRepository.findByMaIsbn(request.getMaIsbn()).isPresent()) {
             throw new LibraryException(ErrorCode.ISBN_DA_TON_TAI);
         }
 
@@ -105,12 +106,11 @@ public class SachServiceImplement implements SachService {
                 .orElseThrow(() -> new LibraryException(ErrorCode.SACH_KHONG_TON_TAI));
 
         if (request.getMaIsbn() != null) {
-            List<Sach> existing = sachRepository.findByMaIsbn(request.getMaIsbn());
-            boolean isbnTrungVoiSachKhac = existing.stream()
-                    .anyMatch(s -> !s.getMaSach().equals(id));
-            if (isbnTrungVoiSachKhac) {
-                throw new LibraryException(ErrorCode.ISBN_DA_TON_TAI);
-            }
+            sachRepository.findByMaIsbn(request.getMaIsbn()).ifPresent(existing -> {
+                if (!existing.getMaSach().equals(id)) {
+                    throw new LibraryException(ErrorCode.ISBN_DA_TON_TAI);
+                }
+            });
         }
 
         sach.setTenSach(request.getTenSach());
@@ -176,8 +176,18 @@ public class SachServiceImplement implements SachService {
                         .tenTheLoai(tl.getTenTheLoai())
                         .build()).collect(Collectors.toList());
 
-        List<String> hinhAnhs = sach.getDanhSachHinhAnh() == null ? Collections.emptyList()
-                : sach.getDanhSachHinhAnh().stream().map(HinhAnhSach::getDuongDan).collect(Collectors.toList());
+        List<HinhAnhSachResponse> hinhAnhs = sach.getDanhSachHinhAnh() == null ? Collections.emptyList()
+                : sach.getDanhSachHinhAnh().stream().map(ha -> HinhAnhSachResponse.builder()
+                        .maHinhAnh(ha.getMaHinhAnh())
+                        .duongDan(ha.getDuongDan())
+                        .loaiHinhAnh(ha.getLoaiHinhAnh())
+                        .thuTuHienThi(ha.getThuTuHienThi())
+                        .maSach(ha.getSach() != null ? ha.getSach().getMaSach() : null)
+                        .build()).collect(Collectors.toList());
+
+        long countCoSan = cuonSachRepository.countBySach_MaSachAndTrangThai(
+                sach.getMaSach(), com.hcmunre.library.enums.TrangThaiCuonSach.SAN_SANG);
+        long countTong = cuonSachRepository.countBySach_MaSach(sach.getMaSach());
 
         return SachResponse.builder()
                 .maSach(sach.getMaSach())
@@ -194,9 +204,10 @@ public class SachServiceImplement implements SachService {
                 .nhaXuatBan(nxbResponse)
                 .danhSachTacGia(tacGias)
                 .danhSachTheLoai(theLoais)
-                .danhSachHinhAnhUrl(hinhAnhs)
-                .soLuongCoSan(cuonSachRepository.countBySach_MaSachAndTrangThai(
-                        sach.getMaSach(), com.hcmunre.library.enums.TrangThaiCuonSach.SAN_SANG))
+                .danhSachHinhAnh(hinhAnhs)
+                .soLuongCoSan(countCoSan)
+                .soLuongKho(countTong)
+                .tongSoLuong(countTong)
                 .build();
     }
 }

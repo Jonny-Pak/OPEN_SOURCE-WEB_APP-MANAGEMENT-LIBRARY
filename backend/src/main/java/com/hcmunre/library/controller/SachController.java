@@ -25,12 +25,16 @@ public class SachController {
     // API lấy toàn bộ danh sách đầu sách có phân trang
     @GetMapping
     public ResponseEntity<Page<SachResponse>> getAll(
+            @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "maSach") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
         Sort sort = direction.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            return ResponseEntity.ok(sachService.searchAndFilterSach(keyword, null, null, null, pageable));
+        }
         return ResponseEntity.ok(sachService.getAllSach(pageable));
     }
 

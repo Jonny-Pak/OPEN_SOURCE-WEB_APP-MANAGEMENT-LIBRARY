@@ -24,19 +24,20 @@ export interface DangKyRequest {
 
 /** Thông tin cơ bản của người dùng (lưu trong store) */
 export interface ThongTinNguoiDung {
-  maNguoiDung: string
+  maNguoiDung?: string
   hoDem: string
   ten: string
   email: string
   vaiTro: 'DOC_GIA' | 'THU_THU' | 'QUAN_TRI_VIEN'
   trangThaiTaiKhoan?: 'chua_kich_hoat' | 'da_kich_hoat' | 'bi_khoa'
+  avatar?: string | null
 }
 
 /** Response trả về sau khi đăng nhập / đăng ký thành công */
 export interface AuthResponse {
-  maNguoiDung: string
+  maNguoiDung?: string
   accessToken: string
-  tokenType: string
+  tokenType?: string
   hoDem: string
   ten: string
   email: string
@@ -44,6 +45,7 @@ export interface AuthResponse {
   isDefaultPassword?: boolean
   mustChangePassword?: boolean
   trangThaiTaiKhoan?: 'chua_kich_hoat' | 'da_kich_hoat' | 'bi_khoa'
+  avatar?: string | null
 }
 
 /** Format lỗi chuẩn từ backend */

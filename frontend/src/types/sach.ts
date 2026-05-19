@@ -3,32 +3,56 @@
  */
 import type { TacGia, NhaXuatBan, TheLoai } from './danhmuc'
 
+export interface HinhAnhSach {
+  maHinhAnh: number;
+  duongDan: string;
+  loaiHinhAnh: string;
+  thuTuHienThi: number;
+  maSach?: number;
+}
+
 // ===== ĐẦU SÁCH =====
 export interface Sach {
   maSach: number
   tenSach: string
-  isbn: string
+  maIsbn: string
   namXuatBan: number
   moTa?: string
-  anhBiaUrl?: string
+  lanTaiBan?: number
+  soTrang?: number
+  giaTien?: number
+  donGiaPhatTheoNgay?: number
+  kichThuoc?: string
+  dichGia?: string
   nhaXuatBan: NhaXuatBan
-  tacGias: TacGia[]
-  theLoais: TheLoai[]
+  danhSachTacGia: TacGia[]
+  danhSachTheLoai: TheLoai[]
+  danhSachHinhAnh?: HinhAnhSach[]
+  soLuongCoSan?: number
+  soLuongKho?: number
+  tongSoLuong?: number
 }
 
 export interface TaoSachRequest {
   tenSach: string
-  isbn: string
+  maIsbn: string
   namXuatBan: number
+  lanTaiBan: number
+  soTrang: number
+  ngonNgu?: string
   moTa?: string
-  nhaXuatBanId: number
-  tacGiaIds: number[]
-  theLoaiIds: number[]
+  donGiaPhatTheoNgay?: number
+  giaTien: number
+  kichThuoc?: string
+  dichGia?: string
+  maNhaXuatBan: number
+  maTacGias: number[]
+  maTheLoais: number[]
 }
 
 // ===== CUỐN SÁCH (bản sao vật lý) =====
 export type TinhTrangVatLy = 'TOT' | 'HU_HONG' | 'MAT'
-export type TrangThaiCuonSach = 'TRONG' | 'DA_MUON' | 'BAO_TRI'
+export type TrangThaiCuonSach = 'SAN_SANG' | 'DANG_MUON' | 'CHO_MUON' | 'BAO_MAT'
 
 export interface CuonSach {
   maCuonSach: number
@@ -36,7 +60,7 @@ export interface CuonSach {
   viTriKe: string
   tinhTrangVatLy: TinhTrangVatLy
   trangThai: TrangThaiCuonSach
-  sach: Pick<Sach, 'maSach' | 'tenSach' | 'isbn'>
+  sach: Pick<Sach, 'maSach' | 'tenSach' | 'maIsbn'>
 }
 
 export interface TaoCuonSachRequest {

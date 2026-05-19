@@ -25,16 +25,28 @@ export interface ChiTietPhieuMuon {
 
 export interface PhieuMuon {
   maPhieuMuon: string
-  maNguoiDung: string
-  tenDocGia: string
+  maNguoiDung?: string
+  tenDocGia?: string
   ngayMuon: string
-  trangThaiPhieu: TrangThaiPhieuMuon
-  danhSachChiTiet: ChiTietPhieuMuon[]
+  trangThaiPhieu?: TrangThaiPhieuMuon
+  danhSachChiTiet?: ChiTietPhieuMuon[]
+
+  // Normalized/mapped properties returned by muonSachService
+  nguoiDung?: {
+    maNguoiDung: string
+    hoDem: string
+    ten: string
+    email: string
+  }
+  hanTra?: string
+  trangThai?: string
+  soLuongCuon?: number
+  chiTietList?: any[]
 }
 
 export interface TaoPhieuMuonRequest {
-  nguoiDungId: string
-  hanTra: string
+  maNguoiDung: string
+  danhSachMaBarcodeVatLy: string[]
 }
 
 export interface ThemChiTietRequest {
@@ -48,4 +60,15 @@ export interface TraSachChiTietItem {
 
 export interface TraSachRequest {
   chiTietList: TraSachChiTietItem[]
+}
+
+export interface TraToanBoRequest {
+  maPhieuMuon: string;
+  ghiChu?: string;
+}
+
+export interface TraCuonSachRequest {
+  maChiTietPhieuMuon: string;
+  tinhTrangVatLyKhiTra: TinhTrangVatLy;
+  ghiChu?: string;
 }

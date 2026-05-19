@@ -46,7 +46,7 @@ const toggleWishlist = (e: Event) => {
         <button class="action-btn">Xem chi tiết</button>
         <div class="action-group">
           <button @click="addToCart" class="action-btn icon-only" title="Thêm vào giỏ sách">
-            <i class="fas fa-shopping-basket"></i>
+            <font-awesome-icon icon="fa-solid fa-book-bookmark" />
           </button>
           <button 
             @click="toggleWishlist" 
@@ -54,7 +54,7 @@ const toggleWishlist = (e: Event) => {
             :class="{ active: wishlist.isInWishlist(id) }"
             title="Thêm vào yêu thích"
           >
-            <i :class="wishlist.isInWishlist(id) ? 'fas fa-heart' : 'far fa-heart'"></i>
+            <font-awesome-icon :icon="wishlist.isInWishlist(id) ? 'fa-solid fa-heart' : ['far', 'heart']" />
           </button>
         </div>
       </div>

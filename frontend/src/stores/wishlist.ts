@@ -13,20 +13,21 @@ export interface Book {
 }
 
 export const useWishlistStore = defineStore('wishlist', () => {
-  const items = ref<Book[]>([])
+  const books = ref<Book[]>([])
   const isLoading = ref(false)
   const authStore = useAuthStore()
 
-  const itemCount = computed(() => items.value.length)
+  const items = computed(() => books.value)
+  const itemCount = computed(() => books.value.length)
 
   /** Chuyển đổi từ dữ liệu Backend (Sach) sang dữ liệu Frontend (Book) */
   function mapToBook(sach: Sach): Book {
     return {
       id: sach.maSach,
       title: sach.tenSach,
-      author: sach.tacGias.map(t => t.tenTacGia).join(', '),
-      image: sach.anhBiaUrl || 'https://via.placeholder.com/300x450?text=No+Image',
-      category: sach.theLoais.map(t => t.tenTheLoai).join(', ')
+      author: sach.danhSachTacGia.map(t => `${t.hoDem} ${t.ten}`).join(', '),
+      image: sach.danhSachHinhAnh?.[0]?.duongDan || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=200',
+      category: sach.danhSachTheLoai.map(t => t.tenTheLoai).join(', ')
     }
   }
 
@@ -37,7 +38,7 @@ export const useWishlistStore = defineStore('wishlist', () => {
     isLoading.value = true
     try {
       const data = await yeuThichService.getDanhSach(authStore.thongTinNguoiDung.maNguoiDung)
-      items.value = data.map(item => mapToBook(item.sach))
+      books.value = data.map(item => mapToBook(item.sach))
     } catch (error) {
       console.error('Lỗi khi tải danh sách yêu thích:', error)
     } finally {
@@ -48,24 +49,23 @@ export const useWishlistStore = defineStore('wishlist', () => {
   /** Thêm/Xóa sách khỏi danh sách yêu thích (gọi API) */
   async function toggleWishlist(book: Book) {
     if (!authStore.daXacThuc || !authStore.thongTinNguoiDung?.maNguoiDung) {
-      // Nếu chưa đăng nhập, chỉ xử lý local hoặc yêu cầu đăng nhập
       alert('Vui lòng đăng nhập để sử dụng tính năng này!')
-      return
+      return false
     }
 
     const maNguoiDung = authStore.thongTinNguoiDung.maNguoiDung
-    const index = items.value.findIndex(item => item.id === book.id)
+    const index = books.value.findIndex(item => item.id === book.id)
 
     try {
       if (index > -1) {
         // Đã có trong list -> Xóa
         await yeuThichService.xoa(maNguoiDung, book.id)
-        items.value.splice(index, 1)
+        books.value.splice(index, 1)
         return false
       } else {
         // Chưa có -> Thêm
         await yeuThichService.them(maNguoiDung, book.id)
-        items.value.push(book)
+        books.value.push(book)
         return true
       }
     } catch (error) {
@@ -74,21 +74,39 @@ export const useWishlistStore = defineStore('wishlist', () => {
     }
   }
 
+  async function addToWishlist(book: Book) {
+    if (!isInWishlist(book.id)) {
+      await toggleWishlist(book)
+    }
+  }
+
+  async function removeFromWishlist(bookId: number) {
+    const item = books.value.find(i => i.id === bookId)
+    if (item) {
+      await toggleWishlist(item)
+    }
+  }
+
   function isInWishlist(bookId: number) {
-    return items.value.some(item => item.id === bookId)
+    return books.value.some(item => item.id === bookId)
   }
 
   function clearWishlist() {
-    items.value = []
+    books.value = []
   }
 
   return {
+    books,
     items,
     itemCount,
     isLoading,
     fetchWishlist,
     toggleWishlist,
+    addToWishlist,
+    removeFromWishlist,
     isInWishlist,
     clearWishlist
   }
 })
+
+export default useWishlistStore
