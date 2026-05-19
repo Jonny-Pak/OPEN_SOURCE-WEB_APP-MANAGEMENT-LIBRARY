@@ -413,16 +413,77 @@
           <input v-model="settings.guideHeroSubtitle" class="form-input" placeholder="Mọi thứ bạn cần biết để bắt đầu hành trình khám phá..." />
         </div>
         <div class="form-group" style="grid-column: 1/-1;">
-          <label>Danh sách các bước (Định dạng JSON):</label>
-          <textarea v-model="settings.guideStepsJson" class="form-input" style="height: 180px; font-family: monospace;" placeholder="[ ... ]"></textarea>
+          <label>Danh sách các bước hướng dẫn mượn sách:</label>
+          <div class="visual-list-editor">
+            <div v-for="(step, index) in guideSteps" :key="index" class="list-editor-card">
+              <div class="card-header-row">
+                <span class="step-badge">Bước {{ index + 1 }}</span>
+                <button type="button" class="btn-delete-item" @click="guideSteps.splice(index, 1)">
+                  <font-awesome-icon icon="fa-solid fa-trash" /> Xóa bước này
+                </button>
+              </div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Tiêu đề bước:</label>
+                  <input v-model="step.title" class="form-input" placeholder="Tiêu đề bước..." />
+                </div>
+                <div class="form-group">
+                  <label>Biểu tượng (Icon class):</label>
+                  <input v-model="step.icon" class="form-input" placeholder="Ví dụ: fa-solid fa-magnifying-glass" />
+                </div>
+                <div class="form-group" style="grid-column: 1/-1;">
+                  <label>Mô tả chi tiết:</label>
+                  <textarea v-model="step.description" class="form-input" style="height: 60px; resize: vertical;" placeholder="Nhập mô tả bước..."></textarea>
+                </div>
+              </div>
+            </div>
+            <button type="button" class="btn-add-item" @click="guideSteps.push({ title: 'Bước mới', description: '', icon: 'fa-solid fa-book' })">
+              <font-awesome-icon icon="fa-solid fa-plus" /> Thêm bước hướng dẫn
+            </button>
+          </div>
         </div>
+
         <div class="form-group">
-          <label>Các câu hỏi nhanh (Định dạng JSON):</label>
-          <textarea v-model="settings.guideFaqsJson" class="form-input" style="height: 150px; font-family: monospace;" placeholder="[ ... ]"></textarea>
+          <label>Các câu hỏi nhanh (FAQs ngắn):</label>
+          <div class="visual-list-editor">
+            <div v-for="(faq, index) in guideFaqs" :key="index" class="list-editor-card">
+              <div class="card-header-row">
+                <span class="step-badge">Câu hỏi {{ index + 1 }}</span>
+                <button type="button" class="btn-delete-item" @click="guideFaqs.splice(index, 1)">
+                  <font-awesome-icon icon="fa-solid fa-trash" /> Xóa
+                </button>
+              </div>
+              <div class="form-grid">
+                <div class="form-group" style="grid-column: 1/-1;">
+                  <label>Câu hỏi:</label>
+                  <input v-model="faq.question" class="form-input" placeholder="Nhập câu hỏi..." />
+                </div>
+                <div class="form-group" style="grid-column: 1/-1;">
+                  <label>Câu trả lời:</label>
+                  <textarea v-model="faq.answer" class="form-input" style="height: 60px; resize: vertical;" placeholder="Nhập câu trả lời..."></textarea>
+                </div>
+              </div>
+            </div>
+            <button type="button" class="btn-add-item" @click="guideFaqs.push({ question: 'Câu hỏi mới?', answer: '' })">
+              <font-awesome-icon icon="fa-solid fa-plus" /> Thêm câu hỏi nhanh
+            </button>
+          </div>
         </div>
+
         <div class="form-group">
-          <label>Quy tắc ngắn (Định dạng JSON):</label>
-          <textarea v-model="settings.guideRulesJson" class="form-input" style="height: 150px; font-family: monospace;" placeholder="[ ... ]"></textarea>
+          <label>Quy tắc ngắn (Hiển thị đầu trang):</label>
+          <div class="visual-list-editor">
+            <div v-for="(rule, index) in guideRules" :key="index" class="simple-list-row">
+              <span class="row-index">{{ index + 1 }}</span>
+              <input v-model="guideRules[index]" class="form-input" style="flex: 1;" placeholder="Nhập quy tắc..." />
+              <button type="button" class="btn-delete-icon" @click="guideRules.splice(index, 1)">
+                <font-awesome-icon icon="fa-solid fa-trash" />
+              </button>
+            </div>
+            <button type="button" class="btn-add-item" @click="guideRules.push('Quy tắc mới')">
+              <font-awesome-icon icon="fa-solid fa-plus" /> Thêm quy tắc ngắn
+            </button>
+          </div>
         </div>
       </div>
 
@@ -451,8 +512,54 @@
           <input v-model="settings.faqSubtitle" class="form-input" />
         </div>
         <div class="form-group" style="grid-column: 1/-1;">
-          <label>Danh sách Câu hỏi & Trả lời (Định dạng JSON):</label>
-          <textarea v-model="settings.faqsJson" class="form-input" style="height: 250px; font-family: monospace;"></textarea>
+          <label>Quản lý các danh mục câu hỏi & Câu trả lời chi tiết:</label>
+          <div class="visual-list-editor">
+            <div v-for="(category, catIndex) in generalFaqs" :key="catIndex" class="list-editor-card category-card">
+              <div class="card-header-row">
+                <span class="step-badge category-badge">Danh mục: {{ category.title }}</span>
+                <button type="button" class="btn-delete-item" @click="generalFaqs.splice(catIndex, 1)">
+                  <font-awesome-icon icon="fa-solid fa-trash" /> Xóa danh mục
+                </button>
+              </div>
+              <div class="form-grid" style="margin-bottom: 1rem;">
+                <div class="form-group">
+                  <label>Tên danh mục:</label>
+                  <input v-model="category.title" class="form-input" placeholder="Ví dụ: Tài khoản & Đăng nhập..." />
+                </div>
+                <div class="form-group">
+                  <label>Biểu tượng (Icon class):</label>
+                  <input v-model="category.icon" class="form-input" placeholder="Ví dụ: fa-solid fa-circle-user..." />
+                </div>
+              </div>
+
+              <!-- Nested Questions -->
+              <div class="nested-questions-section">
+                <h4>Danh sách các câu hỏi trong danh mục này:</h4>
+                <div v-for="(q, qIndex) in category.questions" :key="qIndex" class="nested-faq-row">
+                  <div class="nested-faq-header">
+                    <span>Câu hỏi {{ qIndex + 1 }}</span>
+                    <button type="button" class="btn-delete-icon-small" @click="category.questions.splice(qIndex, 1)">
+                      <font-awesome-icon icon="fa-solid fa-xmark" />
+                    </button>
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0.5rem;">
+                    <label>Câu hỏi:</label>
+                    <input v-model="q.question" class="form-input form-input-sm" />
+                  </div>
+                  <div class="form-group">
+                    <label>Trả lời:</label>
+                    <textarea v-model="q.answer" class="form-input form-input-sm" style="height: 60px; resize: vertical;"></textarea>
+                  </div>
+                </div>
+                <button type="button" class="btn-add-nested" @click="category.questions.push({ id: 'faq-' + Date.now(), question: 'Câu hỏi mới?', answer: '' })">
+                  <font-awesome-icon icon="fa-solid fa-plus" /> Thêm câu hỏi vào danh mục
+                </button>
+              </div>
+            </div>
+            <button type="button" class="btn-add-item" @click="generalFaqs.push({ title: 'Danh mục mới', icon: 'fa-solid fa-circle-question', questions: [] })">
+              <font-awesome-icon icon="fa-solid fa-plus" /> Thêm danh mục câu hỏi mới
+            </button>
+          </div>
         </div>
       </div>
 
@@ -485,8 +592,45 @@
           <RichTextEditor v-model="settings.rulesImportantNote" placeholder="Thư viện là không gian chung cho tất cả chúng ta..." />
         </div>
         <div class="form-group" style="grid-column: 1/-1;">
-          <label>Toàn bộ danh sách Nội quy (Định dạng JSON):</label>
-          <textarea v-model="settings.rulesJson" class="form-input" style="height: 250px; font-family: monospace;"></textarea>
+          <label>Quản lý các nhóm nội quy & Quy định chi tiết:</label>
+          <div class="visual-list-editor">
+            <div v-for="(category, catIndex) in generalRules" :key="catIndex" class="list-editor-card category-card">
+              <div class="card-header-row">
+                <span class="step-badge category-badge">Nhóm nội quy: {{ category.title }}</span>
+                <button type="button" class="btn-delete-item" @click="generalRules.splice(catIndex, 1)">
+                  <font-awesome-icon icon="fa-solid fa-trash" /> Xóa nhóm nội quy
+                </button>
+              </div>
+              <div class="form-grid" style="margin-bottom: 1rem;">
+                <div class="form-group">
+                  <label>Tên nhóm nội quy:</label>
+                  <input v-model="category.title" class="form-input" placeholder="Ví dụ: Quy định chung..." />
+                </div>
+                <div class="form-group">
+                  <label>Biểu tượng (Icon class):</label>
+                  <input v-model="category.icon" class="form-input" placeholder="Ví dụ: fa-solid fa-circle-info..." />
+                </div>
+              </div>
+
+              <!-- Rules List -->
+              <div class="nested-questions-section">
+                <h4>Danh sách các điều luật / quy định chi tiết:</h4>
+                <div v-for="(rule, ruleIndex) in category.rules" :key="ruleIndex" class="nested-rule-row">
+                  <span class="row-index">{{ ruleIndex + 1 }}</span>
+                  <input v-model="category.rules[ruleIndex]" class="form-input form-input-sm" style="flex: 1;" />
+                  <button type="button" class="btn-delete-icon-small" @click="category.rules.splice(ruleIndex, 1)">
+                    <font-awesome-icon icon="fa-solid fa-xmark" />
+                  </button>
+                </div>
+                <button type="button" class="btn-add-nested" @click="category.rules.push('Quy định mới')">
+                  <font-awesome-icon icon="fa-solid fa-plus" /> Thêm quy định mới vào nhóm
+                </button>
+              </div>
+            </div>
+            <button type="button" class="btn-add-item" @click="generalRules.push({ title: 'Nhóm nội quy mới', icon: 'fa-solid fa-list-check', rules: [] })">
+              <font-awesome-icon icon="fa-solid fa-plus" /> Thêm nhóm nội quy mới
+            </button>
+          </div>
         </div>
       </div>
 
@@ -791,6 +935,49 @@ const tabsPhat = [
 ]
 const tabPhatHienTai = ref('theo_ngay')
 
+const guideSteps = ref<any[]>([])
+const guideFaqs = ref<any[]>([])
+const guideRules = ref<string[]>([])
+const generalFaqs = ref<any[]>([])
+const generalRules = ref<any[]>([])
+
+function parseJsonSettings() {
+  // Guide Steps
+  try {
+    guideSteps.value = JSON.parse(settings.value.guideStepsJson)
+  } catch (e) {
+    guideSteps.value = JSON.parse(JSON.stringify(defaultSteps))
+  }
+
+  // Guide FAQs
+  try {
+    guideFaqs.value = JSON.parse(settings.value.guideFaqsJson)
+  } catch (e) {
+    guideFaqs.value = JSON.parse(JSON.stringify(defaultGuideFaqs))
+  }
+
+  // Guide Rules
+  try {
+    guideRules.value = JSON.parse(settings.value.guideRulesJson)
+  } catch (e) {
+    guideRules.value = JSON.parse(JSON.stringify(defaultGuideRules))
+  }
+
+  // General FAQs
+  try {
+    generalFaqs.value = JSON.parse(settings.value.faqsJson)
+  } catch (e) {
+    generalFaqs.value = JSON.parse(JSON.stringify(defaultFaqs))
+  }
+
+  // General Rules
+  try {
+    generalRules.value = JSON.parse(settings.value.rulesJson)
+  } catch (e) {
+    generalRules.value = JSON.parse(JSON.stringify(defaultRules))
+  }
+}
+
 onMounted(async () => {
   const saved_qr = localStorage.getItem(STORAGE_KEY_QR)
   if (saved_qr) qrUrl.value = saved_qr
@@ -811,6 +998,8 @@ onMounted(async () => {
       }
     } catch {}
   }
+
+  parseJsonSettings()
 
   try {
     const list = await theLoaiService.danhSach()
@@ -925,6 +1114,13 @@ function onContactMapFileChange(e: Event) {
 }
 
 function luuCaiDat() {
+  // Serialize our visual array states back to JSON strings before saving!
+  settings.value.guideStepsJson = JSON.stringify(guideSteps.value, null, 2)
+  settings.value.guideFaqsJson = JSON.stringify(guideFaqs.value, null, 2)
+  settings.value.guideRulesJson = JSON.stringify(guideRules.value, null, 2)
+  settings.value.faqsJson = JSON.stringify(generalFaqs.value, null, 2)
+  settings.value.rulesJson = JSON.stringify(generalRules.value, null, 2)
+
   localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings.value))
   saved.value = true
   setTimeout(() => { saved.value = false }, 3000)
@@ -1107,5 +1303,197 @@ function formatVND(val: number) {
 .toast-fade-leave-to {
   opacity: 0;
   transform: translateY(-10px) scale(0.95);
+}
+
+/* Visual List Editor */
+.visual-list-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-top: 0.5rem;
+}
+.list-editor-card {
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 1.25rem;
+  position: relative;
+  transition: all 0.25s ease;
+}
+.list-editor-card:hover {
+  border-color: rgba(6, 182, 212, 0.3);
+  background: rgba(15, 23, 42, 0.6);
+}
+.card-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.step-badge {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #06b6d4;
+  background: rgba(6, 182, 212, 0.1);
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.category-badge {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+.btn-delete-item {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.775rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.btn-delete-item:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ff6b6b;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+.btn-add-item {
+  align-self: flex-start;
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px dashed rgba(6, 182, 212, 0.4);
+  color: #06b6d4;
+  padding: 0.65rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.btn-add-item:hover {
+  background: rgba(6, 182, 212, 0.2);
+  border-style: solid;
+  color: #22d3ee;
+}
+.simple-list-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+.row-index {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--mau-chu-mo);
+}
+.btn-delete-icon {
+  background: transparent;
+  border: none;
+  color: rgba(239, 68, 68, 0.6);
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: color 0.2s;
+  font-size: 0.9rem;
+}
+.btn-delete-icon:hover {
+  color: #ef4444;
+}
+
+/* FAQs Category Card & Nesting */
+.category-card {
+  border-left: 3px solid #10b981;
+}
+.nested-questions-section {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+.nested-questions-section h4 {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--mau-chu);
+}
+.nested-faq-row {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 0.875rem;
+  margin-bottom: 0.75rem;
+}
+.nested-faq-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.775rem;
+  font-weight: 700;
+  color: var(--mau-chu-mo);
+  margin-bottom: 0.5rem;
+}
+.btn-delete-icon-small {
+  background: transparent;
+  border: none;
+  color: rgba(239, 68, 68, 0.6);
+  cursor: pointer;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-delete-icon-small:hover {
+  color: #ef4444;
+}
+.btn-add-nested {
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  color: var(--mau-chu-mo);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+}
+.btn-add-nested:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: var(--mau-chu);
+  background: rgba(255, 255, 255, 0.03);
+}
+.nested-rule-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+.form-input-sm {
+  font-size: 0.825rem;
+  padding: 0.45rem 0.75rem;
 }
 </style>
