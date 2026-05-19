@@ -34,6 +34,107 @@ const user = ref({
   reservationCount: 0,
 })
 
+// Form fields for editing profile
+const editableProfile = ref({
+  hoDem: '',
+  ten: '',
+  soDienThoai: '',
+  ngaySinh: '',
+  gioiTinh: 'NAM',
+  cccd: '',
+  diaChi: '',
+  avatar: ''
+})
+
+const avatarFileInput = ref<HTMLInputElement | null>(null)
+const profileMessage = ref('')
+const profileError = ref(false)
+const updatingProfile = ref(false)
+
+const triggerAvatarUpload = () => {
+  avatarFileInput.value?.click()
+}
+
+const onAvatarFileChange = (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  if (file.size > 2 * 1024 * 1024) {
+    toast.error('Ảnh quá lớn (tối đa 2MB)')
+    return
+  }
+  const reader = new FileReader()
+  reader.onload = (ev) => {
+    const url = ev.target?.result as string
+    editableProfile.value.avatar = url
+    user.value.avatar = url
+    toast.success('Đã chọn ảnh đại diện mới. Vui lòng bấm "Cập nhật thông tin" để lưu lại.')
+  }
+  reader.readAsDataURL(file)
+}
+
+const handleUpdateProfile = async () => {
+  if (!editableProfile.value.hoDem.trim() || !editableProfile.value.ten.trim()) {
+    profileMessage.value = 'Họ đệm và Tên không được để trống'
+    profileError.value = true
+    return
+  }
+  if (!editableProfile.value.soDienThoai.trim()) {
+    profileMessage.value = 'Số điện thoại không được để trống'
+    profileError.value = true
+    return
+  }
+  if (!/^0\d{9}$/.test(editableProfile.value.soDienThoai.trim())) {
+    profileMessage.value = 'Số điện thoại phải có đúng 10 chữ số và bắt đầu bằng số 0'
+    profileError.value = true
+    return
+  }
+  if (editableProfile.value.cccd && !/^\d{12}$/.test(editableProfile.value.cccd.trim())) {
+    profileMessage.value = 'CCCD phải bao gồm đúng 12 chữ số'
+    profileError.value = true
+    return
+  }
+
+  updatingProfile.value = true
+  profileMessage.value = ''
+  profileError.value = false
+
+  try {
+    const res: any = await apiClient.put('/api/v1/nguoi-dung/me', {
+      hoDem: editableProfile.value.hoDem.trim(),
+      ten: editableProfile.value.ten.trim(),
+      soDienThoai: editableProfile.value.soDienThoai.trim(),
+      ngaySinh: editableProfile.value.ngaySinh ? editableProfile.value.ngaySinh : null,
+      gioiTinh: editableProfile.value.gioiTinh,
+      cccd: editableProfile.value.cccd ? editableProfile.value.cccd.trim() : null,
+      diaChi: editableProfile.value.diaChi ? editableProfile.value.diaChi.trim() : null,
+      avatar: editableProfile.value.avatar || null
+    })
+
+    if (res) {
+      user.value.name = `${res.hoDem} ${res.ten}`
+      if (res.avatar) {
+        user.value.avatar = res.avatar
+      }
+      if (authStore.thongTinNguoiDung) {
+        authStore.thongTinNguoiDung.avatar = res.avatar
+        authStore.thongTinNguoiDung.hoDem = res.hoDem
+        authStore.thongTinNguoiDung.ten = res.ten
+        localStorage.setItem('userInfo', JSON.stringify(authStore.thongTinNguoiDung))
+      }
+    }
+
+    profileMessage.value = 'Cập nhật thông tin cá nhân thành công!'
+    profileError.value = false
+    toast.success('Đã cập nhật thông tin cá nhân!')
+  } catch (err: any) {
+    profileMessage.value = err.message || 'Có lỗi xảy ra khi cập nhật thông tin'
+    profileError.value = true
+    toast.error(profileMessage.value)
+  } finally {
+    updatingProfile.value = false
+  }
+}
+
 const handleLogout = () => {
   authStore.xoaXacThuc()
   router.push('/login')
@@ -160,9 +261,22 @@ const loadProfileAndHistory = async () => {
       user.value.name = `${profile.hoDem} ${profile.ten}`
       user.value.email = profile.email
       user.value.studentId = profile.maNguoiDung ? profile.maNguoiDung.substring(0, 8).toUpperCase() : 'SV2024001'
+      if (profile.avatar) {
+        user.value.avatar = profile.avatar
+      }
       if (profile.ngayTao) {
         user.value.joinDate = new Date(profile.ngayTao).toLocaleDateString('vi-VN')
       }
+
+      // Populate form fields for editing
+      editableProfile.value.hoDem = profile.hoDem || ''
+      editableProfile.value.ten = profile.ten || ''
+      editableProfile.value.soDienThoai = profile.soDienThoai || ''
+      editableProfile.value.ngaySinh = profile.ngaySinh || ''
+      editableProfile.value.gioiTinh = profile.gioiTinh || 'NAM'
+      editableProfile.value.cccd = profile.cccd || ''
+      editableProfile.value.diaChi = profile.diaChi || ''
+      editableProfile.value.avatar = profile.avatar || ''
     }
 
     // 2. Fetch borrowing history via correct endpoint
@@ -267,7 +381,16 @@ onMounted(() => {
           <div class="user-card">
             <div class="avatar-wrapper">
               <img :src="user.avatar" :alt="user.name" />
-              <button class="edit-avatar"><font-awesome-icon icon="fa-solid fa-camera" /></button>
+              <button class="edit-avatar" type="button" @click="triggerAvatarUpload">
+                <font-awesome-icon icon="fa-solid fa-camera" />
+              </button>
+              <input 
+                type="file" 
+                ref="avatarFileInput" 
+                style="display: none;" 
+                accept="image/*" 
+                @change="onAvatarFileChange" 
+              />
             </div>
             <div class="user-meta">
               <h2>{{ user.name }}</h2>
@@ -617,25 +740,72 @@ onMounted(() => {
             
             <div class="section-card">
               <h3>Thông tin cá nhân</h3>
-              <form class="settings-form" @submit.prevent>
+              <form class="settings-form" @submit.prevent="handleUpdateProfile">
+                <div v-if="profileMessage" class="alert-box" :class="{ error: profileError, success: !profileError }">
+                  {{ profileMessage }}
+                </div>
+
                 <div class="form-row">
                   <div class="form-group">
-                    <label>Họ và tên</label>
-                    <input type="text" :value="user.name" readonly />
+                    <label>Họ đệm <span style="color: red;">*</span></label>
+                    <input type="text" v-model="editableProfile.hoDem" required placeholder="Nhập họ đệm" />
                   </div>
                   <div class="form-group">
-                    <label>Mã độc giả</label>
+                    <label>Tên <span style="color: red;">*</span></label>
+                    <input type="text" v-model="editableProfile.ten" required placeholder="Nhập tên" />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Số điện thoại <span style="color: red;">*</span></label>
+                    <input type="text" v-model="editableProfile.soDienThoai" required placeholder="Ví dụ: 0912345678" />
+                  </div>
+                  <div class="form-group">
+                    <label>Số CCCD / Định danh (12 chữ số)</label>
+                    <input type="text" v-model="editableProfile.cccd" placeholder="Nhập 12 số định danh" />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Ngày sinh</label>
+                    <input type="date" v-model="editableProfile.ngaySinh" />
+                  </div>
+                  <div class="form-group">
+                    <label>Giới tính</label>
+                    <select v-model="editableProfile.gioiTinh" style="padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: var(--radius); background: white;">
+                      <option value="NAM">Nam</option>
+                      <option value="NU">Nữ</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>Địa chỉ</label>
+                  <input type="text" v-model="editableProfile.diaChi" placeholder="Nhập địa chỉ cư trú của bạn" />
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Email (Không thể thay đổi)</label>
+                    <input type="email" :value="user.email" readonly />
+                  </div>
+                  <div class="form-group">
+                    <label>Mã độc giả / Nhân viên (Không thể thay đổi)</label>
                     <input type="text" :value="user.studentId" readonly />
                   </div>
                 </div>
+
                 <div class="form-group">
-                  <label>Email</label>
-                  <input type="email" :value="user.email" readonly />
-                </div>
-                <div class="form-group">
-                  <label>Lớp</label>
+                  <label>Lớp / Ban ngành (Không thể thay đổi)</label>
                   <input type="text" :value="user.class" readonly />
                 </div>
+
+                <button type="submit" class="btn btn-outline" style="align-self: flex-start;" :disabled="updatingProfile">
+                  <font-awesome-icon v-if="updatingProfile" icon="fa-solid fa-spinner" class="fa-spin" style="margin-right: 0.5rem;" />
+                  {{ updatingProfile ? 'Đang cập nhật...' : 'Cập nhật thông tin' }}
+                </button>
               </form>
             </div>
             

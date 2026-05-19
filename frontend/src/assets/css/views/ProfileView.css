@@ -454,3 +454,53 @@
 }
 
 .status-tag.danger { background: #fee2e2; color: #ef4444; }
+
+/* Alert Box */
+.alert-box {
+  padding: 0.875rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+}
+.alert-box.success {
+  background: rgba(81, 207, 102, 0.1);
+  border: 1px solid rgba(81, 207, 102, 0.3);
+  color: #2b8a3e;
+}
+.alert-box.error {
+  background: rgba(250, 82, 82, 0.1);
+  border: 1px solid rgba(250, 82, 82, 0.3);
+  color: #c92a2a;
+}
+
+/* Edit avatar interactivity */
+.edit-avatar {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.edit-avatar:hover {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+  transform: scale(1.1);
+}
+
+/* Profile select input styling */
+.settings-form select {
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--primary);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+.settings-form select:focus {
+  border-color: var(--accent);
+}
+
+/* Disabled button state */
+.settings-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
