@@ -1,9 +1,28 @@
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+
+const logoUrl = ref('')
+
+onMounted(() => {
+  const savedSettings = localStorage.getItem('library_settings')
+  if (savedSettings) {
+    try {
+      const parsed = JSON.parse(savedSettings)
+      if (parsed.logo) {
+        logoUrl.value = parsed.logo
+      }
+    } catch {}
+  }
+})
+</script>
+
 <template>
   <footer class="footer">
     <div class="container footer-content">
       <div class="footer-brand">
         <div class="logo">
-          <span class="logo-text">THƯ VIỆN <span class="text-accent">ĐIỆN TỬ</span></span>
+          <img v-if="logoUrl" :src="logoUrl" alt="Logo" class="footer-logo-img" />
+          <span v-else class="logo-text">THƯ VIỆN <span class="text-accent">ĐIỆN TỬ</span></span>
         </div>
         <p>Hệ thống quản lý thư viện mã nguồn mở hiện đại, giúp kết nối tri thức và cộng đồng.</p>
         <div class="social-links">

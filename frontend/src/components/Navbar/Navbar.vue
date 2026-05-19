@@ -11,9 +11,22 @@ const authStore = useAuthStore()
 const router = useRouter()
 
 const isScrolled = ref(false)
+const logoUrl = ref('')
 
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 20
+}
+
+const loadLogo = () => {
+  const savedSettings = localStorage.getItem('library_settings')
+  if (savedSettings) {
+    try {
+      const parsed = JSON.parse(savedSettings)
+      logoUrl.value = parsed.logo || ''
+    } catch {}
+  } else {
+    logoUrl.value = ''
+  }
 }
 
 const handleLogout = () => {
@@ -24,6 +37,8 @@ const handleLogout = () => {
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
+  window.addEventListener('library-settings-updated', loadLogo)
+  loadLogo()
   if (authStore.daXacThuc) {
     wishlist.fetchWishlist()
   }
@@ -31,6 +46,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
+  window.removeEventListener('library-settings-updated', loadLogo)
 })
 
 const userInitials = computed(() => {
@@ -44,7 +60,8 @@ const userInitials = computed(() => {
   <nav :class="['navbar', { 'navbar-scrolled': isScrolled }]">
     <div class="container navbar-content">
       <div class="logo">
-        <span class="logo-text">THƯ VIỆN <span class="text-accent">ĐIỆN TỬ</span></span>
+        <img v-if="logoUrl" :src="logoUrl" alt="Logo" class="navbar-logo-img" />
+        <span v-else class="logo-text">THƯ VIỆN <span class="text-accent">ĐIỆN TỬ</span></span>
       </div>
       
       <ul class="nav-links">

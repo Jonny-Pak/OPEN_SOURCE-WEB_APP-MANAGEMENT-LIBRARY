@@ -33,6 +33,40 @@
       
       <!-- ===== TAB 1: CÀI ĐẶT CHUNG ===== -->
       <div v-if="activeSystemTab === 'chung'" class="tab-pane-content">
+        <!-- Logo Hệ thống -->
+        <div class="section-card">
+          <div class="card-head">
+            <font-awesome-icon icon="fa-solid fa-image" class="card-icon" />
+            <div>
+              <h3>Logo Thư viện (1674 x 358)</h3>
+              <p>Ảnh logo chuẩn tỉ lệ 1674 x 358 px, sẽ hiển thị trên thanh điều hướng và chân trang.</p>
+            </div>
+          </div>
+
+          <div class="qr-area">
+            <div class="qr-preview" @click="triggerLogoUpload" style="width: 100%; max-width: 420px; height: 100px; border: 2px dashed rgba(6,182,212,0.4); border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: rgba(6,182,212,0.04); overflow: hidden; transition: border-color 0.2s;">
+              <img v-if="settings.logo" :src="settings.logo" alt="Logo Thư viện" style="max-width: 100%; max-height: 100%; object-fit: contain; padding: 10px;" />
+              <div v-else class="qr-placeholder">
+                <font-awesome-icon icon="fa-solid fa-camera" class="qr-icon" />
+                <span>Click để chọn ảnh Logo</span>
+              </div>
+            </div>
+
+            <div class="qr-actions">
+              <input ref="logoFileInput" type="file" accept="image/*" hidden @change="onLogoFileChange" />
+              <button type="button" class="nut-upload" @click="triggerLogoUpload">
+                <font-awesome-icon icon="fa-solid fa-folder-open" /> {{ settings.logo ? 'Thay Logo' : 'Chọn Logo' }}
+              </button>
+              <button type="button" v-if="settings.logo" class="nut-xoa-qr" @click="xoaLogo">
+                <font-awesome-icon icon="fa-solid fa-trash-can" /> Xóa Logo
+              </button>
+              <p class="hint">Hỗ trợ JPG, PNG, WebP. Định dạng khuyến nghị 1674 x 358 px.</p>
+              <div v-if="settings.logo" class="qr-status">
+                <span class="dot-xanh"></span> Đã cấu hình Logo thư viện
+              </div>
+            </div>
+          </div>
+        </div>
         <!-- QR Thanh toán -->
         <div class="section-card">
           <div class="card-head">
@@ -734,6 +768,7 @@ const STORAGE_KEY_QR = 'library_qr_url'
 const STORAGE_KEY_SETTINGS = 'library_settings'
 
 const fileInput = ref<HTMLInputElement | null>(null)
+const logoFileInput = ref<HTMLInputElement | null>(null)
 const qrUrl = ref('')
 const saved = ref(false)
 
@@ -900,6 +935,7 @@ const defaultRules = [
 
 const settings = ref({
   tenThuVien: 'Thư viện ĐH Tài nguyên Môi trường TP.HCM',
+  logo: '',
   sdtLienHe: '028 5445 2222',
   diaChi: '236 Lê Văn Sỹ, Phường 1, Quận 3, TP.HCM',
   soNgayMuon: 14,
@@ -1075,6 +1111,31 @@ function xoaQR() {
   localStorage.removeItem(STORAGE_KEY_QR)
 }
 
+function triggerLogoUpload() {
+  logoFileInput.value?.click()
+}
+
+function onLogoFileChange(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  if (file.size > 5 * 1024 * 1024) {
+    alert('Ảnh quá lớn (tối đa 5MB)')
+    return
+  }
+  const reader = new FileReader()
+  reader.onload = (ev) => {
+    const url = ev.target?.result as string
+    settings.value.logo = url
+    luuCaiDat()
+  }
+  reader.readAsDataURL(file)
+}
+
+function xoaLogo() {
+  settings.value.logo = ''
+  luuCaiDat()
+}
+
 function triggerHeroUpload() {
   heroFileInput.value?.click()
 }
@@ -1159,6 +1220,7 @@ function luuCaiDat() {
   settings.value.rulesJson = JSON.stringify(generalRules.value, null, 2)
 
   localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings.value))
+  window.dispatchEvent(new Event('library-settings-updated'))
   saved.value = true
   setTimeout(() => { saved.value = false }, 3000)
 }

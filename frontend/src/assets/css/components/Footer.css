@@ -92,6 +92,13 @@
   font-weight: 700;
 }
 
+.footer-logo-img {
+  max-height: 48px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
 .text-accent {
   color: var(--accent);
 }
