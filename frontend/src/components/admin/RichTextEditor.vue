@@ -111,20 +111,19 @@ const format = (command: string, value: string = '') => {
 
 <style scoped>
 .rich-text-editor {
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 12px;
-  background: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(10px);
+  background: #ffffff;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
 }
 
 .rich-text-editor.focused {
-  border-color: #0ea5e9;
-  box-shadow: 0 0 16px rgba(14, 165, 233, 0.25);
-  background: rgba(15, 23, 42, 0.6);
+  border-color: #06b6d4;
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.12);
 }
 
 .editor-toolbar {
@@ -133,14 +132,14 @@ const format = (command: string, value: string = '') => {
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: #f8fafc;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .toolbar-btn {
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.7);
+  color: #475569;
   padding: 6px 10px;
   border-radius: 6px;
   cursor: pointer;
@@ -155,14 +154,14 @@ const format = (command: string, value: string = '') => {
 }
 
 .toolbar-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  background: rgba(0, 0, 0, 0.04);
+  color: #0f172a;
 }
 
 .divider {
   width: 1px;
   height: 20px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.08);
   margin: 0 4px;
 }
 
@@ -186,7 +185,7 @@ const format = (command: string, value: string = '') => {
   min-height: 200px;
   max-height: 400px;
   overflow-y: auto;
-  color: #f1f5f9;
+  color: #0f172a;
   font-size: 15px;
   line-height: 1.6;
   outline: none;
@@ -195,7 +194,7 @@ const format = (command: string, value: string = '') => {
 
 .editor-content[contenteditable="true"]:empty:before {
   content: attr(placeholder);
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(0, 0, 0, 0.4);
   pointer-events: none;
   display: block;
 }
@@ -206,7 +205,7 @@ const format = (command: string, value: string = '') => {
   font-weight: 700;
   margin-top: 16px;
   margin-bottom: 8px;
-  color: #fff;
+  color: #0f172a;
 }
 
 .editor-content :deep(h2) {
@@ -214,7 +213,7 @@ const format = (command: string, value: string = '') => {
   font-weight: 600;
   margin-top: 14px;
   margin-bottom: 6px;
-  color: #f1f5f9;
+  color: #1e293b;
 }
 
 .editor-content :deep(p) {
