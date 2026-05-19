@@ -13,7 +13,12 @@ export interface Book {
 }
 
 export const useWishlistStore = defineStore('wishlist', () => {
-  const books = ref<Book[]>([])
+  const books = ref<Book[]>(
+    (() => {
+      const saved = localStorage.getItem('wishlist')
+      return saved ? (JSON.parse(saved) as Book[]) : []
+    })()
+  )
   const isLoading = ref(false)
   const authStore = useAuthStore()
 
@@ -39,6 +44,7 @@ export const useWishlistStore = defineStore('wishlist', () => {
     try {
       const data = await yeuThichService.getDanhSach(authStore.thongTinNguoiDung.maNguoiDung)
       books.value = data.map(item => mapToBook(item.sach))
+      localStorage.setItem('wishlist', JSON.stringify(books.value))
     } catch (error) {
       console.error('Lỗi khi tải danh sách yêu thích:', error)
     } finally {
@@ -61,11 +67,13 @@ export const useWishlistStore = defineStore('wishlist', () => {
         // Đã có trong list -> Xóa
         await yeuThichService.xoa(maNguoiDung, book.id)
         books.value.splice(index, 1)
+        localStorage.setItem('wishlist', JSON.stringify(books.value))
         return false
       } else {
         // Chưa có -> Thêm
         await yeuThichService.them(maNguoiDung, book.id)
         books.value.push(book)
+        localStorage.setItem('wishlist', JSON.stringify(books.value))
         return true
       }
     } catch (error) {
@@ -93,6 +101,7 @@ export const useWishlistStore = defineStore('wishlist', () => {
 
   function clearWishlist() {
     books.value = []
+    localStorage.removeItem('wishlist')
   }
 
   return {
