@@ -61,6 +61,7 @@ public class NguoiDung extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private VaiTro vaiTro;
 
+    @Column(columnDefinition = "TEXT")
     private String avatar;
 
     @Enumerated(EnumType.STRING)

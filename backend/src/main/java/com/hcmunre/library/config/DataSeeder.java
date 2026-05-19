@@ -10,6 +10,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -31,10 +33,20 @@ public class DataSeeder implements CommandLineRunner {
         private final DatChoRepository datChoRepository;
         private final PhieuPhatRepository phieuPhatRepository;
         private final PasswordEncoder passwordEncoder;
+        private final JdbcTemplate jdbcTemplate;
 
         @Override
         @Transactional
         public void run(String... args) throws Exception {
+                try {
+                        log.info("⚙️ Đang dọn dẹp các ràng buộc cơ sở dữ liệu cũ...");
+                        jdbcTemplate.execute("ALTER TABLE phieu_muon DROP CONSTRAINT IF EXISTS phieu_muon_trang_thai_phieu_check");
+                        jdbcTemplate.execute("ALTER TABLE nguoi_dung ALTER COLUMN avatar TYPE TEXT");
+                        log.info("✅ Dọn dẹp ràng buộc và nâng cấp độ rộng cột avatar thành công!");
+                } catch (Exception e) {
+                        log.warn("⚠️ Có lỗi khi chạy lệnh SQL dọn dẹp DDL: {}", e.getMessage());
+                }
+
                 seedUsers();
                 if (sachRepository.count() == 0) {
                         seedCatalogData();
