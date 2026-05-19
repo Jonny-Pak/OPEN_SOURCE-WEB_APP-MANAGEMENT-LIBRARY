@@ -51,6 +51,9 @@ const profileMessage = ref('')
 const profileError = ref(false)
 const updatingProfile = ref(false)
 
+const tempAvatar = ref('')
+const savingAvatar = ref(false)
+
 const triggerAvatarUpload = () => {
   avatarFileInput.value?.click()
 }
@@ -65,11 +68,48 @@ const onAvatarFileChange = (e: Event) => {
   const reader = new FileReader()
   reader.onload = (ev) => {
     const url = ev.target?.result as string
-    editableProfile.value.avatar = url
+    tempAvatar.value = url
     user.value.avatar = url
-    toast.success('Đã chọn ảnh đại diện mới. Vui lòng bấm "Cập nhật thông tin" để lưu lại.')
+    toast.success('Đã chọn ảnh mới. Hãy nhấn "Lưu ảnh" ở dưới ảnh đại diện để hoàn tất.')
   }
   reader.readAsDataURL(file)
+}
+
+const handleSaveAvatar = async () => {
+  if (!tempAvatar.value) return
+  savingAvatar.value = true
+  try {
+    const res: any = await apiClient.put('/api/v1/nguoi-dung/me', {
+      hoDem: editableProfile.value.hoDem || '',
+      ten: editableProfile.value.ten || '',
+      soDienThoai: editableProfile.value.soDienThoai || '',
+      ngaySinh: editableProfile.value.ngaySinh || null,
+      gioiTinh: editableProfile.value.gioiTinh || 'NAM',
+      cccd: editableProfile.value.cccd || null,
+      diaChi: editableProfile.value.diaChi || null,
+      avatar: tempAvatar.value
+    })
+    if (res) {
+      user.value.avatar = res.avatar
+      editableProfile.value.avatar = res.avatar
+      if (authStore.thongTinNguoiDung) {
+        authStore.thongTinNguoiDung.avatar = res.avatar
+        localStorage.setItem('userInfo', JSON.stringify(authStore.thongTinNguoiDung))
+      }
+      tempAvatar.value = ''
+      toast.success('Cập nhật ảnh đại diện thành công!')
+    }
+  } catch (err: any) {
+    toast.error(err.message || 'Có lỗi xảy ra khi cập nhật ảnh đại diện')
+  } finally {
+    savingAvatar.value = false
+  }
+}
+
+const handleCancelAvatar = () => {
+  tempAvatar.value = ''
+  user.value.avatar = editableProfile.value.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
+  toast.info('Đã hủy thay đổi ảnh đại diện')
 }
 
 const handleUpdateProfile = async () => {
@@ -392,6 +432,30 @@ onMounted(() => {
                 @change="onAvatarFileChange" 
               />
             </div>
+            
+            <!-- Quick save/cancel buttons for avatar -->
+            <div v-if="tempAvatar" class="avatar-actions" style="margin-top: 10px; display: flex; gap: 8px; justify-content: center; width: 100%; z-index: 10;">
+              <button 
+                type="button" 
+                class="btn btn-sm" 
+                :disabled="savingAvatar" 
+                @click="handleSaveAvatar"
+                style="font-size: 0.8rem; padding: 6px 12px; display: flex; align-items: center; gap: 4px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s;"
+              >
+                <font-awesome-icon v-if="savingAvatar" icon="fa-solid fa-spinner" class="fa-spin" />
+                Lưu ảnh
+              </button>
+              <button 
+                type="button" 
+                class="btn btn-sm" 
+                :disabled="savingAvatar" 
+                @click="handleCancelAvatar"
+                style="font-size: 0.8rem; padding: 6px 12px; background: #6b7280; color: white; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s;"
+              >
+                Hủy
+              </button>
+            </div>
+
             <div class="user-meta">
               <h2>{{ user.name }}</h2>
               <p class="student-id">{{ user.studentId }}</p>
