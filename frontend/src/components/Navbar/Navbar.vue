@@ -70,7 +70,15 @@ const userInitials = computed(() => {
           <div class="user-menu-container">
             <div class="user-profile-trigger">
               <span class="user-name-small">{{ authStore.tenDayDu }}</span>
-              <span class="user-avatar-small"><i class="fas fa-user"></i></span>
+              <span class="user-avatar-small">
+                <img 
+                  v-if="authStore.thongTinNguoiDung?.avatar" 
+                  :src="authStore.thongTinNguoiDung.avatar" 
+                  alt="Avatar" 
+                  class="navbar-avatar-img"
+                />
+                <i v-else class="fas fa-user"></i>
+              </span>
               <i class="fas fa-chevron-down chevron-icon"></i>
             </div>
             
