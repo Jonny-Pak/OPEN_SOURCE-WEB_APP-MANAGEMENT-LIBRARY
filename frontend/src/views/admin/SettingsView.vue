@@ -1261,9 +1261,9 @@ function formatVND(val: number) {
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 .form-grid--3 { grid-template-columns: 1fr 1fr 1fr; }
 .form-group { display: flex; flex-direction: column; gap: 0.375rem; }
-.form-group label { font-size: 0.825rem; font-weight: 600; color: var(--mau-chu); }
-.form-input { padding: 0.7rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--mau-chu); font-family: inherit; font-size: 0.875rem; outline: none; }
-.form-input:focus { border-color: var(--mau-chinh); }
+.form-group label { font-size: 0.825rem; font-weight: 700; color: #334155; }
+.form-input { padding: 0.7rem 1rem; background: #ffffff; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 8px; color: #1e293b; font-family: inherit; font-size: 0.875rem; outline: none; transition: all 0.2s ease; }
+.form-input:focus { border-color: #06b6d4; box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1); }
 .form-hint { font-size: 0.75rem; color: var(--mau-chu-mo); margin-top: 0.2rem; }
 
 /* Input prefix */
@@ -1407,23 +1407,24 @@ function formatVND(val: number) {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 12px;
   padding: 1.25rem;
   margin-top: 0.5rem;
 }
 .list-editor-card {
-  background: rgba(15, 23, 42, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 10px;
   padding: 1.25rem;
   position: relative;
   transition: all 0.25s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
 }
 .list-editor-card:hover {
-  border-color: rgba(6, 182, 212, 0.3);
-  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(6, 182, 212, 0.4);
+  box-shadow: 0 6px 15px rgba(6, 182, 212, 0.06);
 }
 .card-header-row {
   display: flex;
@@ -1431,13 +1432,13 @@ function formatVND(val: number) {
   align-items: center;
   margin-bottom: 1rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 .step-badge {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #06b6d4;
-  background: rgba(6, 182, 212, 0.1);
+  color: #0891b2;
+  background: rgba(6, 182, 212, 0.08);
   padding: 0.35rem 0.75rem;
   border-radius: 6px;
   text-transform: uppercase;
@@ -1445,12 +1446,12 @@ function formatVND(val: number) {
 }
 .category-badge {
   color: #10b981;
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(16, 185, 129, 0.08);
 }
 .btn-delete-item {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  color: #ef4444;
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  color: #dc2626;
   padding: 0.4rem 0.85rem;
   border-radius: 6px;
   font-size: 0.775rem;
@@ -1462,19 +1463,19 @@ function formatVND(val: number) {
   gap: 0.35rem;
 }
 .btn-delete-item:hover {
-  background: rgba(239, 68, 68, 0.2);
-  color: #ff6b6b;
-  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+  border-color: rgba(239, 68, 68, 0.3);
 }
 .btn-add-item {
   align-self: flex-start;
-  background: rgba(6, 182, 212, 0.1);
-  border: 1px dashed rgba(6, 182, 212, 0.4);
-  color: #06b6d4;
+  background: rgba(6, 182, 212, 0.06);
+  border: 1px dashed rgba(6, 182, 212, 0.3);
+  color: #0891b2;
   padding: 0.65rem 1.25rem;
   border-radius: 8px;
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
@@ -1482,9 +1483,9 @@ function formatVND(val: number) {
   gap: 0.5rem;
 }
 .btn-add-item:hover {
-  background: rgba(6, 182, 212, 0.2);
+  background: rgba(6, 182, 212, 0.12);
   border-style: solid;
-  color: #22d3ee;
+  color: #06b6d4;
 }
 .simple-list-row {
   display: flex;
@@ -1496,13 +1497,13 @@ function formatVND(val: number) {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--mau-chu-mo);
+  font-weight: 700;
+  color: #475569;
 }
 .btn-delete-icon {
   background: transparent;
@@ -1522,8 +1523,8 @@ function formatVND(val: number) {
   border-left: 3px solid #10b981;
 }
 .nested-questions-section {
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: #f8fafc;
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 8px;
   padding: 1rem;
   margin-top: 1rem;
@@ -1532,14 +1533,15 @@ function formatVND(val: number) {
   margin: 0 0 1rem;
   font-size: 0.85rem;
   font-weight: 700;
-  color: var(--mau-chu);
+  color: #1e293b;
 }
 .nested-faq-row {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 6px;
   padding: 0.875rem;
   margin-bottom: 0.75rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.01);
 }
 .nested-faq-header {
   display: flex;
@@ -1547,7 +1549,7 @@ function formatVND(val: number) {
   align-items: center;
   font-size: 0.775rem;
   font-weight: 700;
-  color: var(--mau-chu-mo);
+  color: #475569;
   margin-bottom: 0.5rem;
 }
 .btn-delete-icon-small {
@@ -1564,13 +1566,13 @@ function formatVND(val: number) {
   color: #ef4444;
 }
 .btn-add-nested {
-  background: transparent;
-  border: 1px dashed rgba(255, 255, 255, 0.15);
-  color: var(--mau-chu-mo);
+  background: #ffffff;
+  border: 1px dashed rgba(0, 0, 0, 0.15);
+  color: #475569;
   padding: 0.5rem 1rem;
   border-radius: 6px;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
@@ -1579,9 +1581,9 @@ function formatVND(val: number) {
   margin-top: 0.5rem;
 }
 .btn-add-nested:hover {
-  border-color: rgba(255, 255, 255, 0.3);
-  color: var(--mau-chu);
-  background: rgba(255, 255, 255, 0.03);
+  border-color: #06b6d4;
+  color: #0891b2;
+  background: rgba(6, 182, 212, 0.02);
 }
 .nested-rule-row {
   display: flex;
@@ -1592,5 +1594,20 @@ function formatVND(val: number) {
 .form-input-sm {
   font-size: 0.825rem;
   padding: 0.45rem 0.75rem;
+}
+
+/* Explicit Light Styling override for visual inputs */
+.visual-list-editor .form-input {
+  background: #f8fafc !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  color: #0f172a !important;
+}
+.visual-list-editor .form-input:focus {
+  background: #ffffff !important;
+  border-color: #06b6d4 !important;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1) !important;
+}
+.visual-list-editor label {
+  color: #334155 !important;
 }
 </style>
