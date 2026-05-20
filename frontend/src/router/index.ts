@@ -211,6 +211,11 @@ const router = createRouter({
           name: 'phat',
           component: () => import('@/views/admin/phat/PhatView.vue'),
         },
+        {
+          path: 'nhat-ky',
+          name: 'admin-nhat-ky',
+          component: () => import('@/views/admin/nhat-ky/NhatKyView.vue'),
+        },
       ],
     },
 

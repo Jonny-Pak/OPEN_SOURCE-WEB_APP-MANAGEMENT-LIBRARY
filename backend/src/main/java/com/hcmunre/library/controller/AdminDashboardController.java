@@ -27,24 +27,30 @@ public class AdminDashboardController {
 
     @GetMapping("/thong-ke")
     @PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'THU_THU')")
-    public ResponseEntity<ThongKeDashboardResponse> getDashboardStats() {
-        long soBanDangMuon = cuonSachRepository.countByTrangThai(TrangThaiCuonSach.DANG_MUON);
-        long soSachQuaHan = chiTietPhieuMuonRepository.countByTrangThaiChiTietPhieuMuon(TrangThaiChiTietPhieuMuon.QUA_HAN);
-        
-        // Tính tổng tiền phạt
-        double tongTienPhat = phieuPhatRepository.findAll().stream()
-                .mapToDouble(PhieuPhat::getSoTienPhat)
-                .sum();
-                
-        long tongNguoiDung = nguoiDungRepository.count();
+    public ResponseEntity<?> getDashboardStats() {
+        try {
+            long soBanDangMuon = cuonSachRepository.countByTrangThai(TrangThaiCuonSach.DANG_MUON);
+            long soSachQuaHan = chiTietPhieuMuonRepository.countByTrangThaiChiTietPhieuMuon(TrangThaiChiTietPhieuMuon.QUA_HAN);
+            
+            // Tính tổng tiền phạt
+            double tongTienPhat = phieuPhatRepository.findAll().stream()
+                    .filter(p -> p.getSoTienPhat() != null)
+                    .mapToDouble(PhieuPhat::getSoTienPhat)
+                    .sum();
+                    
+            long tongNguoiDung = nguoiDungRepository.count();
 
-        ThongKeDashboardResponse response = ThongKeDashboardResponse.builder()
-                .soBanDangMuon(soBanDangMuon)
-                .soSachQuaHan(soSachQuaHan)
-                .tongTienPhat(tongTienPhat)
-                .tongNguoiDung(tongNguoiDung)
-                .build();
+            ThongKeDashboardResponse response = ThongKeDashboardResponse.builder()
+                    .soBanDangMuon(soBanDangMuon)
+                    .soSachQuaHan(soSachQuaHan)
+                    .tongTienPhat(tongTienPhat)
+                    .tongNguoiDung(tongNguoiDung)
+                    .build();
 
-        return ResponseEntity.ok(response);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(e.toString() + " - " + e.getMessage());
+        }
     }
 }

@@ -39,6 +39,8 @@ public interface NguoiDungRepository extends JpaRepository<NguoiDung, UUID> {
     
     org.springframework.data.domain.Page<NguoiDung> findByNgayXoaIsNull(org.springframework.data.domain.Pageable pageable);
 
+    java.util.List<NguoiDung> findByVaiTroInAndNgayXoaIsNull(java.util.List<com.hcmunre.library.enums.VaiTro> vaiTros);
+
     org.springframework.data.domain.Page<NguoiDung> findByNgayXoaIsNullAndTrangThai(
             com.hcmunre.library.enums.TrangThaiNguoiDung trangThai, 
             org.springframework.data.domain.Pageable pageable);

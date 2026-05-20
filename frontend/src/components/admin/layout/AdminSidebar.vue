@@ -88,6 +88,12 @@ const menuItems: MenuItem[] = [
     onlyAdmin: true,
     permission: 'system:settings',
   },
+  {
+    label: 'Nhật ký hoạt động',
+    icon: 'fa-solid fa-clock-rotate-left',
+    route: '/admin/nhat-ky',
+    onlyAdmin: true,
+  },
 ]
 
 const visibleMenuItems = computed(() =>

@@ -96,13 +96,13 @@ async function docHet() {
   } catch {}
 }
 
-function iconLoai(loai: string) {
+function iconClass(loai: string) {
   switch (loai) {
-    case 'HE_THONG': return '🔔'
-    case 'NHAC_NHO': return '⏰'
-    case 'CANH_BAO': return '⚠️'
-    case 'DAT_CHO': return '📅'
-    default: return '📣'
+    case 'HE_THONG': return 'fa-solid fa-bell'
+    case 'NHAC_NHO': return 'fa-solid fa-clock'
+    case 'CANH_BAO': return 'fa-solid fa-triangle-exclamation'
+    case 'DAT_CHO': return 'fa-solid fa-calendar-days'
+    default: return 'fa-solid fa-circle-info'
   }
 }
 
@@ -208,7 +208,9 @@ async function dangXuat(): Promise<void> {
                 :class="{ 'tb-item--chua-doc': !tb.daDoc }"
                 @click="danhDauDaDoc(tb.maThongBao)"
               >
-                <span class="tb-icon">{{ iconLoai(tb.loaiThongBao) }}</span>
+                <div class="tb-icon-box" :class="`tb-icon-box--${tb.loaiThongBao.toLowerCase()}`">
+                  <font-awesome-icon :icon="iconClass(tb.loaiThongBao)" />
+                </div>
                 <div class="tb-noi-dung">
                   <p class="tb-tieu-de-item">{{ tb.tieuDe }}</p>
                   <p class="tb-text">{{ tb.noiDung }}</p>
@@ -411,10 +413,44 @@ async function dangXuat(): Promise<void> {
 }
 .tb-item--chua-doc:hover { background: rgba(6, 182, 212, 0.08); }
 
-.tb-icon {
-  font-size: 1.25rem;
+.tb-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
   flex-shrink: 0;
-  line-height: 1.4;
+  transition: transform 0.2s ease;
+}
+
+.tb-item:hover .tb-icon-box {
+  transform: scale(1.05);
+}
+
+.tb-icon-box--he_thong {
+  background: rgba(6, 182, 212, 0.08);
+  color: #0891b2;
+  border: 1px solid rgba(6, 182, 212, 0.15);
+}
+
+.tb-icon-box--nhac_nho {
+  background: rgba(245, 158, 11, 0.08);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.15);
+}
+
+.tb-icon-box--canh_bao {
+  background: rgba(239, 68, 68, 0.08);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.15);
+}
+
+.tb-icon-box--dat_cho {
+  background: rgba(59, 130, 246, 0.08);
+  color: #2563eb;
+  border: 1px solid rgba(59, 130, 246, 0.15);
 }
 
 .tb-noi-dung {

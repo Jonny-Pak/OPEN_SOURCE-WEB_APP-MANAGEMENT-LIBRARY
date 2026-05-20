@@ -29,10 +29,10 @@ const loadData = async () => {
     author.value = {
       id: found.maTacGia,
       name: `${found.hoDem} ${found.ten}`.trim(),
-      bio: found.tieuSu || 'Dale Carnegie (1888-1955) là một nhà văn và diễn giả người Mỹ nổi tiếng, chuyên phát triển các khóa học về tự cải thiện, giao tiếp và thuyết phục.',
-      image: 'https://images.unsplash.com/photo-1544717305-27a7ad515996?auto=format&fit=crop&q=80&w=600',
-      nationality: 'Việt Nam',
-      born: '1970',
+      bio: found.tieuSu || 'Chưa có thông tin tiểu sử của tác giả này.',
+      image: (found as any).hinhAnh || '',
+      nationality: (found as any).quocTich || 'Việt Nam',
+      born: (found as any).ngaySinh ? new Date((found as any).ngaySinh).getFullYear() : '1970',
       died: ''
     }
 
@@ -85,7 +85,10 @@ onMounted(loadData)
           <!-- Author Profile Header -->
           <section class="author-profile">
             <div class="author-visual">
-              <img :src="author.image" :alt="author.name" />
+              <img v-if="author.image" :src="author.image" :alt="author.name" />
+              <div v-else class="author-avatar-placeholder-big">
+                <font-awesome-icon icon="fa-solid fa-user-nib" />
+              </div>
             </div>
             <div class="author-content">
               <nav class="breadcrumb">

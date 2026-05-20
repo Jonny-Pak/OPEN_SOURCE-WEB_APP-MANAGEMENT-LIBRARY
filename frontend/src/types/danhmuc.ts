@@ -7,12 +7,14 @@ export interface TacGia {
   hoDem: string
   ten: string
   tieuSu?: string
+  hinhAnh?: string
 }
 
 export interface TaoTacGiaRequest {
   hoDem: string
   ten: string
   tieuSu?: string
+  hinhAnh?: string
 }
 
 export interface NhaXuatBan {

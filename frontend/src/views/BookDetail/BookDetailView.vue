@@ -225,6 +225,13 @@ onMounted(() => {
             
             <h1 class="book-title">{{ book.title }}</h1>
             <p class="book-author">Tác giả: <span>{{ book.author }}</span></p>
+
+            <div class="rating-stars" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+              <div class="stars" style="display: flex; gap: 0.25rem;">
+                <font-awesome-icon v-for="i in 5" :key="i" icon="fa-solid fa-star" style="color: #f59e0b;" />
+              </div>
+              <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted);">5.0 (Độc giả đánh giá)</span>
+            </div>
             
             <div class="description">
               <h3>Tóm tắt nội dung</h3>
@@ -233,25 +240,58 @@ onMounted(() => {
             
             <div class="specs-grid">
               <div class="spec-item">
-                <span class="label">Nhà xuất bản</span>
-                <span class="value">{{ book.publisher }}</span>
+                <span class="spec-icon"><font-awesome-icon icon="fa-solid fa-building-columns" /></span>
+                <div class="spec-detail">
+                  <span class="label">Nhà xuất bản</span>
+                  <span class="value">{{ book.publisher }}</span>
+                </div>
               </div>
               <div class="spec-item">
-                <span class="label">Năm xuất bản</span>
-                <span class="value">{{ book.publishedYear }}</span>
+                <span class="spec-icon"><font-awesome-icon icon="fa-solid fa-calendar-days" /></span>
+                <div class="spec-detail">
+                  <span class="label">Năm xuất bản</span>
+                  <span class="value">{{ book.publishedYear }}</span>
+                </div>
               </div>
               <div class="spec-item">
-                <span class="label">Mã ISBN</span>
-                <span class="value">{{ book.maIsbn }}</span>
+                <span class="spec-icon"><font-awesome-icon icon="fa-solid fa-barcode" /></span>
+                <div class="spec-detail">
+                  <span class="label">Mã ISBN</span>
+                  <span class="value">{{ book.maIsbn }}</span>
+                </div>
               </div>
               <div class="spec-item">
-                <span class="label">Số trang</span>
-                <span class="value">{{ book.pages }} trang</span>
+                <span class="spec-icon"><font-awesome-icon icon="fa-solid fa-file-invoice" /></span>
+                <div class="spec-detail">
+                  <span class="label">Số trang</span>
+                  <span class="value">{{ book.pages }} trang</span>
+                </div>
               </div>
               <div class="spec-item">
-                <span class="label">Ngôn ngữ</span>
-                <span class="value">{{ book.language }}</span>
+                <span class="spec-icon"><font-awesome-icon icon="fa-solid fa-language" /></span>
+                <div class="spec-detail">
+                  <span class="label">Ngôn ngữ</span>
+                  <span class="value">{{ book.language }}</span>
+                </div>
               </div>
+              <div class="spec-item">
+                <span class="spec-icon"><font-awesome-icon icon="fa-solid fa-cubes" /></span>
+                <div class="spec-detail">
+                  <span class="label">Số bản có sẵn</span>
+                  <span class="value">{{ book.soLuongKho }} / {{ book.tongSoLuong }} bản</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Premium Borrowing Policy Alert -->
+            <div class="borrow-policy-alert" style="margin-top: 1.5rem; padding: 1.25rem; background: rgba(6, 182, 212, 0.05); border-left: 4px solid var(--accent); border-radius: 8px;">
+              <h4 style="margin: 0 0 0.5rem 0; font-size: 0.95rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 0.5rem;">
+                <font-awesome-icon icon="fa-solid fa-circle-info" style="color: var(--accent);" />
+                <span>Quy định mượn & nhận sách</span>
+              </h4>
+              <p style="margin: 0; font-size: 0.85rem; line-height: 1.5; color: var(--secondary);">
+                Quý độc giả vui lòng đến quầy thủ thư để nhận sách vật lý trong vòng <b>24 giờ</b> kể từ khi đăng ký mượn trực tuyến hoặc đặt chỗ thành công.
+              </p>
             </div>
           </div>
         </div>

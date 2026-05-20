@@ -42,6 +42,7 @@ public class TacGiaServiceImplement implements TacGiaService {
                 .hoDem(request.getHoDem())
                 .ten(request.getTen())
                 .tieuSu(request.getTieuSu())
+                .hinhAnh(request.getHinhAnh())
                 .ngayXoa(null)
                 .build();
         return toResponse(tacGiaRepository.save(tacGia));
@@ -55,6 +56,7 @@ public class TacGiaServiceImplement implements TacGiaService {
         tacGia.setHoDem(request.getHoDem());
         tacGia.setTen(request.getTen());
         tacGia.setTieuSu(request.getTieuSu());
+        tacGia.setHinhAnh(request.getHinhAnh());
 
         return toResponse(tacGiaRepository.save(tacGia));
     }
@@ -73,6 +75,7 @@ public class TacGiaServiceImplement implements TacGiaService {
                 .hoDem(tacGia.getHoDem())
                 .ten(tacGia.getTen())
                 .tieuSu(tacGia.getTieuSu())
+                .hinhAnh(tacGia.getHinhAnh())
                 .build();
     }
 }

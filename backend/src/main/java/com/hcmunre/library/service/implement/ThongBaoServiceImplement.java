@@ -40,6 +40,25 @@ public class ThongBaoServiceImplement implements ThongBaoService {
     }
 
     @Override
+    public void taoThongBaoChoAdmin(String tieuDe, String noiDung, LoaiThongBao loaiThongBao) {
+        List<com.hcmunre.library.enums.VaiTro> targetRoles = List.of(
+            com.hcmunre.library.enums.VaiTro.QUAN_TRI_VIEN,
+            com.hcmunre.library.enums.VaiTro.THU_THU
+        );
+        List<NguoiDung> admins = nguoiDungRepository.findByVaiTroInAndNgayXoaIsNull(targetRoles);
+        for (NguoiDung admin : admins) {
+            ThongBao thongBao = ThongBao.builder()
+                    .nguoiDung(admin)
+                    .tieuDe(tieuDe)
+                    .noiDung(noiDung)
+                    .loaiThongBao(loaiThongBao)
+                    .daDoc(false)
+                    .build();
+            thongBaoRepository.save(thongBao);
+        }
+    }
+
+    @Override
     public List<ThongBaoResponse> layDanhSachThongBao(UUID maNguoiDung) {
         return thongBaoRepository.findByNguoiDung_MaNguoiDungOrderByNgayTaoDesc(maNguoiDung)
                 .stream().map(item -> ThongBaoResponse.builder()

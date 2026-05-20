@@ -29,6 +29,9 @@ public class TacGia extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String tieuSu;
 
+    @Column(columnDefinition = "TEXT")
+    private String hinhAnh;
+
     private LocalDateTime ngayXoa;
 
     @com.fasterxml.jackson.annotation.JsonIgnore

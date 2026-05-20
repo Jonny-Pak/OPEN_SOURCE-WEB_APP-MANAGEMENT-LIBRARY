@@ -58,7 +58,8 @@ const modalNXB = useModal<NhaXuatBan>()
 const modalTheLoai = useModal<TheLoai>()
 const modalViTri = useModal<{ maViTri: number; tenViTri: string; moTa?: string }>()
 
-const formTacGia = ref({ hoDem: '', ten: '', tieuSu: '', ngaySinh: '', quocTich: '' })
+const formTacGia = ref({ hoDem: '', ten: '', tieuSu: '', ngaySinh: '', quocTich: '', hinhAnh: '' })
+const tacGiaAvatarInput = ref<HTMLInputElement | null>(null)
 const formNXB = ref({ tenNhaXuatBan: '', diaChi: '', soDienThoai: '', email: '' })
 const formTheLoai = ref({ tenTheLoai: '', moTa: '' })
 const formViTri = ref({ tenViTri: '', moTa: '' })
@@ -92,19 +93,37 @@ async function taiDanhSach(): Promise<void> {
   finally { dangTai.value = false }
 }
 
-function moSuaTacGia(item: TacGia) { modalTacGia.moModalSua(item); formTacGia.value = { hoDem: item.hoDem, ten: item.ten, tieuSu: item.tieuSu ?? '', ngaySinh: (item as any).ngaySinh ?? '', quocTich: (item as any).quocTich ?? '' } }
+function moSuaTacGia(item: TacGia) { modalTacGia.moModalSua(item); formTacGia.value = { hoDem: item.hoDem, ten: item.ten, tieuSu: item.tieuSu ?? '', ngaySinh: (item as any).ngaySinh ?? '', quocTich: (item as any).quocTich ?? '', hinhAnh: (item as any).hinhAnh ?? '' } }
 function moSuaNXB(item: NhaXuatBan) { modalNXB.moModalSua(item); formNXB.value = { tenNhaXuatBan: item.tenNhaXuatBan, diaChi: item.diaChi ?? '', soDienThoai: item.soDienThoai ?? '', email: item.email ?? '' } }
 function moSuaTheLoai(item: TheLoai) { modalTheLoai.moModalSua(item); formTheLoai.value = { tenTheLoai: item.tenTheLoai, moTa: item.moTa ?? '' } }
 function moSuaViTri(item: { maViTri: number; tenViTri: string; moTa?: string }) { modalViTri.moModalSua(item); formViTri.value = { tenViTri: item.tenViTri, moTa: item.moTa ?? '' } }
 
 function moThemMoi() {
-  if (tabHienTai.value === 'tacGia') { formTacGia.value = { hoDem: '', ten: '', tieuSu: '', ngaySinh: '', quocTich: '' }; modalTacGia.moModalThem() }
+  if (tabHienTai.value === 'tacGia') { formTacGia.value = { hoDem: '', ten: '', tieuSu: '', ngaySinh: '', quocTich: '', hinhAnh: '' }; modalTacGia.moModalThem() }
   else if (tabHienTai.value === 'nxb') { formNXB.value = { tenNhaXuatBan: '', diaChi: '', soDienThoai: '', email: '' }; modalNXB.moModalThem() }
   else if (tabHienTai.value === 'theLoai') { formTheLoai.value = { tenTheLoai: '', moTa: '' }; modalTheLoai.moModalThem() }
   else { formViTri.value = { tenViTri: '', moTa: '' }; modalViTri.moModalThem() }
 }
 
 // ... [Giữ nguyên logic luuTacGia, luuNXB, luuTheLoai như cũ]
+function triggerTacGiaAvatar() {
+  tacGiaAvatarInput.value?.click()
+}
+
+function onTacGiaAvatarChange(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  if (file.size > 5 * 1024 * 1024) {
+    toast.canhBao('Ảnh quá lớn (tối đa 5MB)')
+    return
+  }
+  const reader = new FileReader()
+  reader.onload = (ev) => {
+    formTacGia.value.hinhAnh = ev.target?.result as string
+  }
+  reader.readAsDataURL(file)
+}
+
 async function luuTacGia() {
   if (!formTacGia.value.hoDem.trim()) return toast.canhBao('Họ đệm không được để trống')
   if (!formTacGia.value.ten.trim()) return toast.canhBao('Tên không được để trống')
@@ -222,10 +241,14 @@ onMounted(taiDanhSach)
         <template v-if="tabHienTai === 'tacGia'">
           <EmptyState v-if="danhSachTacGia.length === 0" thong-diep="Chưa có tác giả nào" />
           <table v-else class="bang">
-            <thead><tr><th>#</th><th>Họ đệm</th><th>Tên</th><th>Quốc tịch</th><th>Tiểu sử</th><th>Hành động</th></tr></thead>
+            <thead><tr><th>#</th><th>Ảnh</th><th>Họ đệm</th><th>Tên</th><th>Quốc tịch</th><th>Tiểu sử</th><th>Hành động</th></tr></thead>
             <tbody>
               <tr v-for="(item, i) in danhSachTacGia" :key="item.maTacGia">
                 <td>{{ i + 1 }}</td>
+                <td>
+                  <img v-if="(item as any).hinhAnh" :src="(item as any).hinhAnh" alt="Avatar" class="anh-avatar-tac-gia" />
+                  <div v-else class="anh-avatar-placeholder"><font-awesome-icon icon="fa-solid fa-user-nib" /></div>
+                </td>
                 <td>{{ item.hoDem }}</td>
                 <td><strong>{{ item.ten }}</strong></td>
                 <td>{{ (item as any).quocTich ?? '—' }}</td>
@@ -298,6 +321,24 @@ onMounted(taiDanhSach)
 
     <ModalDialog :dang-mo="modalTacGia.dangMo.value" :tieu-de="modalTacGia.dangThem() ? 'Thêm tác giả' : 'Sửa tác giả'" @dong="modalTacGia.dongModal()">
       <div class="form-modal">
+        <!-- Ảnh Đại Diện Tác Giả -->
+        <div class="form-group flex-row-center" style="display: flex; gap: 1.5rem; align-items: center; margin-bottom: 1.25rem; background: rgba(6,182,212,0.03); padding: 0.75rem; border-radius: 8px; border: 1px dashed rgba(6,182,212,0.2);">
+          <div class="avatar-preview-box" @click="triggerTacGiaAvatar" style="width: 70px; height: 70px; border-radius: 50%; border: 2px dashed rgba(6,182,212,0.4); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; background: white; flex-shrink: 0;">
+            <img v-if="formTacGia.hinhAnh" :src="formTacGia.hinhAnh" alt="Avatar Tác giả" style="width: 100%; height: 100%; object-fit: cover;" />
+            <font-awesome-icon v-else icon="fa-solid fa-camera" style="color: var(--accent); font-size: 1.5rem;" />
+          </div>
+          <div class="avatar-actions">
+            <input ref="tacGiaAvatarInput" type="file" accept="image/*" hidden @change="onTacGiaAvatarChange" />
+            <button type="button" class="btn btn-outline btn-sm" @click="triggerTacGiaAvatar" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; border: 1px solid var(--accent); color: var(--accent); background: transparent; border-radius: 4px; cursor: pointer; transition: all 0.2s;">
+              <font-awesome-icon icon="fa-solid fa-cloud-arrow-up" /> Chọn ảnh
+            </button>
+            <button type="button" v-if="formTacGia.hinhAnh" class="btn btn-danger btn-sm" @click="formTacGia.hinhAnh = ''" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; border: 1px solid #ef4444; color: #ef4444; background: transparent; border-radius: 4px; cursor: pointer; margin-left: 8px; transition: all 0.2s;">
+              <font-awesome-icon icon="fa-solid fa-trash-can" /> Xóa
+            </button>
+            <p style="margin: 0.25rem 0 0 0; font-size: 0.75rem; color: var(--text-muted);">Hỗ trợ JPG, PNG, WebP (tối đa 5MB)</p>
+          </div>
+        </div>
+
         <div class="hang-doi" style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
           <div class="form-group"><label>Họ đệm *</label><input v-model="formTacGia.hoDem" class="form-input" placeholder="Nhập họ đệm" /></div>
           <div class="form-group"><label>Tên *</label><input v-model="formTacGia.ten" class="form-input" placeholder="Nhập tên" /></div>
@@ -386,4 +427,25 @@ onMounted(taiDanhSach)
 .nut-huy { padding:0.65rem 1.25rem; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu-mo); cursor:pointer; font-family:inherit; }
 .nut-luu { padding:0.65rem 1.5rem; background:var(--color-primary); border:none; border-radius:8px; color:white; cursor:pointer; font-family:inherit; font-weight:600; }
 .nut-luu:disabled { opacity:0.6; cursor:not-allowed; }
+
+.anh-avatar-tac-gia {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(6, 182, 212, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.anh-avatar-placeholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(6, 182, 212, 0.08);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
 </style>

@@ -18,6 +18,8 @@ import com.hcmunre.library.service.DatChoService;
 import com.hcmunre.library.service.NguoiDungService;
 import com.hcmunre.library.service.PhieuMuonService;
 import com.hcmunre.library.service.PhieuPhatService;
+import com.hcmunre.library.service.ThongBaoService;
+import com.hcmunre.library.enums.LoaiThongBao;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +38,8 @@ public class DatChoServiceImplement implements DatChoService {
     private final CuonSachRepository cuonSachRepository;
     private final PhieuPhatService phieuPhatService;
     private final PhieuMuonService phieuMuonService;
+    private final ThongBaoService thongBaoService;
+    private final com.hcmunre.library.service.NhatKyHoatDongService nhatKyHoatDongService;
 
     @Override
     @Transactional
@@ -84,7 +88,29 @@ public class DatChoServiceImplement implements DatChoService {
                 .trangThai(TrangThaiDatCho.DANG_CHO)
                 .build();
 
-        return toDatChoResponse(datChoRepository.save(datCho));
+        DatCho savedDatCho = datChoRepository.save(datCho);
+
+        try {
+            thongBaoService.taoThongBaoChoAdmin(
+                "Yêu cầu đặt chỗ mới",
+                "Độc giả " + nguoiDung.getHoTen() + " đã đặt chỗ sách \"" + sach.getTenSach() + "\". Vui lòng chuẩn bị và duyệt mượn.",
+                LoaiThongBao.DAT_CHO
+            );
+        } catch (Exception e) {
+            // catch warning and avoid transaction rollback
+        }
+
+        try {
+            nhatKyHoatDongService.ghiLog(
+                nguoiDung.getMaNguoiDung(),
+                "Đặt chỗ sách",
+                "Độc giả " + nguoiDung.getHoTen() + " đã yêu cầu đặt chỗ cuốn sách \"" + sach.getTenSach() + "\"."
+            );
+        } catch (Exception e) {
+            // ignore
+        }
+
+        return toDatChoResponse(savedDatCho);
     }
 
     @Override
@@ -100,6 +126,25 @@ public class DatChoServiceImplement implements DatChoService {
         datCho.setTrangThai(TrangThaiDatCho.DA_HUY);
         datCho.setGhiChuHuy(ghiChuHuy);
         datChoRepository.save(datCho);
+
+        try {
+            thongBaoService.taoThongBao(
+                datCho.getNguoiDung().getMaNguoiDung(),
+                "Yêu cầu đặt chỗ bị từ chối/hủy",
+                "Đơn đặt chỗ cuốn sách \"" + datCho.getSach().getTenSach() + "\" của bạn đã bị hủy. Lý do: " + ghiChuHuy,
+                LoaiThongBao.CANH_BAO
+            );
+        } catch (Exception e) {
+            // catch warning and avoid transaction rollback
+        }
+
+        try {
+            nhatKyHoatDongService.ghiLog(
+                getMaNguoiDungHienTai(),
+                "Hủy đặt chỗ sách",
+                "Hủy đơn đặt chỗ cuốn sách \"" + datCho.getSach().getTenSach() + "\" của độc giả " + datCho.getNguoiDung().getHoTen() + ". Lý do: " + ghiChuHuy
+            );
+        } catch (Exception e) {}
     }
 
     @Override
@@ -136,7 +181,36 @@ public class DatChoServiceImplement implements DatChoService {
                 () -> new LibraryException(ErrorCode.DAT_CHO_KHONG_TON_TAI)
         );
 
+        try {
+            thongBaoService.taoThongBao(
+                datCho.getNguoiDung().getMaNguoiDung(),
+                "Yêu cầu đặt chỗ được duyệt",
+                "Đơn đặt chỗ cuốn sách \"" + datCho.getSach().getTenSach() + "\" của bạn đã được duyệt thành công! Bạn có thể nhận sách.",
+                LoaiThongBao.HE_THONG
+            );
+        } catch (Exception e) {
+            // catch warning and avoid transaction rollback
+        }
+
+        try {
+            nhatKyHoatDongService.ghiLog(
+                getMaNguoiDungHienTai(),
+                "Duyệt đặt chỗ",
+                "Phê duyệt đặt chỗ sách \"" + datCho.getSach().getTenSach() + "\" cho độc giả " + datCho.getNguoiDung().getHoTen() + "."
+            );
+        } catch (Exception e) {}
+
         return toDatChoResponse(updatedDatCho);
+    }
+
+    private UUID getMaNguoiDungHienTai() {
+        try {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof com.hcmunre.library.security.CustomUserDetails) {
+                return ((com.hcmunre.library.security.CustomUserDetails) auth.getPrincipal()).getNguoiDung().getMaNguoiDung();
+            }
+        } catch (Exception e) {}
+        return null;
     }
 
 

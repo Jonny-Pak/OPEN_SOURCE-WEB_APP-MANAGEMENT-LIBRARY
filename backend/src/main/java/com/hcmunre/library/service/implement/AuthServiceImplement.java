@@ -34,6 +34,7 @@ public class AuthServiceImplement implements AuthService {
         private final PasswordEncoder passwordEncoder;
         private final OtpService otpService;
         private final EmailOutboxService emailOutboxService;
+        private final com.hcmunre.library.service.NhatKyHoatDongService nhatKyHoatDongService;
 
         @Override
         public AuthResponse dangNhap(AuthRequest request) {
@@ -66,6 +67,10 @@ public class AuthServiceImplement implements AuthService {
 
                         log.info("Đăng nhập thành công cho email: {}", request.getEmail());
 
+                        try {
+                                nhatKyHoatDongService.ghiLog(nd.getMaNguoiDung(), "Đăng nhập thành công", "Người dùng " + nd.getHoTen() + " (" + nd.getEmail() + ") đăng nhập thành công vào hệ thống.");
+                        } catch (Exception ex) {}
+
                         return AuthResponse.builder()
                                         .maNguoiDung(nd.getMaNguoiDung())
                                         .accessToken(jwtToken)
@@ -79,6 +84,9 @@ public class AuthServiceImplement implements AuthService {
 
                 } catch (BadCredentialsException e) {
                         log.warn("Đăng nhập thất bại cho email: {}", request.getEmail());
+                        try {
+                                nhatKyHoatDongService.ghiLog(nguoiDung.getMaNguoiDung(), "Đăng nhập thất bại", "Thử đăng nhập bằng email: " + request.getEmail() + " nhưng thất bại do nhập sai mật khẩu.");
+                        } catch (Exception ex) {}
                         throw new LibraryException(ErrorCode.DANG_NHAP_THAT_BAI);
                 }
         }

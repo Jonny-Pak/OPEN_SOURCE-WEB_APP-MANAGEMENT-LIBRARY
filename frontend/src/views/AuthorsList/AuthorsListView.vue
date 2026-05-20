@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import Navbar from '../../components/Navbar/Navbar.vue'
 import Footer from '../../components/Footer/Footer.vue'
 import { tacGiaService } from '@/services/danhMucService'
+import { sachService } from '@/services/sachService'
 
 const searchQuery = ref('')
 const authors = ref<any[]>([])
@@ -14,20 +15,22 @@ const loadAuthors = async () => {
   isError.value = false
   try {
     const list = await tacGiaService.danhSach()
-    authors.value = list.map((a: any, index: number) => ({
-      id: a.maTacGia,
-      name: `${a.hoDem} ${a.ten}`.trim(),
-      bio: a.tieuSu || 'Dale Carnegie là một nhà văn và diễn giả người Mỹ nổi tiếng, chuyên về kỹ năng tự hoàn thiện.',
-      image: [
-        'https://images.unsplash.com/photo-1544717297-fa95b3ee21f3?auto=format&fit=crop&q=80&w=300',
-        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=300',
-        'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=300',
-        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300',
-        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=300',
-        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=300'
-      ][index % 6],
-      bookCount: 5 + (index * 3) % 20
-    }))
+    const fetchedBooks = await sachService.getAll({ size: 1000 })
+    const allBooks = fetchedBooks?.content || []
+
+    authors.value = list.map((a: any) => {
+      const authorBooks = allBooks.filter((b: any) => 
+        b.danhSachTacGia?.some((t: any) => t.maTacGia === a.maTacGia)
+      )
+      
+      return {
+        id: a.maTacGia,
+        name: `${a.hoDem} ${a.ten}`.trim(),
+        bio: a.tieuSu || 'Chưa có thông tin tiểu sử của tác giả này.',
+        image: a.hinhAnh || '',
+        bookCount: authorBooks.length
+      }
+    })
   } catch (err) {
     console.error(err)
     isError.value = true
@@ -94,7 +97,10 @@ const filteredAuthors = computed(() => {
             class="author-card"
           >
             <div class="author-image">
-              <img :src="author.image" :alt="author.name" />
+              <img v-if="author.image" :src="author.image" :alt="author.name" />
+              <div v-else class="author-avatar-placeholder-small">
+                <font-awesome-icon icon="fa-solid fa-user-nib" />
+              </div>
             </div>
             <div class="author-info">
               <h3>{{ author.name }}</h3>

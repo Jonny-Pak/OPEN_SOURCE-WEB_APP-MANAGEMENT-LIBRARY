@@ -8,6 +8,7 @@ import java.util.UUID;
 
 public interface ThongBaoService {
     void taoThongBao(UUID maNguoiDung, String tieuDe, String noiDung, LoaiThongBao loaiThongBao);
+    void taoThongBaoChoAdmin(String tieuDe, String noiDung, LoaiThongBao loaiThongBao);
     List<ThongBaoResponse> layDanhSachThongBao(UUID maNguoiDung);
     void danhDauDaDoc(UUID maThongBao);
     void danhDauTatCaDaDoc(UUID maNguoiDung);

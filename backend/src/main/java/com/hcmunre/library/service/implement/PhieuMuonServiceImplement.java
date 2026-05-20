@@ -20,6 +20,7 @@ import com.hcmunre.library.repository.DatChoRepository;
 import com.hcmunre.library.repository.LichSuGiaHanRepository;
 import com.hcmunre.library.repository.PhieuMuonRepository;
 import com.hcmunre.library.service.*;
+import com.hcmunre.library.enums.LoaiThongBao;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +51,8 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
     private final PhieuPhatService phieuPhatService;
     private final DatChoRepository datChoRepository;
     private final EmailOutboxService emailOutboxService;
+    private final ThongBaoService thongBaoService;
+    private final com.hcmunre.library.service.NhatKyHoatDongService nhatKyHoatDongService;
 
     @Override
     @Transactional
@@ -115,6 +118,14 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
         phieuMuon.setDanhSachChiTietPhieuMuon(danhSachChiTiet);
         PhieuMuon saved = phieuMuonRepository.save(phieuMuon);
 
+        try {
+            nhatKyHoatDongService.ghiLog(
+                getMaNguoiDungHienTai(),
+                "Mượn sách",
+                "Tạo phiếu mượn sách thành công cho độc giả " + nguoiDung.getHoTen() + " (" + nguoiDung.getEmail() + ") - Số lượng cuốn sách: " + request.getDanhSachMaVach().size()
+            );
+        } catch (Exception e) {}
+
         emailOutboxService.lenLichGuiEmail(
                 nguoiDung.getEmail(),
                 "[Thư Viện] Xác nhận mượn sách thành công",
@@ -152,6 +163,14 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
         }
         phieuMuon.setTrangThaiPhieu(TrangThaiPhieuMuon.DA_HUY);
         phieuMuonRepository.save(phieuMuon);
+
+        try {
+            nhatKyHoatDongService.ghiLog(
+                getMaNguoiDungHienTai(),
+                "Hủy phiếu mượn",
+                "Hủy phiếu mượn mã: " + maPhieuMuon + " của độc giả " + phieuMuon.getNguoiDung().getHoTen()
+            );
+        } catch (Exception e) {}
     }
 
     @Override
@@ -210,6 +229,14 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
             phieuMuon.setTrangThaiPhieu(TrangThaiPhieuMuon.DA_HOAN_TAT);
             phieuMuonRepository.save(phieuMuon);
         }
+
+        try {
+            nhatKyHoatDongService.ghiLog(
+                getMaNguoiDungHienTai(),
+                "Trả sách",
+                "Nhận trả cuốn sách \"" + chiTietPhieuMuon.getCuonSach().getSach().getTenSach() + "\" từ độc giả " + chiTietPhieuMuon.getPhieuMuon().getNguoiDung().getHoTen() + ". Tình trạng lúc trả: " + request.getTinhTrangLucTra().name()
+            );
+        } catch (Exception e) {}
 
         return toChiTietResponse(chiTietPhieuMuon);
     }
@@ -359,6 +386,25 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
                 .build();
 
         LichSuGiaHan saved = lichSuGiaHanRepository.save(lichSuGiaHan);
+
+        try {
+            thongBaoService.taoThongBaoChoAdmin(
+                "Yêu cầu gia hạn mượn sách",
+                "Độc giả " + nguoiThucHien.getHoTen() + " yêu cầu gia hạn cuốn sách \"" + chiTietPhieuMuon.getCuonSach().getSach().getTenSach() + "\".",
+                LoaiThongBao.HE_THONG
+            );
+        } catch (Exception e) {
+            // catch warning and avoid transaction rollback
+        }
+
+        try {
+            nhatKyHoatDongService.ghiLog(
+                nguoiThucHien.getMaNguoiDung(),
+                "Yêu cầu gia hạn",
+                "Độc giả " + nguoiThucHien.getHoTen() + " gửi yêu cầu gia hạn cuốn sách \"" + chiTietPhieuMuon.getCuonSach().getSach().getTenSach() + "\" thêm " + soNgayGiaHan + " ngày."
+            );
+        } catch (Exception e) {}
+
         return toGiaHanResponse(saved);
     }
 
@@ -393,6 +439,32 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
         }
 
         LichSuGiaHan saved = lichSuGiaHanRepository.save(ls);
+
+        try {
+            String title = dongY ? "Yêu cầu gia hạn được duyệt" : "Yêu cầu gia hạn bị từ chối";
+            String msg = dongY ? 
+                "Yêu cầu gia hạn cuốn sách \"" + ls.getChiTietPhieuMuon().getCuonSach().getSach().getTenSach() + "\" của bạn đã được phê duyệt." :
+                "Yêu cầu gia hạn cuốn sách \"" + ls.getChiTietPhieuMuon().getCuonSach().getSach().getTenSach() + "\" của bạn đã bị từ chối.";
+            thongBaoService.taoThongBao(
+                ls.getChiTietPhieuMuon().getPhieuMuon().getNguoiDung().getMaNguoiDung(),
+                title,
+                msg,
+                dongY ? LoaiThongBao.HE_THONG : LoaiThongBao.CANH_BAO
+            );
+        } catch (Exception e) {
+            // catch warning and avoid transaction rollback
+        }
+
+        try {
+            String act = dongY ? "Duyệt gia hạn" : "Từ chối gia hạn";
+            String detail = (dongY ? "Phê duyệt đồng ý" : "Từ chối") + " gia hạn cuốn sách \"" + ls.getChiTietPhieuMuon().getCuonSach().getSach().getTenSach() + "\" cho độc giả " + ls.getChiTietPhieuMuon().getPhieuMuon().getNguoiDung().getHoTen() + ".";
+            nhatKyHoatDongService.ghiLog(
+                maAdmin,
+                act,
+                detail
+            );
+        } catch (Exception e) {}
+
         return toGiaHanResponse(saved);
     }
 
@@ -581,6 +653,16 @@ public class PhieuMuonServiceImplement implements PhieuMuonService {
             throw new LibraryException(ErrorCode.CUON_SACH_KHONG_SAN_SANG);
         }
         return cuonSach;
+    }
+
+    private UUID getMaNguoiDungHienTai() {
+        try {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof com.hcmunre.library.security.CustomUserDetails) {
+                return ((com.hcmunre.library.security.CustomUserDetails) auth.getPrincipal()).getNguoiDung().getMaNguoiDung();
+            }
+        } catch (Exception e) {}
+        return null;
     }
 
 }

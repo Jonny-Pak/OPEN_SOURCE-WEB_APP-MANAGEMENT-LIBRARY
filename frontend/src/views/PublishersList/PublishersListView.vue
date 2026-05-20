@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import Navbar from '../../components/Navbar/Navbar.vue'
 import Footer from '../../components/Footer/Footer.vue'
 import { nhaXuatBanService } from '@/services/danhMucService'
+import { sachService } from '@/services/sachService'
 
 const searchQuery = ref('')
 const publishers = ref<any[]>([])
@@ -14,20 +15,18 @@ const loadPublishers = async () => {
   isError.value = false
   try {
     const list = await nhaXuatBanService.danhSach()
-    publishers.value = list.map((p: any, index: number) => ({
-      id: p.maNhaXuatBan,
-      name: p.tenNhaXuatBan,
-      description: p.diaChi ? `Địa chỉ: ${p.diaChi}. Email: ${p.email || 'đang cập nhật'}.` : 'Nhà xuất bản uy tín cung cấp nguồn tri thức chất lượng cao.',
-      logo: [
-        'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=200',
-        'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=200',
-        'https://images.unsplash.com/photo-1491841573634-28140fc7ced7?auto=format&fit=crop&q=80&w=200',
-        'https://images.unsplash.com/photo-1543003919-a995d01a5d92?auto=format&fit=crop&q=80&w=200',
-        'https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=200',
-        'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&q=80&w=200'
-      ][index % 6],
-      bookCount: 150 + (index * 25) % 1000
-    }))
+    const fetchedBooks = await sachService.getAll({ size: 1000 })
+    const allBooks = fetchedBooks?.content || []
+
+    publishers.value = list.map((p: any) => {
+      const pubBooks = allBooks.filter((b: any) => b.nhaXuatBan?.maNhaXuatBan === p.maNhaXuatBan)
+      return {
+        id: p.maNhaXuatBan,
+        name: p.tenNhaXuatBan,
+        description: p.diaChi ? `Địa chỉ: ${p.diaChi}. Email: ${p.email || 'đang cập nhật'}.` : 'Nhà xuất bản uy tín cung cấp nguồn tri thức chất lượng cao.',
+        bookCount: pubBooks.length
+      }
+    })
   } catch (err) {
     console.error(err)
     isError.value = true
@@ -93,9 +92,6 @@ const filteredPublishers = computed(() => {
             :to="`/publisher/${pub.id}`"
             class="publisher-card"
           >
-            <div class="pub-logo">
-              <img :src="pub.logo" :alt="pub.name" />
-            </div>
             <div class="pub-info">
               <h3>{{ pub.name }}</h3>
               <p>{{ pub.description }}</p>

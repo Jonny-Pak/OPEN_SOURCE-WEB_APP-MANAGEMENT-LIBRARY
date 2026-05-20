@@ -29,7 +29,6 @@ const loadData = async () => {
     publisher.value = {
       id: found.maNhaXuatBan,
       name: found.tenNhaXuatBan,
-      logo: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=600',
       description: `Nhà xuất bản ${found.tenNhaXuatBan} là một đối tác xuất bản chiến lược quan trọng của thư viện, đem lại nhiều tác phẩm giá trị cao cho độc giả.`,
       address: found.diaChi || '161B Lý Chính Thắng, Quận 3, TP. Hồ Chí Minh',
       website: 'www.publibmanage.vn',
@@ -84,23 +83,7 @@ onMounted(loadData)
 
         <template v-else>
           <section class="pub-profile">
-            <div class="pub-visual">
-              <div class="logo-box">
-                <img :src="publisher.logo" :alt="publisher.name" />
-              </div>
-              <div class="pub-quick-info">
-                <div class="info-row">
-                  <font-awesome-icon icon="fa-solid fa-calendar-days" />
-                  <span>Thành lập: {{ publisher.founded }}</span>
-                </div>
-                <div class="info-row">
-                  <font-awesome-icon icon="fa-solid fa-globe" />
-                  <a :href="'https://' + publisher.website" target="_blank">{{ publisher.website }}</a>
-                </div>
-              </div>
-            </div>
-
-            <div class="pub-content">
+            <div class="pub-content" style="width: 100%;">
               <nav class="breadcrumb">
                 <RouterLink to="/publishers">Nhà xuất bản</RouterLink>
                 <span class="separator">/</span>
@@ -108,6 +91,18 @@ onMounted(loadData)
               </nav>
               <h1>{{ publisher.name }}</h1>
               
+              <!-- Quick Info Row -->
+              <div class="pub-quick-info-row" style="display: flex; gap: 2rem; margin-bottom: 2rem; background: #f8fafc; padding: 1rem 1.5rem; border-radius: 12px; width: fit-content; flex-wrap: wrap;">
+                <div class="info-row" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--secondary);">
+                  <font-awesome-icon icon="fa-solid fa-calendar-days" style="color: var(--accent);" />
+                  <span>Thành lập: <b>{{ publisher.founded }}</b></span>
+                </div>
+                <div class="info-row" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--secondary);">
+                  <font-awesome-icon icon="fa-solid fa-globe" style="color: var(--accent);" />
+                  <a :href="'https://' + publisher.website" target="_blank" style="color: var(--accent); font-weight: 600; text-decoration: none;">{{ publisher.website }}</a>
+                </div>
+              </div>
+
               <div class="pub-description">
                 <h3>Về chúng tôi</h3>
                 <p>{{ publisher.description }}</p>
@@ -115,14 +110,14 @@ onMounted(loadData)
 
               <div class="pub-contact-grid">
                 <div class="contact-item">
-                  <font-awesome-icon icon="fa-solid fa-location-dot" />
+                  <font-awesome-icon icon="fa-solid fa-location-dot" style="color: var(--accent); font-size: 1.25rem; margin-top: 0.25rem;" />
                   <div>
                     <label>Địa chỉ</label>
                     <p>{{ publisher.address }}</p>
                   </div>
                 </div>
                 <div class="contact-item">
-                  <font-awesome-icon icon="fa-solid fa-envelope" />
+                  <font-awesome-icon icon="fa-solid fa-envelope" style="color: var(--accent); font-size: 1.25rem; margin-top: 0.25rem;" />
                   <div>
                     <label>Email</label>
                     <p>{{ publisher.email }}</p>

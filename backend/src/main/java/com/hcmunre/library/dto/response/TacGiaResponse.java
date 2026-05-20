@@ -10,4 +10,5 @@ public class TacGiaResponse {
     private String hoDem;
     private String ten;
     private String tieuSu;
+    private String hinhAnh;
 }
