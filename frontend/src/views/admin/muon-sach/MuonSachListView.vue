@@ -1,6 +1,10 @@
 <template>
   <div class="muon-sach-list">
     <div class="thanh-cong-cu">
+      <div class="vung-tim-kiem">
+        <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="icon-tim-kiem" />
+        <input v-model="tuKhoaTim" class="input-tk" placeholder="Tìm theo tên độc giả..." />
+      </div>
       <select v-model="filterTrangThai" class="select-filter">
         <option value="">Tất cả trạng thái</option>
         <option value="CHUA_HOAN_TAT">Đang mượn</option>
@@ -22,7 +26,7 @@
             <th>Số cuốn</th><th>Trạng thái</th><th>Hành động</th>
           </tr></thead>
           <tbody>
-            <tr v-for="item in danhSach" :key="item.maPhieuMuon">
+            <tr v-for="item in danhSachLoc" :key="item.maPhieuMuon">
               <td><code class="ma-phieu">#{{ String(item.maPhieuMuon).substring(0,8) }}...</code></td>
               <td>
                 <div class="ten-nguoi">{{ item.tenDocGia || '' }}</div>
@@ -151,6 +155,16 @@ const dangTai = ref(false)
 const danhSach = ref<any[]>([])
 const filterTrangThai = ref('')
 const phieuChiTiet = ref<any | null>(null)
+const tuKhoaTim = ref('')
+
+import { computed } from 'vue'
+const danhSachLoc = computed(() => {
+  const kw = tuKhoaTim.value.trim().toLowerCase()
+  if (!kw) return danhSach.value
+  return danhSach.value.filter((item: any) =>
+    (item.tenDocGia || '').toLowerCase().includes(kw)
+  )
+})
 
 const TRANG_THAI_MAP: Record<string, { nhan: string; mau: 'xanh-duong' | 'xanh' | 'do' | 'xam' | 'vang' }> = {
   CHUA_HOAN_TAT: { nhan: 'Đang mượn', mau: 'xanh-duong' },
@@ -209,6 +223,10 @@ onMounted(taiDanhSach)
 <style scoped>
 .muon-sach-list { animation: fadeInUp 0.4s ease; }
 .thanh-cong-cu { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.vung-tim-kiem { position: relative; display: flex; align-items: center; flex: 1; min-width: 200px; }
+.icon-tim-kiem { position: absolute; left: 1rem; color: var(--mau-chu-mo); pointer-events: none; }
+.input-tk { width: 100%; padding: 0.65rem 1rem 0.65rem 2.5rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--mau-chu); font-family: inherit; font-size: 0.875rem; outline: none; box-sizing: border-box; }
+.input-tk:focus { border-color: var(--mau-chinh); box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15); }
 .select-filter { padding: 0.65rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--mau-chu); font-family: inherit; cursor: pointer; }
 .select-filter option { background: #1a1a2e; color: #ffffff; }
 .nut-them { padding: 0.65rem 1.25rem; background: var(--color-primary); border: none; border-radius: 8px; color: white; cursor: pointer; font-family: inherit; font-size: 0.875rem; font-weight: 600; white-space: nowrap; margin-left: auto; }

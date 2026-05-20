@@ -212,7 +212,7 @@ const hasActiveChild = (item: MenuItem): boolean => {
 <style scoped>
 .sidebar {
   width: 240px;
-  min-height: 100vh;
+  height: 100vh;
   background: #ffffff; /* Nền trắng */
   border-right: 1px solid #e5e7eb;
   display: flex;

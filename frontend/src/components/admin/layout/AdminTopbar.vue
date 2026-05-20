@@ -15,24 +15,43 @@ defineEmits<{ 'toggle-sidebar': [] }>()
 const authStore = useAuthStore()
 const route = useRoute()
 
-/** Bản đồ tên route → tiêu đề trang */
-const BAN_DO_TIEU_DE: Record<string, string> = {
-  dashboard: 'Dashboard',
-  'danh-muc': 'Quản lý Danh mục',
-  'sach-list': 'Quản lý Đầu sách',
-  'sach-them': 'Thêm Đầu sách',
-  'sach-sua': 'Chỉnh sửa Đầu sách',
-  'cuon-sach': 'Quản lý Cuốn sách',
-  'doc-gia': 'Quản lý Độc giả',
-  'dat-cho': 'Quản lý Đặt chỗ',
-  'muon-sach': 'Quản lý Mượn sách',
-  'tao-phieu-muon': 'Tạo Phiếu mượn',
-  'tra-sach': 'Trả sách & Gia hạn',
-  phat: 'Quản lý Phạt',
-  settings: 'Cài đặt hệ thống',
-}
+/** Bản đồ đường dẫn → tiêu đề trang (dùng path thay vì name để hỗ trợ sub-route danh mục) */
+const BAN_DO_TIEU_DE_PATH: [string, string][] = [
+  // Danh mục con — check trước vì cần match cụ thể hơn /admin/danh-muc
+  ['/admin/danh-muc/tac-gia', 'Quản lý Tác giả'],
+  ['/admin/danh-muc/nha-xuat-ban', 'Quản lý Nhà xuất bản'],
+  ['/admin/danh-muc/the-loai', 'Quản lý Thể loại'],
+  ['/admin/danh-muc/vi-tri', 'Quản lý Vị trí kệ sách'],
+  ['/admin/danh-muc', 'Quản lý Danh mục'],
 
-const tieuDeTrang = computed(() => BAN_DO_TIEU_DE[route.name as string] ?? 'Admin')
+  // Sách
+  ['/admin/sach/them-moi', 'Thêm Đầu sách'],
+  ['/admin/sach/', 'Chỉnh sửa Đầu sách'],  // /admin/sach/:id/chinh-sua
+  ['/admin/sach', 'Quản lý Đầu sách'],
+  ['/admin/cuon-sach', 'Quản lý Cuốn sách'],
+
+  // Mượn / Trả
+  ['/admin/muon-sach/tao-moi', 'Tạo Phiếu mượn'],
+  ['/admin/muon-sach', 'Quản lý Mượn sách'],
+  ['/admin/tra-sach', 'Trả sách'],
+  ['/admin/duyet-gia-han', 'Duyệt Gia hạn'],
+
+  // Khác
+  ['/admin/dat-cho', 'Quản lý Đặt chỗ'],
+  ['/admin/phat', 'Quản lý Phiếu phạt'],
+  ['/admin/doc-gia', 'Quản lý Độc giả'],
+  ['/admin/settings', 'Cài đặt hệ thống'],
+  ['/admin/nhat-ky', 'Nhật ký hoạt động'],
+  ['/admin/dashboard', 'Dashboard'],
+]
+
+const tieuDeTrang = computed(() => {
+  const path = route.path
+  for (const [prefix, title] of BAN_DO_TIEU_DE_PATH) {
+    if (path === prefix || path.startsWith(prefix + '/')) return title
+  }
+  return 'Trang quản trị'
+})
 
 /** Chữ cái đầu tên người dùng cho avatar */
 const kyTuDau = computed(() => {

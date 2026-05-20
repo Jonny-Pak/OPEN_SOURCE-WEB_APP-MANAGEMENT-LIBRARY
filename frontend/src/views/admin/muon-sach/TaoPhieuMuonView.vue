@@ -180,7 +180,7 @@ async function hoanTat() {
 </template>
 
 <style scoped>
-.tao-phieu { animation:fadeInUp 0.4s ease; max-width:700px; }
+.tao-phieu { animation:fadeInUp 0.4s ease; max-width:700px; margin: 0 auto; }
 .dau-trang { display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem; }
 .dau-trang h2 { font-size:1.2rem; font-weight:700; }
 .nut-quay-lai { background:none; border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu-mo); cursor:pointer; padding:0.5rem 1rem; font-family:inherit; font-size:0.875rem; transition:all 0.2s; }

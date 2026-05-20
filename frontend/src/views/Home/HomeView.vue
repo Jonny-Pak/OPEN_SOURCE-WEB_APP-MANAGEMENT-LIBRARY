@@ -77,6 +77,9 @@ const loadData = async () => {
         }
       })
     )
+
+    // Ẩn thể loại không có sách
+    categories.value = categories.value.filter((cat: any) => cat.books.length > 0)
   } catch (error: any) {
     console.error('Lỗi khi tải dữ liệu trang chủ:', error)
     isError.value = true

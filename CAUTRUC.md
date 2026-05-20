@@ -34,8 +34,9 @@ OPEN_SOURCE-WEB_APP-MANAGEMENT-LIBRARY/
 
 ## 2. Cấu Trúc Thư Mục Backend (Backend Directory Structure)
 
-`backend/`
-├──  `.mvn/`                  # Cấu hình của Maven Wrapper
+```text
+backend/
+├──  .mvn/                  # Cấu hình của Maven Wrapper
 ├──  logs/                    # Thư mục chứa log riêng của Backend
 ├──  src/                     # Thư mục chứa toàn bộ mã nguồn Spring Boot
 │   ├──  main/
@@ -58,6 +59,7 @@ OPEN_SOURCE-WEB_APP-MANAGEMENT-LIBRARY/
 │   └──  test/                # Chứa các đoạn mã kiểm thử đơn vị và tích hợp (Unit & Integration tests)
 ├──  mvnw / mvnw.cmd          # Maven Wrapper dùng để chạy Maven không cần cài đặt cục bộ
 └──  pom.xml                  # File cấu hình thư viện và plugin Maven của dự án
+```
 
 
 
@@ -81,51 +83,53 @@ OPEN_SOURCE-WEB_APP-MANAGEMENT-LIBRARY/
 
 Mã nguồn Frontend được xây dựng dựa trên **Vue.js 3** (Composition API), viết bằng **TypeScript** và được build bằng công cụ siêu tốc **Vite**.
 
-📂 `frontend/`
-├── 📂 public/                  # Chứa các tài nguyên tĩnh phân phối trực tiếp (Favicon, Logo,...)
-├── 📂 src/                     # Thư mục mã nguồn chính của ứng dụng Vue.js
-│   ├── 📄 App.vue              # Component gốc của toàn bộ ứng dụng Vue
-│   ├── 📄 main.ts              # File cấu hình khởi tạo Vue App (gắn kết Router, Pinia, CSS)
-│   ├── 📂 assets/              # Thư mục chứa các tài nguyên tĩnh như CSS/SCSS toàn cục, Hình ảnh
-│   ├── 📂 components/          # Các UI Components nhỏ có tính tái sử dụng cao trên nhiều trang
-│   │   ├── 📂 BookCard/        # Thẻ hiển thị thông tin thu nhỏ của sách
-│   │   ├── 📂 Footer/          # Phần chân trang hệ thống
-│   │   ├── 📂 Hero/            # Banner lớn ở trang chủ giới thiệu thư viện
-│   │   ├── 📂 Navbar/          # Thanh điều hướng (Menu chính của trang)
-│   │   └── 📂 admin/           # Các Component phụ trợ cho bảng điều khiển admin (Ví dụ: Sidebar admin)
-│   ├── 📂 composables/         # Chứa các Vue Composition Functions (Hooks) có thể tái sử dụng logic
-│   ├── 📂 router/              # Quản lý định tuyến trang (Routes) và kiểm soát quyền truy cập trang
-│   ├── 📂 services/            # Định nghĩa kết nối API tới Backend (sử dụng Axios)
-│   ├── 📂 stores/              # Quản lý trạng thái toàn cục bằng Pinia (như giỏ sách mượn, thông tin User đã login)
-│   ├── 📂 types/               # Khai báo các kiểu dữ liệu và Interface TypeScript (auth, book, api,...)
-│   └── 📂 views/               # Chứa các Component trang lớn đại diện cho mỗi đường dẫn (View)
-│       ├── 📂 Home/            # Giao diện Trang chủ hệ thống
-│       ├── 📂 BookList/        # Trang hiển thị danh sách sách & Tìm kiếm, Lọc sách của độc giả
-│       ├── 📂 BookDetail/      # Trang chi tiết một cuốn sách cụ thể
-│       ├── 📂 Cart/            # Trang giỏ sách độc giả đã chọn chờ gửi yêu cầu mượn
-│       ├── 📂 Profile/         # Trang cá nhân của Độc giả, theo dõi lịch sử mượn trả
-│       ├── 📂 Login/           # Trang đăng nhập tài khoản
-│       ├── 📂 auth/            # Các trang xác thực khác (Đăng ký, Quên mật khẩu)
-│       ├── 📄 KhongCoQuyenView.vue # Trang báo lỗi không đủ quyền truy cập (403 Forbidden)
-│       ├── 📄 KhongTimThayView.vue # Trang báo lỗi đường dẫn không tồn tại (404 Not Found)
-│       ├── 📂 About/ ...       # Các trang thông tin tĩnh khác (Liên hệ, Nội quy, Hướng dẫn)
-│       └── 📂 admin/           # Khu vực quản lý dành cho Quản trị viên (Admin Panels)
-│           ├── 📄 DashboardView.vue # Trang tổng quan số liệu thống kê (Số lượt mượn, sách quá hạn,...)
-│           ├── 📄 SettingsView.vue  # Các cài đặt nâng cao hệ thống
-│           ├── 📂 sach/         # Quản lý thông tin sách (Thêm, Sửa, Xóa danh mục sách)
-│           ├── 📂 cuon-sach/    # Quản lý mã vạch, mã định danh cá biệt từng cuốn sách
-│           ├── 📂 danh-muc/     # Quản lý thể loại sách (Khoa học, Văn học,...)
-│           ├── 📂 doc-gia/      # Quản lý tài khoản và thông tin độc giả (Sinh viên, Giảng viên)
-│           ├── 📂 muon-sach/    # Quản lý các phiếu mượn đang được mượn
-│           ├── 📂 tra-sach/     # Xử lý quy trình nhận lại sách, cập nhật tình trạng sách trả
-│           ├── 📂 dat-cho/      # Xử lý các yêu cầu giữ chỗ trước sách của độc giả
-│           ├── 📂 duyet-gia-han/ # Duyệt các đơn xin gia hạn thời gian mượn của độc giả
-│           ├── 📂 phat/         # Quản lý các hóa đơn phạt trễ hạn hoặc làm hư hỏng sách
-│           └── 📂 nhat-ky/      # Nhật ký lưu vết hành động tác động hệ thống
-├── 📄 index.html               # Tệp mẫu HTML chính của ứng dụng SPA
-├── 📄 package.json             # Liệt kê các thư viện dependencies và kịch bản chạy dự án (npm scripts)
-├── 📄 vite.config.ts           # File cấu hình công cụ build Vite (CORS proxy, alias, plugins)
-└── 📄 tsconfig.json            # Cấu hình môi trường biên dịch TypeScript
+```text
+frontend/
+├── public/                  # Chứa các tài nguyên tĩnh phân phối trực tiếp (Favicon, Logo,...)
+├── src/                     # Thư mục mã nguồn chính của ứng dụng Vue.js
+│   ├── App.vue              # Component gốc của toàn bộ ứng dụng Vue
+│   ├── main.ts              # File cấu hình khởi tạo Vue App (gắn kết Router, Pinia, CSS)
+│   ├── assets/              # Thư mục chứa các tài nguyên tĩnh như CSS/SCSS toàn cục, Hình ảnh
+│   ├── components/          # Các UI Components nhỏ có tính tái sử dụng cao trên nhiều trang
+│   │   ├── BookCard/        # Thẻ hiển thị thông tin thu nhỏ của sách
+│   │   ├── Footer/          # Phần chân trang hệ thống
+│   │   ├── Hero/            # Banner lớn ở trang chủ giới thiệu thư viện
+│   │   ├── Navbar/          # Thanh điều hướng (Menu chính của trang)
+│   │   └── admin/           # Các Component phụ trợ cho bảng điều khiển admin (Ví dụ: Sidebar admin)
+│   ├── composables/         # Chứa các Vue Composition Functions (Hooks) có thể tái sử dụng logic
+│   ├── router/              # Quản lý định tuyến trang (Routes) và kiểm soát quyền truy cập trang
+│   ├── services/            # Định nghĩa kết nối API tới Backend (sử dụng Axios)
+│   ├── stores/              # Quản lý trạng thái toàn cục bằng Pinia (như giỏ sách mượn, thông tin User đã login)
+│   ├── types/               # Khai báo các kiểu dữ liệu và Interface TypeScript (auth, book, api,...)
+│   └── views/               # Chứa các Component trang lớn đại diện cho mỗi đường dẫn (View)
+│       ├── Home/            # Giao diện Trang chủ hệ thống
+│       ├── BookList/        # Trang hiển thị danh sách sách & Tìm kiếm, Lọc sách của độc giả
+│       ├── BookDetail/      # Trang chi tiết một cuốn sách cụ thể
+│       ├── Cart/            # Trang giỏ sách độc giả đã chọn chờ gửi yêu cầu mượn
+│       ├── Profile/         # Trang cá nhân của Độc giả, theo dõi lịch sử mượn trả
+│       ├── Login/           # Trang đăng nhập tài khoản
+│       ├── auth/            # Các trang xác thực khác (Đăng ký, Quên mật khẩu)
+│       ├── KhongCoQuyenView.vue # Trang báo lỗi không đủ quyền truy cập (403 Forbidden)
+│       ├── KhongTimThayView.vue # Trang báo lỗi đường dẫn không tồn tại (404 Not Found)
+│       ├── About/ ...       # Các trang thông tin tĩnh khác (Liên hệ, Nội quy, Hướng dẫn)
+│       └── admin/           # Khu vực quản lý dành cho Quản trị viên (Admin Panels)
+│           ├── DashboardView.vue # Trang tổng quan số liệu thống kê (Số lượt mượn, sách quá hạn,...)
+│           ├── SettingsView.vue  # Các cài đặt nâng cao hệ thống
+│           ├── sach/         # Quản lý thông tin sách (Thêm, Sửa, Xóa danh mục sách)
+│           ├── cuon-sach/    # Quản lý mã vạch, mã định danh cá biệt từng cuốn sách
+│           ├── danh-muc/     # Quản lý thể loại sách (Khoa học, Văn học,...)
+│           ├── doc-gia/      # Quản lý tài khoản và thông tin độc giả (Sinh viên, Giảng viên)
+│           ├── muon-sach/    # Quản lý các phiếu mượn đang được mượn
+│           ├── tra-sach/     # Xử lý quy trình nhận lại sách, cập nhật tình trạng sách trả
+│           ├── dat-cho/      # Xử lý các yêu cầu giữ chỗ trước sách của độc giả
+│           ├── duyet-gia-han/ # Duyệt các đơn xin gia hạn thời gian mượn của độc giả
+│           ├── phat/         # Quản lý các hóa đơn phạt trễ hạn hoặc làm hư hỏng sách
+│           └── nhat-ky/      # Nhật ký lưu vết hành động tác động hệ thống
+├── index.html               # Tệp mẫu HTML chính của ứng dụng SPA
+├── package.json             # Liệt kê các thư viện dependencies và kịch bản chạy dự án (npm scripts)
+├── vite.config.ts           # File cấu hình công cụ build Vite (CORS proxy, alias, plugins)
+└── tsconfig.json            # Cấu hình môi trường biên dịch TypeScript
+```
 
 ### Các tính năng cốt lõi của Frontend:
 1. **Module Admin (`views/admin/`)**: Tích hợp đầy đủ các nghiệp vụ thủ thư và quản trị viên, giao diện quản lý dạng bảng (Table), các biểu mẫu (Form) nhập liệu chi tiết hỗ trợ đắc lực công tác quản lý thư viện.

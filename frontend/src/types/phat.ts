@@ -16,6 +16,9 @@ export interface PhieuPhat {
   ngayTao: string
   trangThai: TrangThaiPhieuPhat
   phuongThucThanhToan?: PhuongThucThanhToan
+  // Thông tin cuốn sách bị phạt
+  tenSach?: string
+  maVachCuonSach?: string
 }
 
 export interface TaoPhieuPhatRequest {

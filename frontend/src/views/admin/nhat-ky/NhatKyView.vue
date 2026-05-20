@@ -80,45 +80,33 @@ onMounted(() => {
 
 <template>
   <div class="nhat-ky-page">
-    <div class="dau-trang">
-      <div>
-        <h2 class="tieu-de"><font-awesome-icon icon="fa-solid fa-history" class="mr-2 text-cyan" /> Nhật ký hoạt động</h2>
-        <p class="mo-ta">Ghi lại toàn bộ lịch sử thao tác của Độc giả, Thủ thư và Quản trị viên trong hệ thống.</p>
+    <div class="thanh-cong-cu">
+      <div class="vung-tim-kiem">
+        <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="icon-tim-kiem" />
+        <input 
+          v-model="keyword"
+          type="text" 
+          class="input-tk"
+          placeholder="Tìm tên người thực hiện, hành động, chi tiết..."
+          @keyup.enter="handleSearch"
+        />
       </div>
+      <select v-model="vaiTro" @change="handleRoleChange" class="select-filter">
+        <option value="TAT_CA">Tất cả vai trò</option>
+        <option value="QUAN_TRI_VIEN">Quản trị viên</option>
+        <option value="THU_THU">Thủ thư</option>
+        <option value="DOC_GIA">Độc giả</option>
+        <option value="KHACH">Khách vãng lai</option>
+      </select>
       <button class="nut-lam-moi" @click="layDanhSachLog" :disabled="dangTai">
         <font-awesome-icon icon="fa-solid fa-rotate" :style="{ animation: dangTai ? 'spin 1s linear infinite' : 'none' }" />
         Làm mới
       </button>
     </div>
 
-    <!-- Thanh lọc & tìm kiếm -->
-    <div class="thanh-loc">
-      <div class="o-tim-kiem">
-        <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="icon-search" />
-        <input 
-          v-model="keyword"
-          type="text" 
-          placeholder="Tìm tên người thực hiện, hành động, chi tiết..."
-          @keyup.enter="handleSearch"
-        />
-        <button class="btn btn-primary btn-search" @click="handleSearch">Tìm kiếm</button>
-      </div>
-
-      <div class="o-loc">
-        <span class="nhan-loc">Vai trò:</span>
-        <select v-model="vaiTro" @change="handleRoleChange" class="select-glass">
-          <option value="TAT_CA">Tất cả vai trò</option>
-          <option value="QUAN_TRI_VIEN">Quản trị viên</option>
-          <option value="THU_THU">Thủ thư</option>
-          <option value="DOC_GIA">Độc giả</option>
-          <option value="KHACH">Khách vãng lai</option>
-        </select>
-      </div>
-    </div>
-
     <!-- Bảng hiển thị dữ liệu -->
-    <div class="bang-container glass-card">
-      <table class="bang-log">
+    <div class="bang-container">
+      <table class="bang">
         <thead>
           <tr>
             <th style="width: 180px;">Thời gian</th>
@@ -187,170 +175,27 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.nhat-ky-page {
-  animation: fadeInUp 0.4s ease;
-}
+.nhat-ky-page { animation: fadeInUp 0.4s ease; }
 
-.dau-trang {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
+/* Toolbar */
+.thanh-cong-cu { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.vung-tim-kiem { position: relative; display: flex; align-items: center; flex: 1; min-width: 200px; }
+.icon-tim-kiem { position: absolute; left: 1rem; color: var(--mau-chu-mo); pointer-events: none; }
+.input-tk { width: 100%; padding: 0.65rem 1rem 0.65rem 2.5rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--mau-chu); font-family: inherit; font-size: 0.875rem; outline: none; box-sizing: border-box; }
+.input-tk:focus { border-color: var(--mau-chinh); box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15); }
+.select-filter { padding: 0.65rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--mau-chu); font-family: inherit; cursor: pointer; font-size: 0.875rem; }
+.select-filter option { background: #1a1a2e; color: #ffffff; }
 
-.tieu-de {
-  font-size: 1.3rem;
-  font-weight: 700;
-  margin-bottom: 0.25rem;
-}
+.nut-lam-moi { display: flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--mau-chu-mo); cursor: pointer; font-family: inherit; font-size: 0.875rem; transition: all 0.2s; white-space: nowrap; }
+.nut-lam-moi:hover:not(:disabled) { background: rgba(6, 182, 212, 0.1); border-color: var(--mau-chinh); color: var(--mau-chinh); }
 
-.mo-ta {
-  color: var(--mau-chu-mo);
-  font-size: 0.875rem;
-}
-
-.nut-lam-moi {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1.2rem;
-  background: var(--glass-nen);
-  border: 1px solid var(--glass-vien);
-  border-radius: 8px;
-  color: var(--mau-chu);
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 0.875rem;
-  transition: all 0.2s;
-}
-
-.nut-lam-moi:hover:not(:disabled) {
-  background: rgba(6, 182, 212, 0.1);
-  border-color: var(--mau-chinh);
-  color: var(--mau-chinh);
-}
-
-.thanh-loc {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.o-tim-kiem {
-  position: relative;
-  display: flex;
-  flex: 1;
-  min-width: 300px;
-  gap: 0.5rem;
-}
-
-.icon-search {
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--mau-chu-mo);
-  pointer-events: none;
-}
-
-.o-tim-kiem input {
-  width: 100%;
-  padding: 0.6rem 1rem 0.6rem 2.5rem;
-  background: var(--glass-nen);
-  border: 1px solid var(--glass-vien);
-  border-radius: 8px;
-  color: var(--mau-chu);
-  font-family: inherit;
-  font-size: 0.875rem;
-  transition: all 0.2s;
-}
-
-.o-tim-kiem input:focus {
-  outline: none;
-  border-color: var(--mau-chinh);
-  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
-}
-
-.btn-search {
-  padding: 0 1.2rem;
-  font-size: 0.875rem;
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-
-.o-loc {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.nhan-loc {
-  font-size: 0.875rem;
-  color: var(--mau-chu-mo);
-}
-
-.select-glass {
-  padding: 0.6rem 2rem 0.6rem 1rem;
-  background: var(--glass-nen);
-  border: 1px solid var(--glass-vien);
-  border-radius: 8px;
-  color: var(--mau-chu);
-  font-family: inherit;
-  font-size: 0.875rem;
-  outline: none;
-  cursor: pointer;
-  transition: all 0.2s;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  background-size: 1rem;
-}
-
-.select-glass:focus {
-  border-color: var(--mau-chinh);
-}
-
-.bang-container {
-  overflow-x: auto;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-}
-
-.bang-log {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-  font-size: 0.875rem;
-}
-
-.bang-log th {
-  background: rgba(15, 23, 42, 0.04);
-  padding: 0.85rem 1rem;
-  font-weight: 600;
-  color: var(--mau-chu);
-  border-bottom: 2px solid var(--glass-vien);
-}
-
-.bang-log td {
-  padding: 0.85rem 1rem;
-  border-bottom: 1px solid var(--glass-vien);
-  color: var(--mau-chu);
-  vertical-align: middle;
-}
-
-.hang-log {
-  transition: background 0.15s ease;
-}
-
-.hang-log:hover {
-  background: rgba(6, 182, 212, 0.03);
-}
+/* Table */
+.bang-container { background: var(--glass-nen); border: 1px solid var(--glass-vien); border-radius: 12px; overflow-x: auto; padding: 1rem; }
+.bang { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem; }
+.bang th { padding: 0.75rem 1rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--mau-chu-mo); border-bottom: 1px solid rgba(255,255,255,0.08); font-weight: 600; }
+.bang td { padding: 0.85rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--mau-chu); vertical-align: middle; }
+.bang tr:last-child td { border-bottom: none; }
+.bang tr:hover td { background: rgba(255,255,255,0.02); }
 
 .cell-thoi-gian {
   font-family: monospace;

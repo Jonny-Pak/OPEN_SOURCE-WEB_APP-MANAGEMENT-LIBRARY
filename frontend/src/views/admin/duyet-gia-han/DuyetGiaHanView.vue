@@ -22,6 +22,7 @@ const modalDuyetGH = ref<LichSuGiaHan | null>(null)
 const hanTraMoi = ref('')
 const modalTuChoiGH = ref<LichSuGiaHan | null>(null)
 const lyDoTuChoi = ref('')
+const tuKhoaTim = ref('')
 
 const GH_MAP: Record<TrangThaiGiaHan, { nhan: string; mau: 'vang' | 'xanh' | 'do' }> = {
   CHO_DUYET: { nhan: 'Chờ duyệt', mau: 'vang' },
@@ -36,8 +37,17 @@ function laQuaHan(hanTra: string): boolean {
 }
 
 const danhSachGHLoc = computed(() => {
-  if (!filterGH.value) return danhSachGH.value
-  return danhSachGH.value.filter((item) => item.trangThai === filterGH.value)
+  let list = danhSachGH.value
+  if (filterGH.value) list = list.filter((item) => item.trangThai === filterGH.value)
+  const kw = tuKhoaTim.value.trim().toLowerCase()
+  if (kw) {
+    list = list.filter((item: any) => {
+      const ten = `${item.nguoiDung?.hoDem || ''} ${item.nguoiDung?.ten || ''}`.toLowerCase()
+      const sach = (item.tenSach || '').toLowerCase()
+      return ten.includes(kw) || sach.includes(kw)
+    })
+  }
+  return list
 })
 
 const danhSachGHHienThi = computed(() => {
@@ -93,6 +103,10 @@ onMounted(() => {
   <div class="duyet-gia-han">
     <div class="noi-dung-tab">
       <div class="thanh-filter">
+        <div class="vung-tim-kiem">
+          <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="icon-tim-kiem" />
+          <input v-model="tuKhoaTim" class="input-tk" placeholder="Tìm theo tên độc giả, sách..." />
+        </div>
         <select v-model="filterGH" class="select-filter">
           <option value="">Tất cả</option>
           <option value="CHO_DUYET">Chờ duyệt</option>
@@ -167,7 +181,11 @@ onMounted(() => {
 .duyet-gia-han { animation:fadeInUp 0.4s ease; padding-top: 1rem; }
 .noi-dung-tab { animation:fadeInUp 0.3s ease; }
 
-.thanh-filter { margin-bottom:1rem; }
+.thanh-filter { margin-bottom:1rem; display:flex; gap:0.75rem; flex-wrap:wrap; }
+.vung-tim-kiem { position:relative; display:flex; align-items:center; flex:1; min-width:200px; }
+.icon-tim-kiem { position:absolute; left:1rem; color:var(--mau-chu-mo); pointer-events:none; }
+.input-tk { width:100%; padding:0.65rem 1rem 0.65rem 2.5rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu); font-family:inherit; font-size:0.875rem; outline:none; box-sizing:border-box; }
+.input-tk:focus { border-color:var(--mau-chinh); box-shadow:0 0 0 3px rgba(6,182,212,0.15); }
 .select-filter { padding:0.65rem 1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu); font-family:inherit; cursor:pointer; }
 .select-filter option { background:#1a1a2e; color:#ffffff; }
 

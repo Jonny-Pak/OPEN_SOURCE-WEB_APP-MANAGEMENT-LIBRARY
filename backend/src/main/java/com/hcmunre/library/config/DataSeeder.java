@@ -32,6 +32,7 @@ public class DataSeeder implements CommandLineRunner {
         private final ChiTietPhieuMuonRepository chiTietPhieuMuonRepository;
         private final DatChoRepository datChoRepository;
         private final PhieuPhatRepository phieuPhatRepository;
+        private final LichSuGiaHanRepository lichSuGiaHanRepository;
         private final PasswordEncoder passwordEncoder;
         private final JdbcTemplate jdbcTemplate;
 
@@ -50,6 +51,9 @@ public class DataSeeder implements CommandLineRunner {
                 seedUsers();
                 if (sachRepository.count() == 0) {
                         seedCatalogData();
+                } else {
+                        // Nếu DB đã có sách nhưng chưa có yêu cầu gia hạn, seed gia hạn mẫu
+                        seedGiaHanIfNeeded();
                 }
         }
 
@@ -131,8 +135,11 @@ public class DataSeeder implements CommandLineRunner {
                 NhaXuatBan theGioi = NhaXuatBan.builder()
                                 .tenNhaXuatBan("Thế Giới").diaChi("46 Trần Hưng Đạo, Hà Nội")
                                 .soDienThoai("0244000004").email("thegioi@nxb.vn").build();
-                nhaXuatBanRepository.saveAll(Arrays.asList(kimDong, nxbTre, giaoDoc, khoaHocKT, theGioi));
-                log.info("✅ Đã seed {} nhà xuất bản", 5);
+                NhaXuatBan nxbTongHop = NhaXuatBan.builder()
+                                .tenNhaXuatBan("NXB Tổng Hợp TP.HCM").diaChi("62 Nguyễn Thị Minh Khai, Q1, TP.HCM")
+                                .soDienThoai("0283000001").email("tonghop@nxb.vn").build();
+                nhaXuatBanRepository.saveAll(Arrays.asList(kimDong, nxbTre, giaoDoc, khoaHocKT, theGioi, nxbTongHop));
+                log.info("✅ Đã seed {} nhà xuất bản", 6);
 
                 // ===== TÁC GIẢ =====
                 TacGia nguyenNhatAnh = TacGia.builder().hoDem("Nguyễn Nhật").ten("Ánh")
@@ -149,9 +156,15 @@ public class DataSeeder implements CommandLineRunner {
                                 .build();
                 TacGia danBrown = TacGia.builder().hoDem("Dan").ten("Brown")
                                 .tieuSu("Nhà văn người Mỹ nổi tiếng với các tiểu thuyết bí ẩn").build();
+                TacGia jkRowling = TacGia.builder().hoDem("J.K.").ten("Rowling")
+                                .tieuSu("Nữ tiểu thuyết gia người Anh, tác giả loạt truyện Harry Potter").build();
+                TacGia daleCarnegie = TacGia.builder().hoDem("Dale").ten("Carnegie")
+                                .tieuSu("Nhà văn Mỹ, tác giả cuốn sách Đắc Nhân Tâm").build();
+                TacGia stephenHawking = TacGia.builder().hoDem("Stephen").ten("Hawking")
+                                .tieuSu("Nhà vật lý lý thuyết, vũ trụ học, tác giả cuốn Lược Sử Thời Gian").build();
                 tacGiaRepository.saveAll(
-                                Arrays.asList(nguyenNhatAnh, toHoai, nguyenDu, fujikoFFujio, namQuocChanh, danBrown));
-                log.info("✅ Đã seed {} tác giả", 6);
+                                Arrays.asList(nguyenNhatAnh, toHoai, nguyenDu, fujikoFFujio, namQuocChanh, danBrown, jkRowling, daleCarnegie, stephenHawking));
+                log.info("✅ Đã seed {} tác giả", 9);
 
                 // ===== SÁCH =====
                 Sach sachToi = Sach.builder()
@@ -284,9 +297,75 @@ public class DataSeeder implements CommandLineRunner {
                                 .danhSachTheLoai(Arrays.asList(ngoaiNgu))
                                 .build();
 
+                Sach sachHarryPotter = Sach.builder()
+                                .tenSach("Harry Potter Và Hòn Đá Phù Thủy")
+                                .maIsbn("9786041047434")
+                                .namXuatBan(2020)
+                                .soTrang(365)
+                                .moTa("Tập đầu tiên của loạt truyện Harry Potter nổi tiếng toàn cầu.")
+                                .giaTien(115000.0)
+                                .donGiaPhatTheoNgay(6000.0)
+                                .nhaXuatBan(nxbTre)
+                                .danhSachTacGia(Arrays.asList(jkRowling))
+                                .danhSachTheLoai(Arrays.asList(thieuNhi, vanHoc))
+                                .build();
+
+                Sach sachDacNhanTam = Sach.builder()
+                                .tenSach("Đắc Nhân Tâm")
+                                .maIsbn("9786041047435")
+                                .namXuatBan(2021)
+                                .soTrang(320)
+                                .moTa("Cuốn sách nghệ thuật thu phục lòng người kinh điển của Dale Carnegie.")
+                                .giaTien(85000.0)
+                                .donGiaPhatTheoNgay(5000.0)
+                                .nhaXuatBan(nxbTongHop)
+                                .danhSachTacGia(Arrays.asList(daleCarnegie))
+                                .danhSachTheLoai(Arrays.asList(kinhTe))
+                                .build();
+
+                Sach sachLuocSu = Sach.builder()
+                                .tenSach("Lược Sử Thời Gian")
+                                .maIsbn("9786041047436")
+                                .namXuatBan(2021)
+                                .soTrang(256)
+                                .moTa("Cuốn sách khoa học phổ thông về vũ trụ, thời gian và hố đen của Stephen Hawking.")
+                                .giaTien(105000.0)
+                                .donGiaPhatTheoNgay(6000.0)
+                                .nhaXuatBan(nxbTre)
+                                .danhSachTacGia(Arrays.asList(stephenHawking))
+                                .danhSachTheLoai(Arrays.asList(khoaHoc))
+                                .build();
+
+                Sach sachSapiens = Sach.builder()
+                                .tenSach("Sapiens - Lược Sử Loài Người")
+                                .maIsbn("9786041047437")
+                                .namXuatBan(2022)
+                                .soTrang(552)
+                                .moTa("Cuốn sách kể lại hành trình 70.000 năm lịch sử loài người từ thời kỳ săn bắt hái lượm đến thế kỷ 21.")
+                                .giaTien(149000.0)
+                                .donGiaPhatTheoNgay(7000.0)
+                                .nhaXuatBan(theGioi)
+                                .danhSachTacGia(Arrays.asList(danBrown)) // placeholder author
+                                .danhSachTheLoai(Arrays.asList(khoaHoc, lichSu))
+                                .build();
+
+                Sach sachVuTru = Sach.builder()
+                                .tenSach("Vũ Trụ Trong Vỏ Hạt Dẻ")
+                                .maIsbn("9786041047438")
+                                .namXuatBan(2020)
+                                .soTrang(224)
+                                .moTa("Stephen Hawking giải thích về hố đen, lý thuyết dây và vũ trụ đa chiều một cách dễ hiểu và hấp dẫn.")
+                                .giaTien(125000.0)
+                                .donGiaPhatTheoNgay(6000.0)
+                                .nhaXuatBan(nxbTre)
+                                .danhSachTacGia(Arrays.asList(stephenHawking))
+                                .danhSachTheLoai(Arrays.asList(khoaHoc))
+                                .build();
+
                 List<Sach> danhSachSach = sachRepository.saveAll(Arrays.asList(
                                 sachToi, sachMatTinhYeu, sachDeDe, sachTruyenKieu, sachDoraemon,
-                                sachLapTrinh, sachDaVinci, sachKinhTe, sachLichSu, sachTiengAnh));
+                                sachLapTrinh, sachDaVinci, sachKinhTe, sachLichSu, sachTiengAnh,
+                                sachHarryPotter, sachDacNhanTam, sachLuocSu, sachSapiens, sachVuTru));
                 log.info("✅ Đã seed {} cuốn sách", danhSachSach.size());
 
                 // ===== CUỐN SÁCH =====
@@ -388,7 +467,53 @@ public class DataSeeder implements CommandLineRunner {
                                                 .build();
                                 datChoRepository.save(datCho);
                                 log.info("✅ Đã seed dữ liệu phiếu mượn và đặt chỗ mẫu");
+
+                                // ===== YÊU CẦU GIA HẠN MẪU (CHỜ DUYỆT) =====
+                                LichSuGiaHan giaHanMau = LichSuGiaHan.builder()
+                                        .chiTietPhieuMuon(chiTietDangMuon)
+                                        .nguoiThucHien(docGiaSeed)
+                                        .hanTraCu(chiTietDangMuon.getHanTraHienTai())
+                                        .hanTraMoi(chiTietDangMuon.getHanTraHienTai().plusDays(7))
+                                        .lyDo("Em cần thêm thời gian đọc sách ạ")
+                                        .trangThai(TrangThaiGiaHan.CHO_DUYET)
+                                        .ngayThucHien(LocalDateTime.now())
+                                        .build();
+                                lichSuGiaHanRepository.save(giaHanMau);
+                                log.info("✅ Đã seed 1 yêu cầu gia hạn mẫu (CHỜ DUYỆT)");
                         }
                 }
+        }
+
+        /**
+         * Seed yêu cầu gia hạn mẫu nếu chưa có (dùng cho DB đã có data sẵn).
+         */
+        private void seedGiaHanIfNeeded() {
+                if (lichSuGiaHanRepository.count() > 0) {
+                        log.info("ℹ️ Bảng gia hạn đã có dữ liệu — bỏ qua seed gia hạn");
+                        return;
+                }
+                NguoiDung docGiaSeed = nguoiDungRepository.findByEmail("docgia@library.edu.vn").orElse(null);
+                if (docGiaSeed == null) return;
+
+                // Tìm chi tiết phiếu mượn đang mượn
+                List<ChiTietPhieuMuon> chiTietDangMuon = chiTietPhieuMuonRepository
+                        .findByTrangThaiChiTietPhieuMuon(TrangThaiChiTietPhieuMuon.DANG_MUON);
+                if (chiTietDangMuon.isEmpty()) {
+                        log.warn("⚠️ Không tìm thấy chi tiết phiếu mượn đang mượn để seed gia hạn");
+                        return;
+                }
+
+                ChiTietPhieuMuon ct = chiTietDangMuon.get(0);
+                LichSuGiaHan giaHanMau = LichSuGiaHan.builder()
+                        .chiTietPhieuMuon(ct)
+                        .nguoiThucHien(docGiaSeed)
+                        .hanTraCu(ct.getHanTraHienTai())
+                        .hanTraMoi(ct.getHanTraHienTai().plusDays(7))
+                        .lyDo("Em cần thêm thời gian đọc sách ạ")
+                        .trangThai(TrangThaiGiaHan.CHO_DUYET)
+                        .ngayThucHien(LocalDateTime.now())
+                        .build();
+                lichSuGiaHanRepository.save(giaHanMau);
+                log.info("✅ Đã seed 1 yêu cầu gia hạn mẫu (CHỜ DUYỆT) cho DB đã có data");
         }
 }

@@ -4,6 +4,7 @@ import com.hcmunre.library.dto.request.TaoPhieuPhatRequest;
 import com.hcmunre.library.dto.response.NguoiDungResponse;
 import com.hcmunre.library.dto.response.PhieuPhatResponse;
 import com.hcmunre.library.entity.ChiTietPhieuMuon;
+import com.hcmunre.library.entity.CuonSach;
 import com.hcmunre.library.entity.PhieuMuon;
 import com.hcmunre.library.entity.NguoiDung;
 import com.hcmunre.library.entity.PhieuPhat;
@@ -130,6 +131,17 @@ public class PhieuPhatServiceImplement implements PhieuPhatService {
                     .build();
         }
 
+        // Lấy thông tin cuốn sách bị phạt
+        String tenSach = null;
+        String maVach = null;
+        if (ct != null && ct.getCuonSach() != null) {
+            CuonSach cuonSach = ct.getCuonSach();
+            maVach = cuonSach.getMaVach();
+            if (cuonSach.getSach() != null) {
+                tenSach = cuonSach.getSach().getTenSach();
+            }
+        }
+
         return PhieuPhatResponse.builder()
                 .maPhieuPhat(pp.getMaPhieuPhat())
                 .maChiTietPhieuMuon(ct != null ? ct.getMaChiTietPhieuMuon() : null) // nullable: ChiTietPhieuMuon may be soft-deleted
@@ -142,6 +154,8 @@ public class PhieuPhatServiceImplement implements PhieuPhatService {
                 .maPhieuMuon(pm != null ? pm.getMaPhieuMuon() : null) // nullable: PhieuMuon may be soft-deleted
                 .lyDo(pp.getLyDoPhat())
                 .trangThai(pp.getTrangThaiThanhToan() != null ? pp.getTrangThaiThanhToan().name() : null) // trangThaiThanhToan is nullable (legacy data)
+                .tenSach(tenSach)
+                .maVachCuonSach(maVach)
                 .build();
     }
 }

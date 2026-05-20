@@ -24,4 +24,8 @@ public class PhieuPhatResponse {
     private UUID maPhieuMuon;
     private String lyDo;
     private String trangThai;
+
+    // Thông tin cuốn sách bị phạt
+    private String tenSach;
+    private String maVachCuonSach;
 }
