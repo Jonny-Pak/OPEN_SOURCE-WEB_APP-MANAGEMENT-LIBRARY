@@ -19,7 +19,7 @@ Dự án áp dụng mô hình **Client-Server tách biệt (RESTful API + SPA)**
 
 ---
 
-## 📂 Cấu Trúc Thư Mục Dự Án
+## Cấu Trúc Thư Mục Dự Án
 
 ```text
 library_system/
