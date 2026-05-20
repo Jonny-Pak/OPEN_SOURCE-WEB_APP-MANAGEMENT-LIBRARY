@@ -10,4 +10,7 @@ import java.util.List;
 public interface TacGiaRepository extends JpaRepository<TacGia, Long> {
     // Tìm kiếm tác giả theo tên (không phân biệt hoa thường)
     List<TacGia> findByTenContainingIgnoreCase(String keyword);
+
+    // Tìm theo họ đệm + tên (dùng khi import Excel)
+    List<TacGia> findByHoDemContainingIgnoreCaseOrTenContainingIgnoreCase(String hoDem, String ten);
 }

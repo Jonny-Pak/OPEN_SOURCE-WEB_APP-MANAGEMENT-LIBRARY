@@ -19,4 +19,5 @@ public class TacGiaRequest {
     @Past(message = "Ngày sinh phải trong quá khứ")
     private LocalDate ngaySinh;
     private String quocTich;
+    private String hinhAnh;
 }

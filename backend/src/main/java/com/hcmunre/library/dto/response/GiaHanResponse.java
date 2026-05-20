@@ -1,5 +1,6 @@
 package com.hcmunre.library.dto.response;
 
+import com.hcmunre.library.enums.TrangThaiGiaHan;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -18,4 +19,8 @@ public class GiaHanResponse {
     private LocalDateTime hanTraMoi;
     private String lyDo;
     private LocalDateTime ngayTao;
+    private TrangThaiGiaHan trangThai;
+    private String tenSach;
+    private String tenDocGia;
+    private String emailDocGia;
 }

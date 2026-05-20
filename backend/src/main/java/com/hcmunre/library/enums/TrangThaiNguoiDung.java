@@ -2,5 +2,6 @@ package com.hcmunre.library.enums;
 
 public enum TrangThaiNguoiDung {
     HOAT_DONG,
-    KHOA
+    KHOA,
+    CHUA_KICH_HOAT
 }

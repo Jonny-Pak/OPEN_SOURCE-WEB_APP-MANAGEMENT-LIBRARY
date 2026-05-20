@@ -58,6 +58,7 @@ public class FileController {
 
     /**
      * Phục vụ file tĩnh (ảnh sách, avatar, ...).
+     * Sử dụng ** để hỗ trợ tên file có dấu chấm và các ký tự đặc biệt.
      * Có kiểm tra path traversal để bảo mật.
      */
     @GetMapping("/{filename:.+}")
@@ -71,26 +72,33 @@ public class FileController {
 
             Resource resource = new UrlResource(filePath.toUri());
 
-            if (resource.exists() && resource.isReadable()) {
-                String contentType = "application/octet-stream";
-                String lowerName = filename.toLowerCase();
-                if (lowerName.endsWith(".png"))
-                    contentType = MediaType.IMAGE_PNG_VALUE;
-                else if (lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg"))
-                    contentType = MediaType.IMAGE_JPEG_VALUE;
-                else if (lowerName.endsWith(".gif"))
-                    contentType = MediaType.IMAGE_GIF_VALUE;
-                else if (lowerName.endsWith(".webp"))
-                    contentType = "image/webp";
-
-                return ResponseEntity.ok()
-                        .header(HttpHeaders.CONTENT_TYPE, contentType)
-                        .body(resource);
-            } else {
+            if (!resource.exists() || !resource.isReadable()) {
                 return ResponseEntity.notFound().build();
             }
+
+            // Xác định content-type theo đuôi file
+            String contentType = detectContentType(filename);
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_TYPE, contentType)
+                    // Hiển thị inline (không bắt download)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                    // Cache 7 ngày để tăng hiệu suất
+                    .header(HttpHeaders.CACHE_CONTROL, "public, max-age=604800")
+                    .body(resource);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    private String detectContentType(String filename) {
+        String lower = filename.toLowerCase();
+        if (lower.endsWith(".png"))  return MediaType.IMAGE_PNG_VALUE;
+        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return MediaType.IMAGE_JPEG_VALUE;
+        if (lower.endsWith(".gif"))  return MediaType.IMAGE_GIF_VALUE;
+        if (lower.endsWith(".webp")) return "image/webp";
+        if (lower.endsWith(".svg"))  return "image/svg+xml";
+        if (lower.endsWith(".pdf"))  return MediaType.APPLICATION_PDF_VALUE;
+        return MediaType.APPLICATION_OCTET_STREAM_VALUE;
     }
 }

@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { useAuthStore } from './auth'
+import { datChoService } from '@/services/datChoService'
 
 export interface Book {
   id: number
@@ -39,12 +41,39 @@ export const useCartStore = defineStore('cart', () => {
     items.value = []
   }
 
+  // Requested English actions
+  function addBook(book: Book) {
+    return addItem(book)
+  }
+
+  function removeBook(bookId: number) {
+    removeItem(bookId)
+  }
+
+  async function borrowAll() {
+    const authStore = useAuthStore()
+    if (!authStore.daXacThuc) {
+      alert('Vui lòng đăng nhập để thực hiện mượn sách!')
+      return
+    }
+
+    // Process borrow book for each item in the cart (reserving them)
+    for (const item of items.value) {
+      await datChoService.reserve(item.id)
+    }
+    clearCart()
+  }
+
   return {
     items,
     itemCount,
     isFull,
     addItem,
     removeItem,
-    clearCart
+    clearCart,
+    addBook,
+    removeBook,
+    borrowAll
   }
 })
+export default useCartStore

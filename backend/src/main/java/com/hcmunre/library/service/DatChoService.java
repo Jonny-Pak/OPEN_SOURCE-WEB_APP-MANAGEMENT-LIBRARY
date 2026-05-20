@@ -14,4 +14,6 @@ public interface DatChoService {
     // Commands
     DatChoResponse createDatCho(DatChoRequest request);
     void cancelDatCho(UUID maDatCho, String ghiChuHuy);
+    DatChoResponse duyetDatCho(UUID maDatCho);
+    void updateStatusOnBookReturn(Long maSach);
 }

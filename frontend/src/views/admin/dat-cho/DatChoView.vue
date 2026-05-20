@@ -2,7 +2,7 @@
   DatChoView.vue — Quản lý đặt chỗ mượn sách: duyệt hoặc hủy.
 -->
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { datChoService } from '@/services/datChoService'
 import { usePagination } from '@/composables/usePagination'
 import { useToast } from '@/composables/useToast'
@@ -20,6 +20,17 @@ const dangTai = ref(false)
 const danhSach = ref<DatCho[]>([])
 const filterTrangThai = ref<TrangThaiDatCho | ''>('CHO_DUYET')
 const dangXuLy = ref(false)
+const tuKhoaTim = ref('')
+
+const danhSachLoc = computed(() => {
+  const kw = tuKhoaTim.value.trim().toLowerCase()
+  if (!kw) return danhSach.value
+  return danhSach.value.filter((item: any) => {
+    const ten = `${item.nguoiDung?.hoDem || ''} ${item.nguoiDung?.ten || ''}`.toLowerCase()
+    const sach = (item.sach?.tenSach || '').toLowerCase()
+    return ten.includes(kw) || sach.includes(kw)
+  })
+})
 
 // Modal hủy
 const huyItem = ref<DatCho | null>(null)
@@ -71,6 +82,10 @@ onMounted(taiDanhSach)
 <template>
   <div class="dat-cho">
     <div class="thanh-cong-cu">
+      <div class="vung-tim-kiem">
+        <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="icon-tim-kiem" />
+        <input v-model="tuKhoaTim" class="input-tk" placeholder="Tìm theo tên độc giả, sách..." />
+      </div>
       <select v-model="filterTrangThai" class="select-filter">
         <option value="">Tất cả</option>
         <option value="CHO_DUYET">Chờ duyệt</option>
@@ -86,18 +101,22 @@ onMounted(taiDanhSach)
         <table v-else class="bang">
           <thead><tr><th>Độc giả</th><th>Sách đặt</th><th>Ngày đặt</th><th>Trạng thái</th><th>Hành động</th></tr></thead>
           <tbody>
-            <tr v-for="item in danhSach" :key="item.maDatCho">
+            <tr v-for="item in danhSachLoc" :key="item.maDatCho">
               <td>
-                <div class="ten-nguoi">{{ item.nguoiDung.hoDem }} {{ item.nguoiDung.ten }}</div>
-                <div class="email-mo">{{ item.nguoiDung.email }}</div>
+                <div class="ten-nguoi">{{ item.nguoiDung?.hoDem || '' }} {{ item.nguoiDung?.ten || '' }}</div>
+                <div class="email-mo">{{ item.nguoiDung?.email || 'N/A' }}</div>
               </td>
-              <td>{{ item.sach.tenSach }}</td>
-              <td>{{ formatNgay(item.ngayDat) }}</td>
-              <td><StatusBadge :nhan-hien="TRANG_THAI_MAP[item.trangThai].nhan" :loai="TRANG_THAI_MAP[item.trangThai].mau" /></td>
+              <td>{{ item.sach?.tenSach || 'N/A' }}</td>
+              <td>{{ item.ngayDatCho ? formatNgay(item.ngayDatCho) : '' }}</td>
+              <td><StatusBadge v-if="item.trangThai && TRANG_THAI_MAP[item.trangThai]" :nhan-hien="TRANG_THAI_MAP[item.trangThai].nhan" :loai="TRANG_THAI_MAP[item.trangThai].mau" /></td>
               <td>
                 <div v-if="item.trangThai === 'CHO_DUYET'" class="hanh-dong">
-                  <button class="nut-duyet" :disabled="dangXuLy" @click="duyet(item)">✅ Duyệt</button>
-                  <button class="nut-huy-btn" :disabled="dangXuLy" @click="huyItem = item; lyDoHuy = ''">❌ Hủy</button>
+                  <button class="nut-duyet" :disabled="dangXuLy" @click="duyet(item)">
+                    <font-awesome-icon icon="fa-solid fa-circle-check" /> Duyệt
+                  </button>
+                  <button class="nut-huy-btn" :disabled="dangXuLy" @click="huyItem = item; lyDoHuy = ''">
+                    <font-awesome-icon icon="fa-solid fa-circle-xmark" /> Hủy
+                  </button>
                 </div>
                 <span v-else class="khong-hanh-dong">—</span>
               </td>
@@ -111,7 +130,7 @@ onMounted(taiDanhSach)
     <!-- Modal hủy -->
     <ModalDialog :dang-mo="huyItem !== null" tieu-de="Hủy đặt chỗ" @dong="huyItem = null">
       <div class="form-modal">
-        <p style="color:var(--mau-chu-mo);font-size:0.875rem;margin-bottom:0.75rem">Hủy đặt chỗ của <strong>{{ huyItem?.nguoiDung.hoDem }} {{ huyItem?.nguoiDung.ten }}</strong> cho sách <strong>{{ huyItem?.sach.tenSach }}</strong>.</p>
+        <p style="color:var(--mau-chu-mo);font-size:0.875rem;margin-bottom:0.75rem">Hủy đặt chỗ của <strong>{{ huyItem?.nguoiDung?.hoDem || '' }} {{ huyItem?.nguoiDung?.ten || '' }}</strong> cho sách <strong>{{ huyItem?.sach?.tenSach || 'N/A' }}</strong>.</p>
         <div class="form-group">
           <label>Lý do hủy *</label>
           <textarea v-model="lyDoHuy" class="form-input form-textarea" placeholder="Nhập lý do hủy..."></textarea>
@@ -127,9 +146,13 @@ onMounted(taiDanhSach)
 
 <style scoped>
 .dat-cho { animation:fadeInUp 0.4s ease; }
-.thanh-cong-cu { margin-bottom:1rem; }
+.thanh-cong-cu { margin-bottom:1rem; display:flex; gap:0.75rem; flex-wrap:wrap; }
+.vung-tim-kiem { position:relative; display:flex; align-items:center; flex:1; min-width:200px; }
+.icon-tim-kiem { position:absolute; left:1rem; color:var(--mau-chu-mo); pointer-events:none; }
+.input-tk { width:100%; padding:0.65rem 1rem 0.65rem 2.5rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu); font-family:inherit; font-size:0.875rem; outline:none; box-sizing:border-box; }
+.input-tk:focus { border-color:var(--mau-chinh); box-shadow:0 0 0 3px rgba(6,182,212,0.15); }
 .select-filter { padding:0.65rem 1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu); font-family:inherit; cursor:pointer; }
-.select-filter option { background:#1a1a2e; }
+.select-filter option { background:#1a1a2e; color:#ffffff; }
 .bang-container { background:var(--glass-nen); border:1px solid var(--glass-vien); border-radius:12px; overflow:hidden; padding:1rem; }
 .bang { width:100%; border-collapse:collapse; }
 .bang th { padding:0.75rem 1rem; text-align:left; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--mau-chu-mo); border-bottom:1px solid rgba(255,255,255,0.08); }

@@ -5,21 +5,21 @@ import com.hcmunre.library.dto.request.ForgotPasswordRequest;
 import com.hcmunre.library.dto.request.RegisterRequest;
 import com.hcmunre.library.dto.request.ResetPasswordRequest;
 import com.hcmunre.library.dto.response.AuthResponse;
+import com.hcmunre.library.dto.response.NguoiDungResponse;
+import com.hcmunre.library.security.CustomUserDetails;
 import com.hcmunre.library.service.AuthService;
+import com.hcmunre.library.service.NguoiDungService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
 /**
  * Controller xử lý các API xác thực (Authentication).
- * Tất cả endpoint trong controller này đều được permitAll (không cần token).
  * Base URL: /api/auth
  */
 @RestController
@@ -28,6 +28,7 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final NguoiDungService nguoiDungService;
 
     /**
      * API đăng nhập.
@@ -80,4 +81,23 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Đặt lại mật khẩu thành công"));
     }
 
+    /**
+     * API lấy thông tin người dùng hiện tại từ Token.
+     */
+    @GetMapping("/me")
+    public ResponseEntity<NguoiDungResponse> getMe(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        NguoiDungResponse profile = nguoiDungService.getMyProfile(userDetails.getNguoiDung().getMaNguoiDung());
+        return ResponseEntity.ok(profile);
+    }
+
+    /**
+     * API đăng xuất.
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, String>> dangXuat() {
+        return ResponseEntity.ok(Map.of("message", "Đăng xuất thành công"));
+    }
 }

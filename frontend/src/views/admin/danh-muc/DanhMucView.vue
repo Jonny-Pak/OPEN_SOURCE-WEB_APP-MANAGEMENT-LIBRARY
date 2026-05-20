@@ -23,10 +23,10 @@ const phanTrang = usePagination()
 type TabId = 'tacGia' | 'nxb' | 'theLoai' | 'viTri'
 
 const tabs = [
-  { id: 'tacGia' as TabId, nhan: 'Tác giả', icon: 'fas fa-pen-nib', path: 'tac-gia' },
-  { id: 'nxb' as TabId, nhan: 'Nhà xuất bản', icon: 'fas fa-building', path: 'nha-xuat-ban' },
-  { id: 'theLoai' as TabId, nhan: 'Thể loại', icon: 'fas fa-tag', path: 'the-loai' },
-  { id: 'viTri' as TabId, nhan: 'Vị trí kệ sách', icon: 'fas fa-map-pin', path: 'vi-tri' },
+  { id: 'tacGia' as TabId, nhan: 'Tác giả', icon: 'fa-solid fa-pen-nib', path: 'tac-gia' },
+  { id: 'nxb' as TabId, nhan: 'Nhà xuất bản', icon: 'fa-solid fa-building', path: 'nha-xuat-ban' },
+  { id: 'theLoai' as TabId, nhan: 'Thể loại', icon: 'fa-solid fa-tag', path: 'the-loai' },
+  { id: 'viTri' as TabId, nhan: 'Vị trí kệ sách', icon: 'fa-solid fa-location-pin', path: 'vi-tri' },
 ]
 
 // Hàm xác định Tab hiện tại dựa trên URL
@@ -50,16 +50,17 @@ const dangTai = ref(false)
 const danhSachTacGia = ref<TacGia[]>([])
 const danhSachNXB = ref<NhaXuatBan[]>([])
 const danhSachTheLoai = ref<TheLoai[]>([])
-const danhSachViTri = ref<any[]>([]) // Dùng tạm any cho Vị Trí
+const danhSachViTri = ref<{ maViTri: number; tenViTri: string; moTa?: string }[]>([]) // Đã sửa type cho Vị Trí
 
 // ===== MODAL THÊM/SỬA =====
 const modalTacGia = useModal<TacGia>()
 const modalNXB = useModal<NhaXuatBan>()
 const modalTheLoai = useModal<TheLoai>()
-const modalViTri = useModal<any>()
+const modalViTri = useModal<{ maViTri: number; tenViTri: string; moTa?: string }>()
 
-const formTacGia = ref({ tenTacGia: '', tieuSu: '' })
-const formNXB = ref({ tenNXB: '', diaChi: '', website: '' })
+const formTacGia = ref({ hoDem: '', ten: '', tieuSu: '', ngaySinh: '', quocTich: '', hinhAnh: '' })
+const tacGiaAvatarInput = ref<HTMLInputElement | null>(null)
+const formNXB = ref({ tenNhaXuatBan: '', diaChi: '', soDienThoai: '', email: '' })
 const formTheLoai = ref({ tenTheLoai: '', moTa: '' })
 const formViTri = ref({ tenViTri: '', moTa: '' })
 const dangGui = ref(false)
@@ -92,35 +93,60 @@ async function taiDanhSach(): Promise<void> {
   finally { dangTai.value = false }
 }
 
-function moSuaTacGia(item: TacGia) { modalTacGia.moModalSua(item); formTacGia.value = { tenTacGia: item.tenTacGia, tieuSu: item.tieuSu ?? '' } }
-function moSuaNXB(item: NhaXuatBan) { modalNXB.moModalSua(item); formNXB.value = { tenNXB: item.tenNXB, diaChi: item.diaChi ?? '', website: item.website ?? '' } }
+function moSuaTacGia(item: TacGia) { modalTacGia.moModalSua(item); formTacGia.value = { hoDem: item.hoDem, ten: item.ten, tieuSu: item.tieuSu ?? '', ngaySinh: (item as any).ngaySinh ?? '', quocTich: (item as any).quocTich ?? '', hinhAnh: (item as any).hinhAnh ?? '' } }
+function moSuaNXB(item: NhaXuatBan) { modalNXB.moModalSua(item); formNXB.value = { tenNhaXuatBan: item.tenNhaXuatBan, diaChi: item.diaChi ?? '', soDienThoai: item.soDienThoai ?? '', email: item.email ?? '' } }
 function moSuaTheLoai(item: TheLoai) { modalTheLoai.moModalSua(item); formTheLoai.value = { tenTheLoai: item.tenTheLoai, moTa: item.moTa ?? '' } }
-function moSuaViTri(item: any) { modalViTri.moModalSua(item); formViTri.value = { tenViTri: item.tenViTri, moTa: item.moTa ?? '' } }
+function moSuaViTri(item: { maViTri: number; tenViTri: string; moTa?: string }) { modalViTri.moModalSua(item); formViTri.value = { tenViTri: item.tenViTri, moTa: item.moTa ?? '' } }
 
 function moThemMoi() {
-  if (tabHienTai.value === 'tacGia') { formTacGia.value = { tenTacGia: '', tieuSu: '' }; modalTacGia.moModalThem() }
-  else if (tabHienTai.value === 'nxb') { formNXB.value = { tenNXB: '', diaChi: '', website: '' }; modalNXB.moModalThem() }
+  if (tabHienTai.value === 'tacGia') { formTacGia.value = { hoDem: '', ten: '', tieuSu: '', ngaySinh: '', quocTich: '', hinhAnh: '' }; modalTacGia.moModalThem() }
+  else if (tabHienTai.value === 'nxb') { formNXB.value = { tenNhaXuatBan: '', diaChi: '', soDienThoai: '', email: '' }; modalNXB.moModalThem() }
   else if (tabHienTai.value === 'theLoai') { formTheLoai.value = { tenTheLoai: '', moTa: '' }; modalTheLoai.moModalThem() }
   else { formViTri.value = { tenViTri: '', moTa: '' }; modalViTri.moModalThem() }
 }
 
 // ... [Giữ nguyên logic luuTacGia, luuNXB, luuTheLoai như cũ]
+function triggerTacGiaAvatar() {
+  tacGiaAvatarInput.value?.click()
+}
+
+function onTacGiaAvatarChange(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  if (file.size > 5 * 1024 * 1024) {
+    toast.canhBao('Ảnh quá lớn (tối đa 5MB)')
+    return
+  }
+  const reader = new FileReader()
+  reader.onload = (ev) => {
+    formTacGia.value.hinhAnh = ev.target?.result as string
+  }
+  reader.readAsDataURL(file)
+}
+
 async function luuTacGia() {
-  if (!formTacGia.value.tenTacGia.trim()) return toast.canhBao('Tên tác giả không được để trống')
+  if (!formTacGia.value.hoDem.trim()) return toast.canhBao('Họ đệm không được để trống')
+  if (!formTacGia.value.ten.trim()) return toast.canhBao('Tên không được để trống')
   dangGui.value = true
+  const body = {
+    ...formTacGia.value,
+    ngaySinh: formTacGia.value.ngaySinh ? formTacGia.value.ngaySinh : undefined
+  }
   try {
-    if (modalTacGia.dangThem()) { await tacGiaService.taoCai(formTacGia.value); toast.thanhCong('Thêm tác giả thành công') }
-    else { await tacGiaService.capNhat(modalTacGia.itemDangSua.value!.maTacGia, formTacGia.value); toast.thanhCong('Cập nhật thành công') }
+    if (modalTacGia.dangThem()) { await tacGiaService.taoCai(body); toast.thanhCong('Thêm tác giả thành công') }
+    else { await tacGiaService.capNhat(modalTacGia.itemDangSua.value!.maTacGia, body); toast.thanhCong('Cập nhật thành công') }
     modalTacGia.dongModal(); taiDanhSach()
   } catch { toast.loi('Thao tác thất bại') } finally { dangGui.value = false }
 }
 
 async function luuNXB() {
-  if (!formNXB.value.tenNXB.trim()) return toast.canhBao('Tên NXB không được để trống')
+  if (!formNXB.value.tenNhaXuatBan.trim()) return toast.canhBao('Tên NXB không được để trống')
+  if (!formNXB.value.soDienThoai.trim()) return toast.canhBao('Số điện thoại không được để trống')
+  if (!formNXB.value.email.trim()) return toast.canhBao('Email không được để trống')
   dangGui.value = true
   try {
     if (modalNXB.dangThem()) { await nhaXuatBanService.taoCai(formNXB.value); toast.thanhCong('Thêm NXB thành công') }
-    else { await nhaXuatBanService.capNhat(modalNXB.itemDangSua.value!.maNXB, formNXB.value); toast.thanhCong('Cập nhật thành công') }
+    else { await nhaXuatBanService.capNhat(modalNXB.itemDangSua.value!.maNhaXuatBan, formNXB.value); toast.thanhCong('Cập nhật thành công') }
     modalNXB.dongModal(); taiDanhSach()
   } catch { toast.loi('Thao tác thất bại') } finally { dangGui.value = false }
 }
@@ -194,13 +220,18 @@ onMounted(taiDanhSach)
         :class="{ 'tab--active': tabHienTai === tab.id }" 
         @click="doiTab(tab)"
       >
-        <i :class="tab.icon"></i> {{ tab.nhan }}
+        <font-awesome-icon :icon="tab.icon" /> {{ tab.nhan }}
       </button>
     </div>
 
     <div class="thanh-cong-cu">
-      <input v-model="tuKhoaTimKiem" class="input-tim-kiem" placeholder="🔍 Tìm kiếm..." />
-      <button class="nut-them" @click="moThemMoi">+ Thêm mới</button>
+      <div class="vung-tim-kiem">
+        <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="icon-tim-kiem" />
+        <input v-model="tuKhoaTimKiem" class="input-tim-kiem" placeholder="Tìm kiếm..." />
+      </div>
+      <button class="nut-them" @click="moThemMoi">
+        <font-awesome-icon icon="fa-solid fa-plus" /> Thêm mới
+      </button>
     </div>
 
     <div class="bang-container">
@@ -210,14 +241,21 @@ onMounted(taiDanhSach)
         <template v-if="tabHienTai === 'tacGia'">
           <EmptyState v-if="danhSachTacGia.length === 0" thong-diep="Chưa có tác giả nào" />
           <table v-else class="bang">
-            <thead><tr><th>#</th><th>Tên tác giả</th><th>Tiểu sử</th><th>Hành động</th></tr></thead>
+            <thead><tr><th>#</th><th>Ảnh</th><th>Họ đệm</th><th>Tên</th><th>Quốc tịch</th><th>Tiểu sử</th><th>Hành động</th></tr></thead>
             <tbody>
               <tr v-for="(item, i) in danhSachTacGia" :key="item.maTacGia">
-                <td>{{ i + 1 }}</td><td>{{ item.tenTacGia }}</td>
+                <td>{{ i + 1 }}</td>
+                <td>
+                  <img v-if="(item as any).hinhAnh" :src="(item as any).hinhAnh" alt="Avatar" class="anh-avatar-tac-gia" />
+                  <div v-else class="anh-avatar-placeholder"><font-awesome-icon icon="fa-solid fa-user-nib" /></div>
+                </td>
+                <td>{{ item.hoDem }}</td>
+                <td><strong>{{ item.ten }}</strong></td>
+                <td>{{ (item as any).quocTich ?? '—' }}</td>
                 <td class="o-mo-ta">{{ item.tieuSu ?? '—' }}</td>
                 <td><div class="hanh-dong">
-                  <button class="nut-sua" @click="moSuaTacGia(item)"><i class="fas fa-pen-to-square"></i></button>
-                  <button class="nut-xoa" @click="xoaItem = { id: item.maTacGia, ten: item.tenTacGia }"><i class="fas fa-trash"></i></button>
+                  <button class="nut-sua" @click="moSuaTacGia(item)"><font-awesome-icon icon="fa-solid fa-pen-to-square" /></button>
+                  <button class="nut-xoa" @click="xoaItem = { id: item.maTacGia, ten: item.hoDem + ' ' + item.ten }"><font-awesome-icon icon="fa-solid fa-trash-can" /></button>
                 </div></td>
               </tr>
             </tbody>
@@ -227,14 +265,16 @@ onMounted(taiDanhSach)
         <template v-else-if="tabHienTai === 'nxb'">
           <EmptyState v-if="danhSachNXB.length === 0" thong-diep="Chưa có nhà xuất bản nào" />
           <table v-else class="bang">
-            <thead><tr><th>#</th><th>Tên NXB</th><th>Địa chỉ</th><th>Website</th><th>Hành động</th></tr></thead>
+            <thead><tr><th>#</th><th>Tên NXB</th><th>Địa chỉ</th><th>Số điện thoại</th><th>Email</th><th>Hành động</th></tr></thead>
             <tbody>
-              <tr v-for="(item, i) in danhSachNXB" :key="item.maNXB">
-                <td>{{ i + 1 }}</td><td>{{ item.tenNXB }}</td>
-                <td>{{ item.diaChi ?? '—' }}</td><td>{{ item.website ?? '—' }}</td>
+              <tr v-for="(item, i) in danhSachNXB" :key="item.maNhaXuatBan">
+                <td>{{ i + 1 }}</td><td>{{ item.tenNhaXuatBan }}</td>
+                <td>{{ item.diaChi ?? '—' }}</td>
+                <td>{{ item.soDienThoai ?? '—' }}</td>
+                <td>{{ item.email ?? '—' }}</td>
                 <td><div class="hanh-dong">
-                  <button class="nut-sua" @click="moSuaNXB(item)"><i class="fas fa-pen-to-square"></i></button>
-                  <button class="nut-xoa" @click="xoaItem = { id: item.maNXB, ten: item.tenNXB }"><i class="fas fa-trash"></i></button>
+                  <button class="nut-sua" @click="moSuaNXB(item)"><font-awesome-icon icon="fa-solid fa-pen-to-square" /></button>
+                  <button class="nut-xoa" @click="xoaItem = { id: item.maNhaXuatBan, ten: item.tenNhaXuatBan }"><font-awesome-icon icon="fa-solid fa-trash-can" /></button>
                 </div></td>
               </tr>
             </tbody>
@@ -250,8 +290,8 @@ onMounted(taiDanhSach)
                 <td>{{ i + 1 }}</td><td>{{ item.tenTheLoai }}</td>
                 <td class="o-mo-ta">{{ item.moTa ?? '—' }}</td>
                 <td><div class="hanh-dong">
-                  <button class="nut-sua" @click="moSuaTheLoai(item)"><i class="fas fa-pen-to-square"></i></button>
-                  <button class="nut-xoa" @click="xoaItem = { id: item.maTheLoai, ten: item.tenTheLoai }"><i class="fas fa-trash"></i></button>
+                  <button class="nut-sua" @click="moSuaTheLoai(item)"><font-awesome-icon icon="fa-solid fa-pen-to-square" /></button>
+                  <button class="nut-xoa" @click="xoaItem = { id: item.maTheLoai, ten: item.tenTheLoai }"><font-awesome-icon icon="fa-solid fa-trash-can" /></button>
                 </div></td>
               </tr>
             </tbody>
@@ -267,8 +307,8 @@ onMounted(taiDanhSach)
                 <td>{{ i + 1 }}</td><td><strong>{{ item.tenViTri }}</strong></td>
                 <td class="o-mo-ta">{{ item.moTa ?? '—' }}</td>
                 <td><div class="hanh-dong">
-                  <button class="nut-sua" @click="moSuaViTri(item)"><i class="fas fa-pen-to-square"></i></button>
-                  <button class="nut-xoa" @click="xoaItem = { id: item.maViTri, ten: item.tenViTri }"><i class="fas fa-trash"></i></button>
+                  <button class="nut-sua" @click="moSuaViTri(item)"><font-awesome-icon icon="fa-solid fa-pen-to-square" /></button>
+                  <button class="nut-xoa" @click="xoaItem = { id: item.maViTri, ten: item.tenViTri }"><font-awesome-icon icon="fa-solid fa-trash-can" /></button>
                 </div></td>
               </tr>
             </tbody>
@@ -281,7 +321,32 @@ onMounted(taiDanhSach)
 
     <ModalDialog :dang-mo="modalTacGia.dangMo.value" :tieu-de="modalTacGia.dangThem() ? 'Thêm tác giả' : 'Sửa tác giả'" @dong="modalTacGia.dongModal()">
       <div class="form-modal">
-        <div class="form-group"><label>Tên tác giả *</label><input v-model="formTacGia.tenTacGia" class="form-input" placeholder="Nhập tên tác giả" /></div>
+        <!-- Ảnh Đại Diện Tác Giả -->
+        <div class="form-group flex-row-center" style="display: flex; gap: 1.5rem; align-items: center; margin-bottom: 1.25rem; background: rgba(6,182,212,0.03); padding: 0.75rem; border-radius: 8px; border: 1px dashed rgba(6,182,212,0.2);">
+          <div class="avatar-preview-box" @click="triggerTacGiaAvatar" style="width: 70px; height: 70px; border-radius: 50%; border: 2px dashed rgba(6,182,212,0.4); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; background: white; flex-shrink: 0;">
+            <img v-if="formTacGia.hinhAnh" :src="formTacGia.hinhAnh" alt="Avatar Tác giả" style="width: 100%; height: 100%; object-fit: cover;" />
+            <font-awesome-icon v-else icon="fa-solid fa-camera" style="color: var(--accent); font-size: 1.5rem;" />
+          </div>
+          <div class="avatar-actions">
+            <input ref="tacGiaAvatarInput" type="file" accept="image/*" hidden @change="onTacGiaAvatarChange" />
+            <button type="button" class="btn btn-outline btn-sm" @click="triggerTacGiaAvatar" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; border: 1px solid var(--accent); color: var(--accent); background: transparent; border-radius: 4px; cursor: pointer; transition: all 0.2s;">
+              <font-awesome-icon icon="fa-solid fa-cloud-arrow-up" /> Chọn ảnh
+            </button>
+            <button type="button" v-if="formTacGia.hinhAnh" class="btn btn-danger btn-sm" @click="formTacGia.hinhAnh = ''" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; border: 1px solid #ef4444; color: #ef4444; background: transparent; border-radius: 4px; cursor: pointer; margin-left: 8px; transition: all 0.2s;">
+              <font-awesome-icon icon="fa-solid fa-trash-can" /> Xóa
+            </button>
+            <p style="margin: 0.25rem 0 0 0; font-size: 0.75rem; color: var(--text-muted);">Hỗ trợ JPG, PNG, WebP (tối đa 5MB)</p>
+          </div>
+        </div>
+
+        <div class="hang-doi" style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+          <div class="form-group"><label>Họ đệm *</label><input v-model="formTacGia.hoDem" class="form-input" placeholder="Nhập họ đệm" /></div>
+          <div class="form-group"><label>Tên *</label><input v-model="formTacGia.ten" class="form-input" placeholder="Nhập tên" /></div>
+        </div>
+        <div class="hang-doi" style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+          <div class="form-group"><label>Ngày sinh</label><input v-model="formTacGia.ngaySinh" type="date" class="form-input" /></div>
+          <div class="form-group"><label>Quốc tịch</label><input v-model="formTacGia.quocTich" class="form-input" placeholder="Việt Nam, Anh..." /></div>
+        </div>
         <div class="form-group"><label>Tiểu sử</label><textarea v-model="formTacGia.tieuSu" class="form-input form-textarea" placeholder="Nhập tiểu sử..."></textarea></div>
       </div>
       <template #footer>
@@ -292,9 +357,10 @@ onMounted(taiDanhSach)
 
     <ModalDialog :dang-mo="modalNXB.dangMo.value" :tieu-de="modalNXB.dangThem() ? 'Thêm nhà xuất bản' : 'Sửa nhà xuất bản'" @dong="modalNXB.dongModal()">
       <div class="form-modal">
-        <div class="form-group"><label>Tên NXB *</label><input v-model="formNXB.tenNXB" class="form-input" placeholder="Nhập tên NXB" /></div>
+        <div class="form-group"><label>Tên NXB *</label><input v-model="formNXB.tenNhaXuatBan" class="form-input" placeholder="Nhập tên NXB" /></div>
         <div class="form-group"><label>Địa chỉ</label><input v-model="formNXB.diaChi" class="form-input" placeholder="Địa chỉ..." /></div>
-        <div class="form-group"><label>Website</label><input v-model="formNXB.website" class="form-input" placeholder="https://..." /></div>
+        <div class="form-group"><label>Số điện thoại *</label><input v-model="formNXB.soDienThoai" class="form-input" placeholder="Số điện thoại..." /></div>
+        <div class="form-group"><label>Email *</label><input v-model="formNXB.email" type="email" class="form-input" placeholder="Email..." /></div>
       </div>
       <template #footer>
         <button class="nut-huy" @click="modalNXB.dongModal()">Hủy</button>
@@ -336,8 +402,10 @@ onMounted(taiDanhSach)
 .tab:hover { color:var(--mau-chu); }
 .tab--active { color:var(--mau-chinh); border-bottom-color:var(--mau-chinh); font-weight:600; }
 .thanh-cong-cu { display:flex; gap:0.75rem; margin-bottom:1rem; }
-.input-tim-kiem { flex:1; padding:0.65rem 1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu); font-family:inherit; font-size:0.875rem; outline:none; }
-.input-tim-kiem:focus { border-color:var(--mau-chinh); }
+.vung-tim-kiem { position: relative; display: flex; align-items: center; flex: 1; }
+.icon-tim-kiem { position: absolute; left: 1rem; color: var(--mau-chu-mo); pointer-events: none; }
+.input-tim-kiem { width: 100%; padding: 0.65rem 1rem 0.65rem 2.5rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--mau-chu); font-family: inherit; font-size: 0.875rem; outline: none; box-sizing: border-box; }
+.input-tim-kiem:focus { border-color: var(--mau-chinh); }
 .nut-them { padding:0.65rem 1.25rem; background:var(--color-primary); border:none; border-radius:8px; color:white; cursor:pointer; font-family:inherit; font-size:0.875rem; font-weight:600; white-space:nowrap; }
 .bang-container { background:var(--glass-nen); border:1px solid var(--glass-vien); border-radius:12px; overflow:hidden; padding:1rem; }
 .bang { width:100%; border-collapse:collapse; }
@@ -359,4 +427,25 @@ onMounted(taiDanhSach)
 .nut-huy { padding:0.65rem 1.25rem; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu-mo); cursor:pointer; font-family:inherit; }
 .nut-luu { padding:0.65rem 1.5rem; background:var(--color-primary); border:none; border-radius:8px; color:white; cursor:pointer; font-family:inherit; font-weight:600; }
 .nut-luu:disabled { opacity:0.6; cursor:not-allowed; }
+
+.anh-avatar-tac-gia {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(6, 182, 212, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.anh-avatar-placeholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(6, 182, 212, 0.08);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
 </style>

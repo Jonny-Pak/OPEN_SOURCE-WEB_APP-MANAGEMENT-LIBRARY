@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import Navbar from '../../components/Navbar/Navbar.vue'
 import Footer from '../../components/Footer/Footer.vue'
 
@@ -9,30 +9,30 @@ const toggleFaq = (index: number) => {
   activeFaq.value = activeFaq.value === index ? null : index
 }
 
-const steps = [
+const defaultSteps = [
   {
     title: 'Tìm kiếm sách',
     description: 'Sử dụng thanh tìm kiếm hoặc duyệt qua danh mục để tìm cuốn sách bạn cần.',
-    icon: 'fa-search'
+    icon: 'fa-solid fa-magnifying-glass'
   },
   {
     title: 'Đăng ký mượn',
     description: 'Nhấn nút "Mượn sách" tại trang chi tiết. Hệ thống sẽ ghi nhận yêu cầu của bạn.',
-    icon: 'fa-file-signature'
+    icon: 'fa-solid fa-hand-holding-heart'
   },
   {
     title: 'Nhận sách',
     description: 'Đến quầy thủ thư, xuất trình mã số học sinh để nhận sách vật lý.',
-    icon: 'fa-book-reader'
+    icon: 'fa-solid fa-book-open-reader'
   },
   {
     title: 'Trả sách đúng hạn',
     description: 'Hoàn trả sách trước ngày hết hạn để duy trì điểm tin cậy của bạn.',
-    icon: 'fa-calendar-check'
+    icon: 'fa-solid fa-calendar-check'
   }
 ]
 
-const faqs = [
+const defaultGuideFaqs = [
   {
     question: 'Tôi có thể mượn tối đa bao nhiêu cuốn sách?',
     answer: 'Mỗi học sinh được mượn tối đa 03 cuốn sách cùng một lúc.'
@@ -51,13 +51,56 @@ const faqs = [
   }
 ]
 
-const rules = [
+const defaultGuideRules = [
   'Giữ gìn sách cẩn thận, không viết vẽ lên sách.',
   'Không cho người khác mượn lại thẻ học sinh của mình.',
   'Trả sách đúng hạn quy định để tránh bị phạt.',
   'Giữ trật tự và vệ sinh chung khi đọc sách tại thư viện.'
 ]
 
+const settings = ref({
+  guideHeroTitle: 'Hướng dẫn Mượn sách',
+  guideHeroSubtitle: 'Mọi thứ bạn cần biết để bắt đầu hành trình khám phá tri thức tại thư viện',
+  guideStepsJson: JSON.stringify(defaultSteps, null, 2),
+  guideFaqsJson: JSON.stringify(defaultGuideFaqs, null, 2),
+  guideRulesJson: JSON.stringify(defaultGuideRules, null, 2)
+})
+
+onMounted(() => {
+  const saved = localStorage.getItem('library_settings')
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved)
+      Object.assign(settings.value, parsed)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+})
+
+const steps = computed(() => {
+  try {
+    return JSON.parse(settings.value.guideStepsJson)
+  } catch (e) {
+    return defaultSteps
+  }
+})
+
+const faqs = computed(() => {
+  try {
+    return JSON.parse(settings.value.guideFaqsJson)
+  } catch (e) {
+    return defaultGuideFaqs
+  }
+})
+
+const rules = computed(() => {
+  try {
+    return JSON.parse(settings.value.guideRulesJson)
+  } catch (e) {
+    return defaultGuideRules
+  }
+})
 </script>
 
 <template>
@@ -68,8 +111,8 @@ const rules = [
       <div class="container">
         <!-- Header -->
         <header class="guide-header text-center">
-          <h1>Hướng dẫn <span class="text-accent">Mượn sách</span></h1>
-          <p>Mọi thứ bạn cần biết để bắt đầu hành trình khám phá tri thức tại thư viện</p>
+          <h1>{{ settings.guideHeroTitle }}</h1>
+          <p>{{ settings.guideHeroSubtitle }}</p>
         </header>
 
         <!-- Stepper Section -->
@@ -78,7 +121,7 @@ const rules = [
             <div v-for="(step, index) in steps" :key="index" class="step-item">
               <div class="step-number">{{ index + 1 }}</div>
               <div class="step-card">
-                <div class="step-icon"><i :class="['fas', step.icon]"></i></div>
+                <div class="step-icon"><font-awesome-icon :icon="step.icon" /></div>
                 <h3>{{ step.title }}</h3>
                 <p>{{ step.description }}</p>
               </div>
@@ -91,7 +134,7 @@ const rules = [
           <!-- FAQ Section -->
           <section class="section faq-section">
             <div class="section-title">
-              <i class="fas fa-question-circle"></i>
+              <font-awesome-icon icon="fa-solid fa-circle-question" />
               <h2>Câu hỏi thường gặp</h2>
             </div>
             
@@ -104,7 +147,7 @@ const rules = [
               >
                 <div class="faq-question" @click="toggleFaq(index)">
                   <h3>{{ faq.question }}</h3>
-                  <i class="fas fa-chevron-down"></i>
+                  <font-awesome-icon icon="fa-solid fa-chevron-down" />
                 </div>
                 <div class="faq-answer">
                   <p>{{ faq.answer }}</p>
@@ -117,17 +160,17 @@ const rules = [
           <aside class="section rules-section">
             <div class="rules-card">
               <div class="section-title">
-                <i class="fas fa-gavel"></i>
+                <font-awesome-icon icon="fa-solid fa-scale-balanced" />
                 <h2>Nội quy thư viện</h2>
               </div>
               <ul class="rules-list">
                 <li v-for="(rule, index) in rules" :key="index">
-                  <i class="fas fa-check-circle"></i>
+                  <font-awesome-icon icon="fa-solid fa-circle-check" />
                   {{ rule }}
                 </li>
               </ul>
               <div class="rules-note">
-                <i class="fas fa-info-circle"></i>
+                <font-awesome-icon icon="fa-solid fa-circle-info" />
                 <p>Việc vi phạm nội quy có thể dẫn đến việc tạm dừng quyền mượn sách.</p>
               </div>
             </div>

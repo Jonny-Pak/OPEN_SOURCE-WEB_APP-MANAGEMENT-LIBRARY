@@ -4,6 +4,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 import { cuonSachService } from '@/services/cuonSachService'
+import apiClient from '@/services/apiClient'
 import { sachService } from '@/services/sachService'
 import { useSearch } from '@/composables/useSearch'
 import { usePagination } from '@/composables/usePagination'
@@ -17,12 +18,14 @@ import Pagination from '@/components/admin/shared/Pagination.vue'
 import SkeletonLoader from '@/components/admin/shared/SkeletonLoader.vue'
 import EmptyState from '@/components/admin/shared/EmptyState.vue'
 import StatusBadge from '@/components/admin/shared/StatusBadge.vue'
+import ImportCuonSachExcelModal from '@/components/admin/shared/ImportCuonSachExcelModal.vue'
 
 const toast = useToast()
 const { tuKhoaTimKiem, tuKhoaDebounced } = useSearch(300)
 const phanTrang = usePagination()
 const modalThem = useModal<CuonSach>()
 const modalMaVach = useModal<CuonSach>()
+const modalMaVachImage = ref<string | null>(null)
 
 const dangTai = ref(false)
 const danhSach = ref<CuonSach[]>([])
@@ -36,25 +39,55 @@ const formThem = ref({ sachId: 0, viTriKe: '', tinhTrangVatLy: 'TOT' as TinhTran
 const formSua = ref({ viTriKe: '', tinhTrangVatLy: 'TOT' as TinhTrangVatLy })
 const itemDangSua = ref<CuonSach | null>(null)
 const dangSua = ref(false)
+const showImportCuonSach = ref(false)
 
 const TRANG_THAI_LABEL: Record<TrangThaiCuonSach, { nhan: string; mau: 'xanh' | 'do' | 'vang' | 'xam' }> = {
-  TRONG: { nhan: 'Trong kho', mau: 'xanh' },
-  DA_MUON: { nhan: 'Đang mượn', mau: 'vang' },
-  BAO_TRI: { nhan: 'Bảo trì', mau: 'xam' },
+  SAN_SANG: { nhan: 'Sẵn sàng', mau: 'xanh' },
+  DANG_MUON: { nhan: 'Đang cho mượn', mau: 'vang' },
+  CHO_MUON: { nhan: 'Đã được đặt chỗ', mau: 'xam' },
+  BAO_MAT: { nhan: 'Đã báo mất', mau: 'do' },
 }
 const TINH_TRANG_LABEL: Record<TinhTrangVatLy, string> = { TOT: 'Tốt', HU_HONG: 'Hư hỏng', MAT: 'Mất' }
 
 async function taiDanhSach() {
   dangTai.value = true
   try {
-    danhSach.value = await cuonSachService.danhSach()
-    phanTrang.capNhatTong(danhSach.value.length)
-  } catch { toast.loi('Không thể tải danh sách cuốn sách') }
-  finally { dangTai.value = false }
+    const list = await cuonSachService.danhSach()
+    
+    // Lọc theo trạng thái
+    let loc = [...list]
+    if (filterTrangThai.value) {
+      loc = loc.filter(item => item.trangThai === filterTrangThai.value)
+    }
+    
+    // Lọc theo từ khóa
+    if (tuKhoaDebounced.value.trim()) {
+      const query = tuKhoaDebounced.value.toLowerCase().trim()
+      loc = loc.filter(item => 
+        item.maBarcodeVatLy.toLowerCase().includes(query) || 
+        item.sach.tenSach.toLowerCase().includes(query)
+      )
+    }
+    
+    phanTrang.capNhatTong(loc.length)
+    
+    // Phân trang cục bộ (local pagination)
+    const size = 10
+    const batDau = phanTrang.trangHienTai.value * size
+    const ketThuc = batDau + size
+    danhSach.value = loc.slice(batDau, ketThuc)
+  } catch { 
+    toast.loi('Không thể tải danh sách cuốn sách') 
+  } finally { 
+    dangTai.value = false 
+  }
 }
 
 async function taiDanhSachSach() {
-  try { danhSachSach.value = await sachService.danhSach() } catch { /* im lặng */ }
+  try { 
+    const response = await sachService.danhSach(0, 1000)
+    danhSachSach.value = response.content
+  } catch { /* im lặng */ }
 }
 
 async function luuThem() {
@@ -88,7 +121,7 @@ async function luuSua() {
 
 async function xacNhanXoa() {
   if (!xoaItem.value) return
-  if (xoaItem.value.trangThai !== 'TRONG') { toast.canhBao('Chỉ xóa được cuốn sách đang trong kho'); xoaItem.value = null; return }
+  if (xoaItem.value.trangThai !== 'SAN_SANG') { toast.canhBao('Chỉ xóa được cuốn sách đang sẵn sàng'); xoaItem.value = null; return }
   dangXoa.value = true
   try {
     await cuonSachService.xoa(xoaItem.value.maCuonSach)
@@ -100,6 +133,26 @@ async function xacNhanXoa() {
 
 function inMaVach() { window.print() }
 
+async function openMaVach(item: CuonSach) {
+  modalMaVach.moModalSua(item)
+  modalMaVachImage.value = null
+  try {
+    const blob = await apiClient.get<Blob>(`/api/v1/cuon-sach/${item.maCuonSach}/ma-vach`, { responseType: 'blob' })
+    modalMaVachImage.value = URL.createObjectURL(blob)
+  } catch (e) {
+    console.error('Lỗi tải mã vạch:', e)
+    toast.loi('Không tải được mã vạch')
+  }
+}
+
+// Cleanup object URL when modal closes
+watch(() => modalMaVach.dangMo.value, (val) => {
+  if (!val && modalMaVachImage.value) {
+    URL.revokeObjectURL(modalMaVachImage.value)
+    modalMaVachImage.value = null
+  }
+})
+
 watch([filterTrangThai, tuKhoaDebounced], () => { phanTrang.datLaiTrang(); taiDanhSach() })
 watch(() => phanTrang.trangHienTai.value, taiDanhSach)
 onMounted(() => { taiDanhSach(); taiDanhSachSach() })
@@ -108,14 +161,23 @@ onMounted(() => { taiDanhSach(); taiDanhSachSach() })
 <template>
   <div class="cuon-sach">
     <div class="thanh-cong-cu">
-      <input v-model="tuKhoaTimKiem" class="input-tk" placeholder="🔍 Tìm mã vạch, tên sách..." />
+      <div class="vung-tim-kiem">
+        <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="icon-tim-kiem" />
+        <input v-model="tuKhoaTimKiem" class="input-tk" placeholder="Tìm mã vạch, tên sách..." />
+      </div>
       <select v-model="filterTrangThai" class="select-filter">
         <option value="">Tất cả trạng thái</option>
-        <option value="TRONG">Trong kho</option>
-        <option value="DA_MUON">Đang mượn</option>
-        <option value="BAO_TRI">Bảo trì</option>
+        <option value="SAN_SANG">Sẵn sàng</option>
+        <option value="DANG_MUON">Đang cho mượn</option>
+        <option value="CHO_MUON">Đã được đặt chỗ</option>
+        <option value="BAO_MAT">Đã báo mất</option>
       </select>
-      <button class="nut-them" @click="modalThem.moModalThem()">+ Thêm cuốn sách</button>
+      <button class="nut-them" @click="modalThem.moModalThem()">
+        <font-awesome-icon icon="fa-solid fa-plus" /> Thêm cuốn sách
+      </button>
+      <button class="nut-them nut-import" @click="showImportCuonSach = true">
+        <font-awesome-icon icon="fa-solid fa-file-excel" /> Import Excel
+      </button>
     </div>
 
     <div class="bang-container">
@@ -135,9 +197,15 @@ onMounted(() => { taiDanhSach(); taiDanhSachSach() })
               </td>
               <td>
                 <div class="hanh-dong">
-                  <button class="nut-hd" @click="modalMaVach.moModalSua(item)" title="Xem mã vạch">🔲</button>
-                  <button class="nut-hd" @click="moSua(item)" title="Sửa">✏️</button>
-                  <button class="nut-hd nut-xoa-btn" @click="xoaItem = item" title="Xóa" :disabled="item.trangThai !== 'TRONG'">🗑️</button>
+                  <button class="nut-hd" @click="openMaVach(item)" title="Xem mã vạch">
+                    <font-awesome-icon icon="fa-solid fa-barcode" />
+                  </button>
+                  <button class="nut-hd" @click="moSua(item)" title="Sửa">
+                    <font-awesome-icon icon="fa-solid fa-pen-to-square" />
+                  </button>
+                  <button class="nut-hd nut-xoa-btn" @click="xoaItem = item" title="Xóa" :disabled="item.trangThai !== 'SAN_SANG'">
+                    <font-awesome-icon icon="fa-solid fa-trash-can" />
+                  </button>
                 </div>
               </td>
             </tr>
@@ -190,28 +258,41 @@ onMounted(() => { taiDanhSach(); taiDanhSachSach() })
       <div class="ma-vach-container" id="in-ma-vach">
         <p style="text-align:center;margin-bottom:1rem;color:var(--mau-chu-mo)">{{ modalMaVach.itemDangSua.value?.sach.tenSach }}</p>
         <div class="ma-vach-hinh">
-          <img v-if="modalMaVach.itemDangSua.value" :src="cuonSachService.layMaVach(modalMaVach.itemDangSua.value.maCuonSach)" alt="Mã vạch" style="max-width:100%" />
+          <img v-if="modalMaVach.itemDangSua.value" :src="modalMaVachImage || undefined" alt="Mã vạch" style="max-width:100%" />
         </div>
         <p style="text-align:center;font-family:monospace;margin-top:0.75rem">{{ modalMaVach.itemDangSua.value?.maBarcodeVatLy }}</p>
       </div>
       <template #footer>
         <button class="nut-huy" @click="modalMaVach.dongModal()">Đóng</button>
-        <button class="nut-luu" @click="inMaVach">🖨️ In mã vạch</button>
+        <button class="nut-luu" @click="inMaVach">
+          <font-awesome-icon icon="fa-solid fa-print" /> In mã vạch
+        </button>
       </template>
     </ModalDialog>
 
     <ConfirmDialog :dang-mo="xoaItem !== null" :thong-diep="`Xóa cuốn sách mã '${xoaItem?.maBarcodeVatLy}'?`" :dang-xu-ly="dangXoa" @xac-nhan="xacNhanXoa" @huy="xoaItem = null" />
+
+    <!-- Import cuốn sách Excel -->
+    <ImportCuonSachExcelModal
+      v-if="showImportCuonSach"
+      @close="showImportCuonSach = false"
+      @done="() => { showImportCuonSach = false; taiDanhSach() }"
+    />
   </div>
 </template>
 
 <style scoped>
 .cuon-sach { animation:fadeInUp 0.4s ease; }
 .thanh-cong-cu { display:flex; gap:0.75rem; margin-bottom:1rem; flex-wrap:wrap; }
-.input-tk { flex:1; min-width:200px; padding:0.65rem 1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu); font-family:inherit; font-size:0.875rem; outline:none; }
-.input-tk:focus { border-color:var(--mau-chinh); }
+.vung-tim-kiem { position: relative; display: flex; align-items: center; flex: 1; min-width: 200px; }
+.icon-tim-kiem { position: absolute; left: 1rem; color: var(--mau-chu-mo); pointer-events: none; }
+.input-tk { width: 100%; padding: 0.65rem 1rem 0.65rem 2.5rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--mau-chu); font-family: inherit; font-size: 0.875rem; outline: none; box-sizing: border-box; }
+.input-tk:focus { border-color: var(--mau-chinh); }
 .select-filter { padding:0.65rem 1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu); font-family:inherit; cursor:pointer; }
-.select-filter option { background:#1a1a2e; }
+.select-filter option { background:#1a1a2e; color:#ffffff; }
 .nut-them { padding:0.65rem 1.25rem; background:var(--color-primary); border:none; border-radius:8px; color:white; cursor:pointer; font-family:inherit; font-size:0.875rem; font-weight:600; white-space:nowrap; }
+.nut-import { display: flex; align-items: center; gap: 0.5rem; background: #16a34a; }
+.nut-import:hover { background: #15803d; }
 .bang-container { background:var(--glass-nen); border:1px solid var(--glass-vien); border-radius:12px; overflow:hidden; padding:1rem; }
 .bang { width:100%; border-collapse:collapse; }
 .bang th { padding:0.75rem 1rem; text-align:left; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--mau-chu-mo); border-bottom:1px solid rgba(255,255,255,0.08); }

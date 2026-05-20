@@ -33,6 +33,19 @@
 
   /* Transitions */
   --transition: all 0.3s ease;
+
+  /* Admin Variables */
+  --color-background: #f1f5f9;
+  --color-primary: #06b6d4;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+  --color-success: #10b981;
+  --glass-nen: rgba(255, 255, 255, 0.8);
+  --glass-vien: rgba(255, 255, 255, 0.2);
+  --glass-blur: blur(12px);
+  --mau-chu: #0f172a;
+  --mau-chu-mo: #64748b;
+  --mau-chinh: #06b6d4;
 }
 
 * {

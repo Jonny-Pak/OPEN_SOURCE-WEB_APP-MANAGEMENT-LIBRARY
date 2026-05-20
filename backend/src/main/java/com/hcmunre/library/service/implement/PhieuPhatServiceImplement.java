@@ -1,7 +1,12 @@
 package com.hcmunre.library.service.implement;
 
+import com.hcmunre.library.dto.request.TaoPhieuPhatRequest;
+import com.hcmunre.library.dto.response.NguoiDungResponse;
 import com.hcmunre.library.dto.response.PhieuPhatResponse;
 import com.hcmunre.library.entity.ChiTietPhieuMuon;
+import com.hcmunre.library.entity.CuonSach;
+import com.hcmunre.library.entity.PhieuMuon;
+import com.hcmunre.library.entity.NguoiDung;
 import com.hcmunre.library.entity.PhieuPhat;
 import com.hcmunre.library.enums.TrangThaiThanhToan;
 import com.hcmunre.library.exception.LibraryException;
@@ -10,7 +15,10 @@ import com.hcmunre.library.repository.ChiTietPhieuMuonRepository;
 import com.hcmunre.library.repository.PhieuPhatRepository;
 import com.hcmunre.library.service.PhieuPhatService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,6 +32,7 @@ public class PhieuPhatServiceImplement implements PhieuPhatService {
     private final PhieuPhatRepository phieuPhatRepository;
 
     @Override
+    @Transactional
     public PhieuPhatResponse createPhieuPhat(UUID maChiTietPhieuMuon, Double tienPhat, String lyDoPhat) {
         ChiTietPhieuMuon chiTietPhieuMuon = chiTietPhieuMuonRepository.findById(maChiTietPhieuMuon).orElseThrow(
                 () -> new LibraryException(ErrorCode.PHIEU_MUON_KHONG_TON_TAI));
@@ -41,11 +50,13 @@ public class PhieuPhatServiceImplement implements PhieuPhatService {
     }
 
     @Override
-    public PhieuPhatResponse createPhieuPhat(com.hcmunre.library.dto.request.TaoPhieuPhatRequest request) {
+    @Transactional
+    public PhieuPhatResponse createPhieuPhat(TaoPhieuPhatRequest request) {
         return createPhieuPhat(request.getMaChiTietPhieuMuon(), request.getSoTienPhat(), request.getLyDoPhat());
     }
 
     @Override
+    @Transactional
     public PhieuPhatResponse cancelPhieuPhat(UUID maPhieuPhat){
         PhieuPhat phieuPhat = phieuPhatRepository.findById(maPhieuPhat).orElseThrow(()
                 -> new LibraryException(ErrorCode.PHIEU_PHAT_KHONG_TON_TAI));
@@ -64,6 +75,7 @@ public class PhieuPhatServiceImplement implements PhieuPhatService {
     }
 
         @Override
+    @Transactional
     public PhieuPhatResponse payPhieuPhat(UUID maPhieuPhat) {
         PhieuPhat phieuPhat = phieuPhatRepository.findById(maPhieuPhat).orElseThrow(()
                 -> new LibraryException(ErrorCode.PHIEU_PHAT_KHONG_TON_TAI));
@@ -96,15 +108,54 @@ public class PhieuPhatServiceImplement implements PhieuPhatService {
                 .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
+    @Override
+    public Page<PhieuPhatResponse> getAllPhieuPhat(Pageable pageable) {
+        return phieuPhatRepository.findAll(pageable).map(this::toResponse);
+    }
+
     private PhieuPhatResponse toResponse(PhieuPhat pp) {
+        // ct and pm are nullable: PhieuPhat may outlive a soft-deleted PhieuMuon or ChiTietPhieuMuon
+        ChiTietPhieuMuon ct = pp.getChiTietPhieuMuon();
+        PhieuMuon pm = ct != null ? ct.getPhieuMuon() : null;
+        NguoiDung nd = pm != null ? pm.getNguoiDung() : null;
+
+        NguoiDungResponse ndResp = null;
+        if (nd != null) {
+            ndResp = NguoiDungResponse.builder()
+                    .maNguoiDung(nd.getMaNguoiDung())
+                    .hoDem(nd.getHoDem())
+                    .ten(nd.getTen())
+                    .email(nd.getEmail())
+                    .soDienThoai(nd.getSoDienThoai())
+                    .ngayTao(nd.getNgayTao())
+                    .build();
+        }
+
+        // Lấy thông tin cuốn sách bị phạt
+        String tenSach = null;
+        String maVach = null;
+        if (ct != null && ct.getCuonSach() != null) {
+            CuonSach cuonSach = ct.getCuonSach();
+            maVach = cuonSach.getMaVach();
+            if (cuonSach.getSach() != null) {
+                tenSach = cuonSach.getSach().getTenSach();
+            }
+        }
+
         return PhieuPhatResponse.builder()
                 .maPhieuPhat(pp.getMaPhieuPhat())
-                .maChiTietPhieuMuon(pp.getChiTietPhieuMuon().getMaChiTietPhieuMuon())
+                .maChiTietPhieuMuon(ct != null ? ct.getMaChiTietPhieuMuon() : null) // nullable: ChiTietPhieuMuon may be soft-deleted
                 .soTienPhat(pp.getSoTienPhat())
                 .lyDoPhat(pp.getLyDoPhat())
                 .trangThaiThanhToan(pp.getTrangThaiThanhToan())
                 .ngayThanhToan(pp.getNgayThanhToan())
                 .ngayTao(pp.getNgayTao())
+                .nguoiDung(ndResp)
+                .maPhieuMuon(pm != null ? pm.getMaPhieuMuon() : null) // nullable: PhieuMuon may be soft-deleted
+                .lyDo(pp.getLyDoPhat())
+                .trangThai(pp.getTrangThaiThanhToan() != null ? pp.getTrangThaiThanhToan().name() : null) // trangThaiThanhToan is nullable (legacy data)
+                .tenSach(tenSach)
+                .maVachCuonSach(maVach)
                 .build();
     }
 }

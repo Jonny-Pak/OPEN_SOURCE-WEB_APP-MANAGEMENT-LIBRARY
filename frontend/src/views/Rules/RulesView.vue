@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import { ref, onMounted, computed } from 'vue'
 import Navbar from '../../components/Navbar/Navbar.vue'
 import Footer from '../../components/Footer/Footer.vue'
 
-const ruleCategories = [
+const defaultRules = [
   {
     title: 'Quy định chung',
-    icon: 'fa-info-circle',
+    icon: 'fa-solid fa-circle-info',
     rules: [
       'Học sinh, giáo viên và nhân viên nhà trường khi vào thư viện phải mang theo thẻ học sinh/thẻ công chức.',
       'Giữ gìn trật tự, không làm ồn, không nói chuyện điện thoại trong khu vực đọc sách.',
@@ -15,7 +16,7 @@ const ruleCategories = [
   },
   {
     title: 'Mượn và Trả sách',
-    icon: 'fa-book-reader',
+    icon: 'fa-solid fa-book-open-reader',
     rules: [
       'Mỗi lần mượn không quá 03 cuốn sách trong thời gian tối đa 14 ngày.',
       'Chỉ được mượn sách bằng thẻ của chính mình, không cho người khác mượn thẻ.',
@@ -25,7 +26,7 @@ const ruleCategories = [
   },
   {
     title: 'Sử dụng thiết bị & Tài sản',
-    icon: 'fa-desktop',
+    icon: 'fa-solid fa-screwdriver-wrench',
     rules: [
       'Máy tính chỉ dùng để tra cứu thông tin và phục vụ học tập, không chơi game hay xem nội dung không phù hợp.',
       'Không tự ý thay đổi cấu hình máy tính hoặc cài đặt các phần mềm lạ.',
@@ -35,7 +36,7 @@ const ruleCategories = [
   },
   {
     title: 'Xử lý vi phạm',
-    icon: 'fa-exclamation-triangle',
+    icon: 'fa-solid fa-triangle-exclamation',
     rules: [
       'Trả sách quá hạn sẽ bị phạt tiền theo quy định (1.000đ/ngày/cuốn).',
       'Làm mất sách phải bồi thường theo giá trị thực tế của sách tại thời điểm đó.',
@@ -45,6 +46,32 @@ const ruleCategories = [
   }
 ]
 
+const settings = ref({
+  rulesTitle: 'Nội quy Thư viện',
+  rulesSubtitle: 'Vì một môi trường học tập văn minh, hiện đại và công bằng cho tất cả mọi người',
+  rulesImportantNote: 'Thư viện là không gian chung cho tất cả chúng ta. Việc tuân thủ nội quy không chỉ giúp bảo vệ tài sản nhà trường mà còn thể hiện văn hóa ứng xử của mỗi học sinh. Hãy cùng nhau xây dựng một cộng đồng tri thức văn minh!',
+  rulesJson: JSON.stringify(defaultRules, null, 2)
+})
+
+onMounted(() => {
+  const saved = localStorage.getItem('library_settings')
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved)
+      Object.assign(settings.value, parsed)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+})
+
+const ruleCategories = computed(() => {
+  try {
+    return JSON.parse(settings.value.rulesJson)
+  } catch (e) {
+    return defaultRules
+  }
+})
 </script>
 
 <template>
@@ -55,9 +82,9 @@ const ruleCategories = [
       <div class="container">
         <!-- Hero Section -->
         <header class="rules-hero text-center">
-          <div class="hero-icon"><i class="fas fa-gavel"></i></div>
-          <h1>Nội quy <span class="text-accent">Thư viện</span></h1>
-          <p>Vì một môi trường học tập văn minh, hiện đại và công bằng cho tất cả mọi người</p>
+          <div class="hero-icon"><font-awesome-icon icon="fa-solid fa-scale-balanced" /></div>
+          <h1>{{ settings.rulesTitle }}</h1>
+          <p>{{ settings.rulesSubtitle }}</p>
         </header>
 
         <!-- Rules Grid -->
@@ -65,7 +92,7 @@ const ruleCategories = [
           <section v-for="category in ruleCategories" :key="category.title" class="rule-section">
             <div class="section-header">
               <div class="category-icon">
-                <i :class="['fas', category.icon]"></i>
+                <font-awesome-icon :icon="category.icon" />
               </div>
               <h2>{{ category.title }}</h2>
             </div>
@@ -81,11 +108,11 @@ const ruleCategories = [
         <!-- Callout/Note -->
         <div class="important-note">
           <div class="note-icon">
-            <i class="fas fa-lightbulb"></i>
+            <font-awesome-icon icon="fa-solid fa-circle-info" />
           </div>
           <div class="note-content">
             <h3>Lưu ý quan trọng</h3>
-            <p>Thư viện là không gian chung cho tất cả chúng ta. Việc tuân thủ nội quy không chỉ giúp bảo vệ tài sản nhà trường mà còn thể hiện văn hóa ứng xử của mỗi học sinh. Hãy cùng nhau xây dựng một cộng đồng tri thức văn minh!</p>
+            <div v-html="settings.rulesImportantNote" class="rich-text-block"></div>
           </div>
         </div>
       </div>

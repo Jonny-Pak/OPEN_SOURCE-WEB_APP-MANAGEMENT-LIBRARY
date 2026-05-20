@@ -34,5 +34,31 @@ export const useToastStore = defineStore('toast', () => {
     if (viTri !== -1) danhSachToast.value.splice(viTri, 1)
   }
 
-  return { danhSachToast, them, xoa }
+  // Requested shorthand methods
+  function showSuccess(noiDung: string): void {
+    them('success', noiDung)
+  }
+
+  function showError(noiDung: string): void {
+    them('error', noiDung)
+  }
+
+  function showWarning(noiDung: string): void {
+    them('warning', noiDung)
+  }
+
+  function showInfo(noiDung: string): void {
+    them('info', noiDung)
+  }
+
+  return { 
+    danhSachToast, 
+    them, 
+    xoa,
+    showSuccess,
+    showError,
+    showWarning,
+    showInfo
+  }
 })
+export default useToastStore

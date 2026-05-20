@@ -16,7 +16,7 @@ import ConfirmDialog from '@/components/admin/shared/ConfirmDialog.vue'
 import Pagination from '@/components/admin/shared/Pagination.vue'
 import SkeletonLoader from '@/components/admin/shared/SkeletonLoader.vue'
 import EmptyState from '@/components/admin/shared/EmptyState.vue'
-import ImportExcelModal from '@/components/admin/shared/ImportExcelModal.vue'
+import ImportSachExcelModal from '@/components/admin/shared/ImportSachExcelModal.vue'
 
 const router = useRouter()
 const toast = useToast()
@@ -35,16 +35,15 @@ const showImportModal = ref(false)
 async function taiDanhSach() {
   dangTai.value = true
   try {
-    danhSach.value = await sachService.danhSach()
-    phanTrang.capNhatTong(danhSach.value.length)
+    const response = await sachService.danhSach(
+      phanTrang.trangHienTai.value,
+      10,
+      tuKhoaDebounced.value
+    )
+    danhSach.value = response.content
+    phanTrang.capNhatTong(response.totalElements)
   } catch { toast.loi('Không thể tải danh sách sách') }
   finally { dangTai.value = false }
-}
-
-async function taiTheLoai() {
-  try {
-    danhSachTheLoai.value = await theLoaiService.danhSach()
-  } catch { /* im lặng */ }
 }
 
 async function xacNhanXoa() {
@@ -59,37 +58,43 @@ async function xacNhanXoa() {
   finally { dangXoa.value = false }
 }
 
-async function handleExcelImport(rows: any[]) {
+async function taiDuLieuDanhMuc() {
   try {
-    // TODO: Gửi data lên API backend để import
-    // Tạm thời mock: giả lập delay 1s rồi reload
-    await new Promise(r => setTimeout(r, 1000))
-    toast.thanhCong(`Đã import thành công ${rows.length} sách`)
-    taiDanhSach()
-  } catch { toast.loi('Lỗi import Excel') }
+    danhSachTheLoai.value = await theLoaiService.danhSach()
+  } catch { /* im lặng */ }
+}
+
+async function onImportDone() {
+  toast.thanhCong('Import đầu sách hoàn tất!')
+  showImportModal.value = false
+  taiDanhSach()
 }
 
 watch([tuKhoaDebounced, filterTheLoai], () => { phanTrang.datLaiTrang(); taiDanhSach() })
 watch(() => phanTrang.trangHienTai.value, taiDanhSach)
-onMounted(() => { taiDanhSach(); taiTheLoai() })
+onMounted(() => { taiDanhSach(); taiDuLieuDanhMuc() })
 </script>
 
 <template>
   <div class="sach-list">
-    <!-- Thanh công cụ -->
     <div class="thanh-cong-cu">
-      <input v-model="tuKhoaTimKiem" class="input-tk" placeholder="🔍 Tìm tên sách, ISBN..." />
+      <div class="vung-tim-kiem">
+        <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="icon-tim-kiem" />
+        <input v-model="tuKhoaTimKiem" class="input-tk" placeholder="Tìm tên sách, ISBN..." />
+      </div>
       <select v-model="filterTheLoai" class="select-filter">
         <option value="">Tất cả thể loại</option>
         <option v-for="tl in danhSachTheLoai" :key="tl.maTheLoai" :value="tl.maTheLoai">{{ tl.tenTheLoai }}</option>
       </select>
-      <button class="nut-them" @click="router.push('/admin/sach/them-moi')">+ Thêm đầu sách</button>
+      <button class="nut-them" @click="router.push('/admin/sach/them-moi')">
+        <font-awesome-icon icon="fa-solid fa-plus" /> Thêm đầu sách
+      </button>
       <button
         v-if="can('sach:import-excel')"
         class="nut-them nut-import"
         @click="showImportModal = true"
       >
-        <i class="fas fa-file-excel"></i> Import Excel
+        <font-awesome-icon icon="fa-solid fa-file-excel" /> Import Excel
       </button>
     </div>
 
@@ -108,22 +113,26 @@ onMounted(() => { taiDanhSach(); taiTheLoai() })
             <tr v-for="item in danhSach" :key="item.maSach">
               <td>
                 <div class="anh-bia-nho">
-                  <img v-if="item.anhBiaUrl" :src="item.anhBiaUrl" alt="Ảnh bìa" />
-                  <span v-else class="anh-placeholder"><i class="fas fa-book"></i></span>
+                  <img
+                    v-if="item.danhSachHinhAnh?.find(h => h.loaiHinhAnh === 'BIA_TRUOC') || item.danhSachHinhAnh?.[0]"
+                    :src="(item.danhSachHinhAnh?.find(h => h.loaiHinhAnh === 'BIA_TRUOC') ?? item.danhSachHinhAnh?.[0])?.duongDan"
+                    alt="Ảnh bìa trước"
+                  />
+                  <span v-else class="anh-placeholder"><font-awesome-icon icon="fa-solid fa-book" /></span>
                 </div>
               </td>
               <td><span class="ten-sach">{{ item.tenSach }}</span></td>
-              <td><code class="isbn">{{ item.isbn }}</code></td>
-              <td>{{ item.tacGias.map(t => t.tenTacGia).join(', ') || '—' }}</td>
-              <td>{{ item.nhaXuatBan.tenNXB }}</td>
+              <td><code class="isbn">{{ item.maIsbn }}</code></td>
+              <td>{{ item.danhSachTacGia?.map(t => `${t.hoDem} ${t.ten}`).join(', ') || '—' }}</td>
+              <td>{{ item.nhaXuatBan?.tenNhaXuatBan || '—' }}</td>
               <td>{{ item.namXuatBan }}</td>
               <td>
                 <div class="hanh-dong">
                   <button class="nut-hanh-dong nut-sua" @click="router.push(`/admin/sach/${item.maSach}/chinh-sua`)">
-                    <i class="fas fa-pen-to-square"></i> Sửa
+                    <font-awesome-icon icon="fa-solid fa-pen-to-square" /> Sửa
                   </button>
                   <button class="nut-hanh-dong nut-xoa" @click="xoaItem = item">
-                    <i class="fas fa-trash"></i> Xóa
+                    <font-awesome-icon icon="fa-solid fa-trash-can" /> Xóa
                   </button>
                 </div>
               </td>
@@ -137,10 +146,10 @@ onMounted(() => { taiDanhSach(); taiTheLoai() })
     <ConfirmDialog :dang-mo="xoaItem !== null" :thong-diep="`Xóa đầu sách '${xoaItem?.tenSach}'? Tất cả cuốn sách liên quan cũng sẽ bị xóa.`" :dang-xu-ly="dangXoa" @xac-nhan="xacNhanXoa" @huy="xoaItem = null" />
 
     <!-- Import Excel Modal -->
-    <ImportExcelModal
+    <ImportSachExcelModal
       v-if="showImportModal"
       @close="showImportModal = false"
-      @imported="handleExcelImport"
+      @done="onImportDone"
     />
   </div>
 </template>
@@ -148,10 +157,12 @@ onMounted(() => { taiDanhSach(); taiTheLoai() })
 <style scoped>
 .sach-list { animation: fadeInUp 0.4s ease; }
 .thanh-cong-cu { display:flex; gap:0.75rem; margin-bottom:1rem; flex-wrap:wrap; }
-.input-tk { flex:1; min-width:200px; padding:0.65rem 1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu); font-family:inherit; font-size:0.875rem; outline:none; }
-.input-tk:focus { border-color:var(--mau-chinh); }
+.vung-tim-kiem { position: relative; display: flex; align-items: center; flex: 1; min-width: 200px; }
+.icon-tim-kiem { position: absolute; left: 1rem; color: var(--mau-chu-mo); pointer-events: none; }
+.input-tk { width: 100%; padding: 0.65rem 1rem 0.65rem 2.5rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--mau-chu); font-family: inherit; font-size: 0.875rem; outline: none; box-sizing: border-box; }
+.input-tk:focus { border-color: var(--mau-chinh); }
 .select-filter { padding:0.65rem 1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:var(--mau-chu); font-family:inherit; font-size:0.875rem; cursor:pointer; }
-.select-filter option { background:#1a1a2e; }
+.select-filter option { background:#1a1a2e; color:#ffffff; }
 .nut-them { padding:0.65rem 1.25rem; background:var(--color-primary); border:none; border-radius:8px; color:white; cursor:pointer; font-family:inherit; font-size:0.875rem; font-weight:600; white-space:nowrap; }
 .nut-import { display: flex; align-items: center; gap: 0.5rem; background: #16a34a; }
 .nut-import:hover { background: #15803d; }

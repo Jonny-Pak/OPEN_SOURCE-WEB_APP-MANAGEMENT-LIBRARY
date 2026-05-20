@@ -38,6 +38,7 @@ public class PhieuMuonResponse {
         private TinhTrangVatLy tinhTrangLucMuon;
         private TinhTrangVatLy tinhTrangLucTra;
         private TrangThaiChiTietPhieuMuon trangThaiChiTietPhieuMuon;
+        private String anhBiaUrl;
         private Integer soLanGiaHan;
         private Double donGiaPhatApDung;
 

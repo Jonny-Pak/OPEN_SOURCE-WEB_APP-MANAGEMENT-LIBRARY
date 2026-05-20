@@ -1,5 +1,6 @@
 package com.hcmunre.library.service;
 
+import com.hcmunre.library.dto.request.AdminTaoNguoiDungRequest;
 import com.hcmunre.library.dto.request.ChangePasswordRequest;
 import com.hcmunre.library.dto.request.UpdateProfileRequest;
 import com.hcmunre.library.dto.response.NguoiDungResponse;
@@ -15,14 +16,22 @@ public interface NguoiDungService {
     // Queries
     NguoiDung getNguoiDungActive(UUID maNugoiDung);
 
-    Page<NguoiDungResponse> getAllNguoiDung(Pageable pageable);
+    Page<NguoiDungResponse> getAllNguoiDung(Pageable pageable, String keyword, TrangThaiNguoiDung trangThai);
 
     NguoiDungResponse getMyProfile(UUID maNguoiDung);
 
     // Commands
     NguoiDungResponse updateProfile(UUID maNguoiDung, UpdateProfileRequest request);
+    NguoiDungResponse updateAvatar(UUID maNguoiDung, String avatar);
 
     void changePassword(UUID maNguoiDung, ChangePasswordRequest request);
 
-    void toggleUserStatus(UUID targetUserId, TrangThaiNguoiDung newTrangThai);
+    void toggleUserStatus(UUID id, TrangThaiNguoiDung trangThai);
+
+    NguoiDungResponse createNguoiDung(AdminTaoNguoiDungRequest request);
+    NguoiDungResponse updateNguoiDung(UUID id, UpdateProfileRequest request);
+    void deleteNguoiDung(UUID id);
+
+    /** Admin đổi mật khẩu bất kỳ người dùng (không cần OTP) */
+    void adminDoiMatKhau(UUID id, String matKhauMoi);
 }

@@ -1,5 +1,6 @@
 package com.hcmunre.library.controller;
 
+import com.hcmunre.library.dto.request.AdminTaoNguoiDungRequest;
 import com.hcmunre.library.dto.request.ChangePasswordRequest;
 import com.hcmunre.library.dto.request.UpdateProfileRequest;
 import com.hcmunre.library.dto.response.ImportExcelResponse;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -45,6 +47,13 @@ public class NguoiDungController {
         return ResponseEntity.ok(nguoiDungService.updateProfile(userDetails.getNguoiDung().getMaNguoiDung(), request));
     }
 
+    @PatchMapping("/me/avatar")
+    public ResponseEntity<NguoiDungResponse> updateAvatar(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody Map<String, String> request) {
+        return ResponseEntity.ok(nguoiDungService.updateAvatar(userDetails.getNguoiDung().getMaNguoiDung(), request.get("avatar")));
+    }
+
     // Đổi mật khẩu
     @PutMapping("/me/password")
     public ResponseEntity<Void> changePassword(
@@ -60,14 +69,16 @@ public class NguoiDungController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "maNguoiDung") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction) {
+            @RequestParam(defaultValue = "desc") String direction,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) TrangThaiNguoiDung trangThai) {
         Sort sort = direction.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        return ResponseEntity.ok(nguoiDungService.getAllNguoiDung(pageable));
+        return ResponseEntity.ok(nguoiDungService.getAllNguoiDung(pageable, keyword, trangThai));
     }
 
     @PatchMapping("/{id}/trang-thai")
-    @PreAuthorize("hasRole('QUAN_TRI_VIEN')")
+    @PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'THU_THU')")
     public ResponseEntity<Void> toggleStatus(
             @PathVariable UUID id,
             @RequestParam TrangThaiNguoiDung trangThai) {
@@ -86,5 +97,31 @@ public class NguoiDungController {
     @PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'THU_THU')")
     public ResponseEntity<ImportExcelResponse> importFromExcel(@RequestParam("file") MultipartFile file) {
         return ResponseEntity.ok(importExcelService.importNguoiDung(file));
+    }
+
+    @PostMapping
+    @PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'THU_THU')")
+    public ResponseEntity<NguoiDungResponse> createNguoiDung(@Valid @RequestBody AdminTaoNguoiDungRequest request) {
+        return ResponseEntity.ok(nguoiDungService.createNguoiDung(request));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'THU_THU')")
+    public ResponseEntity<NguoiDungResponse> updateNguoiDung(@PathVariable UUID id, @Valid @RequestBody UpdateProfileRequest request) {
+        return ResponseEntity.ok(nguoiDungService.updateNguoiDung(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('QUAN_TRI_VIEN')")
+    public ResponseEntity<Void> deleteNguoiDung(@PathVariable UUID id) {
+        nguoiDungService.deleteNguoiDung(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/doi-mat-khau")
+    @PreAuthorize("hasRole('QUAN_TRI_VIEN')")
+    public ResponseEntity<Void> adminDoiMatKhau(@PathVariable UUID id, @RequestParam String matKhauMoi) {
+        nguoiDungService.adminDoiMatKhau(id, matKhauMoi);
+        return ResponseEntity.ok().build();
     }
 }

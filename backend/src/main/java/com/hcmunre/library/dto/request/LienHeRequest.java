@@ -14,6 +14,6 @@ public class LienHeRequest {
     @NotBlank(message = "Tiêu đề không được để trống")
     private String tieuDe;
 
-    @NotBlank(message = "Nội dung tên không được để trống")
+    @NotBlank(message = "Nội dung không được để trống")
     private String noiDung;
 }

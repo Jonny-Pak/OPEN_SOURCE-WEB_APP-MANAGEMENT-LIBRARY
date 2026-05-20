@@ -28,11 +28,13 @@ export interface TaoNguoiDungRequest {
   hoDem: string
   ten: string
   email: string
-  matKhau: string
-  soDienThoai: string
+  matKhau?: string
+  soDienThoai?: string
+  cccd?: string
+  ngaySinh?: string
+  gioiTinh?: 'NAM' | 'NU'
   vaiTro?: VaiTro
   trangThai?: TrangThaiNguoiDung
-  isDefaultPassword?: boolean
 }
 
 export interface SuaNguoiDungRequest {
@@ -48,4 +50,9 @@ export interface TaoNguoiDungExcelRequest {
   lop?: string
   khoa?: string
   email: string
+}
+export interface ChangePasswordRequest {
+  matKhauCu: string
+  matKhauMoi: string
+  xacNhanMatKhau: string
 }

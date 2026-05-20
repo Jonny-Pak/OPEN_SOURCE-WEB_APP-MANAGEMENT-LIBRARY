@@ -1,32 +1,48 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import Navbar from '../../components/Navbar/Navbar.vue'
 import Footer from '../../components/Footer/Footer.vue'
 
-const stats = [
-  { label: 'Đầu sách', value: '50,000+', icon: 'fa-book' },
-  { label: 'Bạn đọc', value: '10,000+', icon: 'fa-users' },
-  { label: 'Năm hoạt động', value: '15+', icon: 'fa-calendar-check' },
-  { label: 'Giải thưởng', value: '05', icon: 'fa-award' }
-]
 
 const features = [
   {
     title: 'Tra cứu thông minh',
     description: 'Hệ thống tìm kiếm hiện đại giúp bạn tìm thấy cuốn sách yêu thích chỉ trong vài giây.',
-    icon: 'fa-search'
+    icon: 'fa-solid fa-magnifying-glass'
   },
   {
     title: 'Mượn trả trực tuyến',
     description: 'Quy trình mượn và trả sách được số hóa hoàn toàn, nhanh chóng và tiện lợi.',
-    icon: 'fa-sync-alt'
+    icon: 'fa-solid fa-rotate'
   },
   {
     title: 'Không gian hiện đại',
     description: 'Thư viện cung cấp không gian học tập yên tĩnh với đầy đủ tiện nghi hiện đại.',
-    icon: 'fa-laptop'
+    icon: 'fa-solid fa-laptop'
   }
 ]
 
+const settings = ref({
+  aboutHeroTitle: 'Lan tỏa tri thức, Kết nối đam mê',
+  aboutHeroSubtitle: 'LibManage không chỉ là một hệ thống quản lý thư viện, mà là cầu nối đưa tri thức đến gần hơn với cộng đồng học sinh và giáo viên.',
+  aboutMissionBadge: 'Sứ mệnh của chúng tôi',
+  aboutMissionTitle: 'Xây dựng nền tảng tri thức vững chắc cho tương lai',
+  aboutMissionDesc1: 'Được thành lập từ năm 2010, thư viện của chúng tôi luôn nỗ lực không ngừng để trở thành trung tâm học tập và nghiên cứu hàng đầu. Chúng tôi tin rằng mỗi cuốn sách là một cánh cửa mở ra thế giới mới.',
+  aboutMissionDesc2: 'Với hệ thống quản lý điện tử LibManage, chúng tôi cam kết mang lại trải nghiệm mượn sách hiện đại, minh bạch và hiệu quả nhất cho mọi người dùng.',
+  aboutMissionImage: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&q=80&w=800'
+})
+
+onMounted(() => {
+  const saved = localStorage.getItem('library_settings')
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved)
+      Object.assign(settings.value, parsed)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+})
 </script>
 
 <template>
@@ -38,8 +54,8 @@ const features = [
       <section class="about-hero">
         <div class="container">
           <div class="hero-content">
-            <h1>Lan tỏa tri thức, <br><span class="text-accent">Kết nối đam mê</span></h1>
-            <p>LibManage không chỉ là một hệ thống quản lý thư viện, mà là cầu nối đưa tri thức đến gần hơn với cộng đồng học sinh và giáo viên.</p>
+            <h1>{{ settings.aboutHeroTitle }}</h1>
+            <p v-html="settings.aboutHeroSubtitle"></p>
           </div>
         </div>
       </section>
@@ -49,32 +65,18 @@ const features = [
         <div class="container">
           <div class="mission-grid">
             <div class="mission-image">
-              <img src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&q=80&w=800" alt="Library Mission" />
+              <img :src="settings.aboutMissionImage" alt="Library Mission" />
             </div>
             <div class="mission-text">
-              <span class="section-badge">Sứ mệnh của chúng tôi</span>
-              <h2>Xây dựng nền tảng tri thức vững chắc cho tương lai</h2>
-              <p>Được thành lập từ năm 2010, thư viện của chúng tôi luôn nỗ lực không ngừng để trở thành trung tâm học tập và nghiên cứu hàng đầu. Chúng tôi tin rằng mỗi cuốn sách là một cánh cửa mở ra thế giới mới.</p>
-              <p>Với hệ thống quản lý điện tử LibManage, chúng tôi cam kết mang lại trải nghiệm mượn sách hiện đại, minh bạch và hiệu quả nhất cho mọi người dùng.</p>
+              <span class="section-badge">{{ settings.aboutMissionBadge }}</span>
+              <h2>{{ settings.aboutMissionTitle }}</h2>
+              <div v-html="settings.aboutMissionDesc1" class="rich-text-block"></div>
+              <div v-html="settings.aboutMissionDesc2" class="rich-text-block"></div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Stats Section -->
-      <section class="section stats-section">
-        <div class="container">
-          <div class="stats-grid">
-            <div v-for="stat in stats" :key="stat.label" class="stat-card">
-              <div class="stat-icon"><i :class="['fas', stat.icon]"></i></div>
-              <div class="stat-info">
-                <span class="stat-value">{{ stat.value }}</span>
-                <span class="stat-label">{{ stat.label }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <!-- Features Section -->
       <section class="section features-section">
@@ -86,7 +88,7 @@ const features = [
           
           <div class="features-grid">
             <div v-for="feature in features" :key="feature.title" class="feature-card">
-              <div class="feature-icon"><i :class="['fas', feature.icon]"></i></div>
+              <div class="feature-icon"><font-awesome-icon :icon="feature.icon" /></div>
               <h3>{{ feature.title }}</h3>
               <p>{{ feature.description }}</p>
             </div>

@@ -34,14 +34,23 @@ public class AuthServiceImplement implements AuthService {
         private final PasswordEncoder passwordEncoder;
         private final OtpService otpService;
         private final EmailOutboxService emailOutboxService;
+        private final com.hcmunre.library.service.NhatKyHoatDongService nhatKyHoatDongService;
 
         @Override
         public AuthResponse dangNhap(AuthRequest request) {
                 NguoiDung nguoiDung = nguoiDungRepository.findByEmail(request.getEmail())
                                 .orElseThrow(() -> new LibraryException(ErrorCode.DANG_NHAP_THAT_BAI));
 
+                if (nguoiDung.getNgayXoa() != null) {
+                        throw new LibraryException(ErrorCode.DANG_NHAP_THAT_BAI);
+                }
+
                 if (nguoiDung.getTrangThai() == TrangThaiNguoiDung.KHOA) {
                         throw new LibraryException(ErrorCode.TAI_KHOAN_BI_KHOA);
+                }
+
+                if (nguoiDung.getTrangThai() == TrangThaiNguoiDung.CHUA_KICH_HOAT) {
+                        throw new LibraryException(ErrorCode.TAI_KHOAN_CHUA_KICH_HOAT);
                 }
 
                 try {
@@ -58,6 +67,10 @@ public class AuthServiceImplement implements AuthService {
 
                         log.info("Đăng nhập thành công cho email: {}", request.getEmail());
 
+                        try {
+                                nhatKyHoatDongService.ghiLog(nd.getMaNguoiDung(), "Đăng nhập thành công", "Người dùng " + nd.getHoTen() + " (" + nd.getEmail() + ") đăng nhập thành công vào hệ thống.");
+                        } catch (Exception ex) {}
+
                         return AuthResponse.builder()
                                         .maNguoiDung(nd.getMaNguoiDung())
                                         .accessToken(jwtToken)
@@ -71,6 +84,9 @@ public class AuthServiceImplement implements AuthService {
 
                 } catch (BadCredentialsException e) {
                         log.warn("Đăng nhập thất bại cho email: {}", request.getEmail());
+                        try {
+                                nhatKyHoatDongService.ghiLog(nguoiDung.getMaNguoiDung(), "Đăng nhập thất bại", "Thử đăng nhập bằng email: " + request.getEmail() + " nhưng thất bại do nhập sai mật khẩu.");
+                        } catch (Exception ex) {}
                         throw new LibraryException(ErrorCode.DANG_NHAP_THAT_BAI);
                 }
         }

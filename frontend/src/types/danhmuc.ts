@@ -4,26 +4,32 @@
 
 export interface TacGia {
   maTacGia: number
-  tenTacGia: string
+  hoDem: string
+  ten: string
   tieuSu?: string
+  hinhAnh?: string
 }
 
 export interface TaoTacGiaRequest {
-  tenTacGia: string
+  hoDem: string
+  ten: string
   tieuSu?: string
+  hinhAnh?: string
 }
 
 export interface NhaXuatBan {
-  maNXB: number
-  tenNXB: string
+  maNhaXuatBan: number
+  tenNhaXuatBan: string
   diaChi?: string
-  website?: string
+  soDienThoai?: string
+  email?: string
 }
 
 export interface TaoNhaXuatBanRequest {
-  tenNXB: string
+  tenNhaXuatBan: string
   diaChi?: string
-  website?: string
+  soDienThoai?: string
+  email?: string
 }
 
 export interface TheLoai {

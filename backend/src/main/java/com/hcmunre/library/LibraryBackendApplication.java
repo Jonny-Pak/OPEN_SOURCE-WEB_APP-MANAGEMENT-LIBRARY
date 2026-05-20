@@ -12,4 +12,4 @@ public class LibraryBackendApplication {
 		SpringApplication.run(LibraryBackendApplication.class, args);
 	}
 
-}
+};

@@ -1,16 +1,34 @@
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+
+const logoUrl = ref('')
+
+onMounted(() => {
+  const savedSettings = localStorage.getItem('library_settings')
+  if (savedSettings) {
+    try {
+      const parsed = JSON.parse(savedSettings)
+      if (parsed.logo) {
+        logoUrl.value = parsed.logo
+      }
+    } catch {}
+  }
+})
+</script>
+
 <template>
   <footer class="footer">
     <div class="container footer-content">
       <div class="footer-brand">
         <div class="logo">
-          <span class="logo-text">THƯ VIỆN <span class="text-accent">ĐIỆN TỬ</span></span>
+          <img v-if="logoUrl" :src="logoUrl" alt="Logo" class="footer-logo-img" />
+          <span v-else class="logo-text">THƯ VIỆN <span class="text-accent">ĐIỆN TỬ</span></span>
         </div>
         <p>Hệ thống quản lý thư viện mã nguồn mở hiện đại, giúp kết nối tri thức và cộng đồng.</p>
         <div class="social-links">
-          <a href="#"><i class="fab fa-facebook-f"></i></a>
-          <a href="#"><i class="fab fa-twitter"></i></a>
-          <a href="#"><i class="fab fa-instagram"></i></a>
-          <a href="#"><i class="fab fa-linkedin-in"></i></a>
+          <a href="#" title="Facebook"><font-awesome-icon :icon="['fab', 'facebook']" /></a>
+          <a href="#" title="GitHub"><font-awesome-icon :icon="['fab', 'github']" /></a>
+          <a href="#" title="YouTube"><font-awesome-icon :icon="['fab', 'youtube']" /></a>
         </div>
       </div>
       

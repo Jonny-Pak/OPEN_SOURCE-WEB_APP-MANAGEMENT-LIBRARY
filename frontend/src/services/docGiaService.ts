@@ -1,162 +1,107 @@
-// /**
-//  * docGiaService.ts — Service quản lý Độc giả / Người dùng.
-//  */
-// import apiClient from './apiClient'
-// import type { NguoiDung, TaoNguoiDungExcelRequest, TaoNguoiDungRequest, SuaNguoiDungRequest } from '@/types/nguoidung'
-
-// export const docGiaService = {
-//   danhSach: () =>
-//     apiClient.get<NguoiDung[]>('/api/v1/nguoi-dung'),
-
-//   taoCai: (body: TaoNguoiDungRequest) =>
-//     apiClient.post<NguoiDung>('/api/v1/nguoi-dung', body),
-
-//   capNhat: (id: string, body: SuaNguoiDungRequest) =>
-//     apiClient.put<NguoiDung>(`/api/v1/nguoi-dung/${id}`, body),
-
-//   xoa: (id: string) =>
-//     apiClient.delete<void>(`/api/v1/admin/nguoi-dung/${id}`),
-
-//   khoa: (id: string) =>
-//     apiClient.put<NguoiDung>(`/api/v1/admin/nguoi-dung/${id}/khoa`),
-
-//   moKhoa: (id: string) =>
-//     apiClient.put<NguoiDung>(`/api/v1/admin/nguoi-dung/${id}/mo-khoa`),
-
-//   kichHoat: (id: string) =>
-//     apiClient.put<NguoiDung>(`/api/v1/admin/nguoi-dung/${id}/kich-hoat`),
-
-//   taoHangLoat: (danhSach: TaoNguoiDungExcelRequest[]) =>
-//     apiClient.post<{ thanhCong: number; thatBai: number; loi: Array<{ email: string; message: string }> }>(
-//       '/api/v1/admin/nguoi-dung/tao-hang-loat',
-//       { danhSach },
-//     ),
-// }
 /**
- * docGiaService.ts — (MOCK DATA) Service quản lý Độc giả / Người dùng.
+ * docGiaService.ts — Service quản lý Độc giả / Người dùng.
  */
+import apiClient from './apiClient'
+import type { PageResponse } from '@/types/common'
 import type { NguoiDung, TaoNguoiDungExcelRequest, TaoNguoiDungRequest, SuaNguoiDungRequest } from '@/types/nguoidung'
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-
-let mockNguoiDung: NguoiDung[] = [
-  {
-    maNguoiDung: '1',
-    hoDem: 'Nguyễn Văn',
-    ten: 'A',
-    email: 'nva@school.edu.vn',
-    soDienThoai: '0901234567',
-    vaiTro: 'DOC_GIA',
-    trangThai: 'HOAT_DONG',
-    ngayTao: '2025-09-05T08:00:00Z'
-  },
-  {
-    maNguoiDung: '2',
-    hoDem: 'Trần Thị',
-    ten: 'B',
-    email: 'ttb@school.edu.vn',
-    soDienThoai: '0912345678',
-    vaiTro: 'DOC_GIA',
-    trangThai: 'CHUA_KICH_HOAT',
-    ngayTao: '2026-05-10T08:00:00Z'
-  },
-  {
-    maNguoiDung: '3',
-    hoDem: 'Lê Văn',
-    ten: 'C',
-    email: 'lvc@school.edu.vn',
-    soDienThoai: '0923456789',
-    vaiTro: 'DOC_GIA',
-    trangThai: 'BI_KHOA',
-    ngayTao: '2025-12-01T08:00:00Z'
-  }
-]
-
 export const docGiaService = {
-  danhSach: async () => { await delay(500); return [...mockNguoiDung] },
-
-  taoCai: async (body: TaoNguoiDungRequest) => {
-    await delay(600)
-    const newId = `SV${Date.now().toString().slice(-5)}`
-    const newDocGia: NguoiDung = {
-      maNguoiDung: newId,
-      hoDem: body.hoDem,
-      ten: body.ten,
-      email: body.email,
-      soDienThoai: body.soDienThoai,
-      vaiTro: body.vaiTro || 'DOC_GIA',
-      trangThai: body.trangThai || 'CHUA_KICH_HOAT',
-      ngayTao: new Date().toISOString()
+  danhSach: (page: number = 0, size: number = 10, keyword: string = '', trangThai: string = '', sortBy: string = '', direction: string = '') => {
+    const params = new URLSearchParams()
+    params.append('page', page.toString())
+    params.append('size', size.toString())
+    if (keyword) params.append('keyword', keyword)
+    if (trangThai && trangThai !== 'all') {
+      let statusParam = ''
+      if (trangThai === 'chua_kich_hoat') statusParam = 'CHUA_KICH_HOAT'
+      else if (trangThai === 'da_kich_hoat') statusParam = 'HOAT_DONG'
+      else if (trangThai === 'bi_khoa') statusParam = 'KHOA'
+      
+      if (statusParam) params.append('trangThai', statusParam)
     }
-    mockNguoiDung.push(newDocGia)
-    return newDocGia
+    if (sortBy) params.append('sortBy', sortBy)
+    if (direction) params.append('direction', direction)
+    return apiClient.get<PageResponse<NguoiDung>>(`/api/v1/nguoi-dung?${params.toString()}`)
   },
 
-  capNhat: async (id: string, body: SuaNguoiDungRequest) => {
-    await delay(500)
-    const index = mockNguoiDung.findIndex(nd => nd.maNguoiDung === id)
-    if (index !== -1) {
-      const nguoiDungToUpdate = mockNguoiDung[index]
-      if (nguoiDungToUpdate) {
-        nguoiDungToUpdate.hoDem = body.hoDem
-        nguoiDungToUpdate.ten = body.ten
-        nguoiDungToUpdate.soDienThoai = body.soDienThoai
-      }
-    }
-    return mockNguoiDung[index]
-  },
+  taoCai: (body: TaoNguoiDungRequest) =>
+    apiClient.post<NguoiDung>('/api/v1/nguoi-dung', body),
 
-  xoa: async (id: string) => {
-    await delay(400)
-    mockNguoiDung = mockNguoiDung.filter(nd => nd.maNguoiDung !== id)
-  },
+  capNhat: (id: string, body: SuaNguoiDungRequest) =>
+    apiClient.put<NguoiDung>(`/api/v1/nguoi-dung/${id}`, body),
 
-  khoa: async (id: string) => {
-    await delay(400)
-    const index = mockNguoiDung.findIndex(nd => nd.maNguoiDung === id)
-    if (index !== -1) {
-      const nguoiDung = mockNguoiDung[index]
-      if (nguoiDung) nguoiDung.trangThai = 'BI_KHOA'
-    }
-    return mockNguoiDung[index]
-  },
+  xoa: (id: string) =>
+    apiClient.delete<void>(`/api/v1/nguoi-dung/${id}`),
 
-  moKhoa: async (id: string) => {
-    await delay(400)
-    const index = mockNguoiDung.findIndex(nd => nd.maNguoiDung === id)
-    if (index !== -1) {
-      const nguoiDung = mockNguoiDung[index]
-      if (nguoiDung) nguoiDung.trangThai = 'HOAT_DONG'
-    }
-    return mockNguoiDung[index]
-  },
+  khoa: (id: string) =>
+    apiClient.patch<NguoiDung>(`/api/v1/nguoi-dung/${id}/trang-thai?trangThai=KHOA`),
 
-  kichHoat: async (id: string) => {
-    await delay(400)
-    const index = mockNguoiDung.findIndex(nd => nd.maNguoiDung === id)
-    if (index !== -1) {
-      const nguoiDung = mockNguoiDung[index]
-      if (nguoiDung) nguoiDung.trangThai = 'HOAT_DONG' // Chuyển thẳng sang Hoạt động
-    }
-    return mockNguoiDung[index]
-  },
+  moKhoa: (id: string) =>
+    apiClient.patch<NguoiDung>(`/api/v1/nguoi-dung/${id}/trang-thai?trangThai=HOAT_DONG`),
 
-  taoHangLoat: async (danhSach: TaoNguoiDungExcelRequest[]) => {
-    await delay(1000) // Giả lập load file nặng xíu
-    const soLuong = danhSach.length
-    // Chèn luôn vào mảng mock
-    danhSach.forEach(item => {
-      mockNguoiDung.push({
-        maNguoiDung: item.mssv || `SV${Date.now().toString().slice(-4)}`,
-        hoDem: item.hoDem,
-        ten: item.ten,
-        email: item.email,
-        soDienThoai: '0123456789', // Fake default
-        vaiTro: 'DOC_GIA',
-        trangThai: 'CHUA_KICH_HOAT',
-        ngayTao: new Date().toISOString()
+  kichHoat: (id: string) =>
+    apiClient.patch<NguoiDung>(`/api/v1/nguoi-dung/${id}/trang-thai?trangThai=HOAT_DONG`),
+
+  taoHangLoat: (danhSach: TaoNguoiDungExcelRequest[]) =>
+    apiClient.post<{ thanhCong: number; thatBai: number; loi: Array<{ email: string; message: string }> }>(
+      '/api/v1/admin/nguoi-dung/tao-hang-loat',
+      { danhSach },
+    ),
+
+  importExcel: (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return apiClient.upload<any>('/api/v1/nguoi-dung/import-excel', formData).then((res) => {
+      const rawList = res.danhSachLoi || res.loi || []
+      const loi = rawList.map((item: any) => {
+        if (typeof item === 'string') {
+          return { email: 'Chi tiết', message: item }
+        }
+        return {
+          email: item.email || 'Lỗi',
+          message: item.message || item.msg || 'Không rõ nguyên nhân'
+        }
       })
+      return {
+        thanhCong: res.thanhCong || 0,
+        thatBai: res.thatBai || 0,
+        loi
+      }
     })
-    return { thanhCong: soLuong, thatBai: 0, loi: [] }
   },
+
+  // Requested English methods
+  getAll: (params?: any) => {
+    const p = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, val]) => {
+        if (val !== undefined && val !== null) {
+          p.append(key, String(val))
+        }
+      })
+    }
+    return apiClient.get<PageResponse<NguoiDung>>(`/api/v1/nguoi-dung?${p.toString()}`)
+  },
+
+  getById: (id: string) => {
+    return apiClient.get<NguoiDung>(`/api/v1/nguoi-dung/${id}`)
+  },
+
+  getMyProfile: () => {
+    return apiClient.get<NguoiDung>('/api/v1/nguoi-dung/me')
+  },
+
+  updateProfile: (body: SuaNguoiDungRequest) => {
+    return apiClient.put<NguoiDung>('/api/v1/nguoi-dung/me', body)
+  },
+
+  getBorrowHistory: (id: string) => {
+    return apiClient.get<any>(`/api/v1/doc-gia/${id}/lich-su-muon`)
+  },
+
+  /** Admin đổi mật khẩu không cần OTP */
+  adminDoiMatKhau: (id: string, matKhauMoi: string) =>
+    apiClient.patch<void>(`/api/v1/nguoi-dung/${id}/doi-mat-khau?matKhauMoi=${encodeURIComponent(matKhauMoi)}`, {}),
 }
+
+export default docGiaService

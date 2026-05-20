@@ -7,6 +7,7 @@ import com.hcmunre.library.dto.request.TraToanBoRequest;
 import com.hcmunre.library.dto.response.GiaHanResponse;
 import com.hcmunre.library.dto.response.PhieuMuonResponse;
 
+import com.hcmunre.library.enums.TrangThaiGiaHan;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -25,6 +26,8 @@ public interface PhieuMuonService {
 
     boolean checkCuonSachQuaHan(UUID maNguoiDung);
 
+    List<GiaHanResponse> getDanhSachYeuCauGiaHan(TrangThaiGiaHan trangThai);
+
     // Commands
     PhieuMuonResponse createPhieuMuon(MuonSachRequest request);
 
@@ -33,6 +36,12 @@ public interface PhieuMuonService {
     void cancelPhieuMuon(UUID maPhieuMuon);
 
     GiaHanResponse createGiaHan(GiaHanRequest request);
+
+    GiaHanResponse giaHanDocGia(UUID maChiTietPhieuMuon, UUID maNguoiDung);
+
+    GiaHanResponse yeuCauGiaHanDocGia(UUID maChiTietPhieuMuon, UUID maNguoiDung, int soNgayGiaHan);
+
+    GiaHanResponse duyetYeuCauGiaHan(UUID maLichSuGiaHan, UUID maAdmin, boolean dongY);
 
     void reportMatSach(UUID maChiTietPhieuMuon);
 

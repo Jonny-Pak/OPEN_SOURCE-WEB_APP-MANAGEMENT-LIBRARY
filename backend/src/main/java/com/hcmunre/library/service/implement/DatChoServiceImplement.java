@@ -1,6 +1,7 @@
 package com.hcmunre.library.service.implement;
 
 import com.hcmunre.library.dto.request.DatChoRequest;
+import com.hcmunre.library.dto.request.MuonSachRequest;
 import com.hcmunre.library.dto.response.DatChoResponse;
 import com.hcmunre.library.entity.CuonSach;
 import com.hcmunre.library.entity.DatCho;
@@ -17,6 +18,8 @@ import com.hcmunre.library.service.DatChoService;
 import com.hcmunre.library.service.NguoiDungService;
 import com.hcmunre.library.service.PhieuMuonService;
 import com.hcmunre.library.service.PhieuPhatService;
+import com.hcmunre.library.service.ThongBaoService;
+import com.hcmunre.library.enums.LoaiThongBao;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +38,8 @@ public class DatChoServiceImplement implements DatChoService {
     private final CuonSachRepository cuonSachRepository;
     private final PhieuPhatService phieuPhatService;
     private final PhieuMuonService phieuMuonService;
+    private final ThongBaoService thongBaoService;
+    private final com.hcmunre.library.service.NhatKyHoatDongService nhatKyHoatDongService;
 
     @Override
     @Transactional
@@ -83,7 +88,29 @@ public class DatChoServiceImplement implements DatChoService {
                 .trangThai(TrangThaiDatCho.DANG_CHO)
                 .build();
 
-        return toDatChoResponse(datChoRepository.save(datCho));
+        DatCho savedDatCho = datChoRepository.save(datCho);
+
+        try {
+            thongBaoService.taoThongBaoChoAdmin(
+                "Yêu cầu đặt chỗ mới",
+                "Độc giả " + nguoiDung.getHoTen() + " đã đặt chỗ sách \"" + sach.getTenSach() + "\". Vui lòng chuẩn bị và duyệt mượn.",
+                LoaiThongBao.DAT_CHO
+            );
+        } catch (Exception e) {
+            // catch warning and avoid transaction rollback
+        }
+
+        try {
+            nhatKyHoatDongService.ghiLog(
+                nguoiDung.getMaNguoiDung(),
+                "Đặt chỗ sách",
+                "Độc giả " + nguoiDung.getHoTen() + " đã yêu cầu đặt chỗ cuốn sách \"" + sach.getTenSach() + "\"."
+            );
+        } catch (Exception e) {
+            // ignore
+        }
+
+        return toDatChoResponse(savedDatCho);
     }
 
     @Override
@@ -99,6 +126,91 @@ public class DatChoServiceImplement implements DatChoService {
         datCho.setTrangThai(TrangThaiDatCho.DA_HUY);
         datCho.setGhiChuHuy(ghiChuHuy);
         datChoRepository.save(datCho);
+
+        try {
+            thongBaoService.taoThongBao(
+                datCho.getNguoiDung().getMaNguoiDung(),
+                "Yêu cầu đặt chỗ bị từ chối/hủy",
+                "Đơn đặt chỗ cuốn sách \"" + datCho.getSach().getTenSach() + "\" của bạn đã bị hủy. Lý do: " + ghiChuHuy,
+                LoaiThongBao.CANH_BAO
+            );
+        } catch (Exception e) {
+            // catch warning and avoid transaction rollback
+        }
+
+        try {
+            nhatKyHoatDongService.ghiLog(
+                getMaNguoiDungHienTai(),
+                "Hủy đặt chỗ sách",
+                "Hủy đơn đặt chỗ cuốn sách \"" + datCho.getSach().getTenSach() + "\" của độc giả " + datCho.getNguoiDung().getHoTen() + ". Lý do: " + ghiChuHuy
+            );
+        } catch (Exception e) {}
+    }
+
+    @Override
+    @Transactional
+    public DatChoResponse duyetDatCho(UUID maDatCho) {
+        DatCho datCho = datChoRepository.findById(maDatCho).orElseThrow(
+                () -> new LibraryException(ErrorCode.DAT_CHO_KHONG_TON_TAI)
+        );
+
+        if (datCho.getTrangThai() != TrangThaiDatCho.DANG_CHO) {
+            throw new LibraryException(ErrorCode.DAT_CHO_DA_XU_LY);
+        }
+
+        // Find available copy of the book
+        List<CuonSach> availableBooks = cuonSachRepository.findBySach_MaSachAndTrangThai(
+                datCho.getSach().getMaSach(), TrangThaiCuonSach.SAN_SANG);
+        
+        if (availableBooks.isEmpty()) {
+            throw new LibraryException(ErrorCode.CUON_SACH_KHONG_SAN_SANG);
+        }
+
+        CuonSach cuonSach = availableBooks.get(0);
+
+        // Construct loan request
+        MuonSachRequest request = new MuonSachRequest();
+        request.setMaNguoiDung(datCho.getNguoiDung().getMaNguoiDung());
+        request.setDanhSachMaVach(List.of(cuonSach.getMaVach()));
+
+        // Create the loan, which will automatically update the DatCho status to DA_NHAN_SACH
+        phieuMuonService.createPhieuMuon(request);
+
+        // Fetch the updated reservation to return
+        DatCho updatedDatCho = datChoRepository.findById(maDatCho).orElseThrow(
+                () -> new LibraryException(ErrorCode.DAT_CHO_KHONG_TON_TAI)
+        );
+
+        try {
+            thongBaoService.taoThongBao(
+                datCho.getNguoiDung().getMaNguoiDung(),
+                "Yêu cầu đặt chỗ được duyệt",
+                "Đơn đặt chỗ cuốn sách \"" + datCho.getSach().getTenSach() + "\" của bạn đã được duyệt thành công! Bạn có thể nhận sách.",
+                LoaiThongBao.HE_THONG
+            );
+        } catch (Exception e) {
+            // catch warning and avoid transaction rollback
+        }
+
+        try {
+            nhatKyHoatDongService.ghiLog(
+                getMaNguoiDungHienTai(),
+                "Duyệt đặt chỗ",
+                "Phê duyệt đặt chỗ sách \"" + datCho.getSach().getTenSach() + "\" cho độc giả " + datCho.getNguoiDung().getHoTen() + "."
+            );
+        } catch (Exception e) {}
+
+        return toDatChoResponse(updatedDatCho);
+    }
+
+    private UUID getMaNguoiDungHienTai() {
+        try {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof com.hcmunre.library.security.CustomUserDetails) {
+                return ((com.hcmunre.library.security.CustomUserDetails) auth.getPrincipal()).getNguoiDung().getMaNguoiDung();
+            }
+        } catch (Exception e) {}
+        return null;
     }
 
 
@@ -116,16 +228,58 @@ public class DatChoServiceImplement implements DatChoService {
     }
 
     private DatChoResponse toDatChoResponse(DatCho datCho){
+        Long maSach = null;
+        String tenSach = "Đầu sách đã bị xóa";
+        String maIsbn = "N/A";
+        try {
+            if (datCho.getSach() != null) {
+                maSach = datCho.getSach().getMaSach();
+                tenSach = datCho.getSach().getTenSach();
+                maIsbn = datCho.getSach().getMaIsbn();
+            }
+        } catch (jakarta.persistence.EntityNotFoundException | org.hibernate.ObjectNotFoundException e) {
+            // Gracefully handle deleted book
+        }
+
+        UUID maNguoiDung = null;
+        String hoDemNguoiDung = "";
+        String tenNguoiDung = "Độc giả đã bị xóa";
+        String emailNguoiDung = "N/A";
+        try {
+            if (datCho.getNguoiDung() != null) {
+                maNguoiDung = datCho.getNguoiDung().getMaNguoiDung();
+                hoDemNguoiDung = datCho.getNguoiDung().getHoDem();
+                tenNguoiDung = datCho.getNguoiDung().getTen();
+                emailNguoiDung = datCho.getNguoiDung().getEmail();
+            }
+        } catch (jakarta.persistence.EntityNotFoundException | org.hibernate.ObjectNotFoundException e) {
+            // Gracefully handle deleted user
+        }
+
         return DatChoResponse.builder()
                 .maDatCho(datCho.getMaDatCho())
-                .maSach(datCho.getSach().getMaSach())
-                .tenSach(datCho.getSach().getTenSach())
-                .maNguoiDung(datCho.getNguoiDung().getMaNguoiDung())
-                .tenNguoiDung(datCho.getNguoiDung().getTen())
+                .maSach(maSach)
+                .tenSach(tenSach)
+                .maIsbn(maIsbn)
+                .maNguoiDung(maNguoiDung)
+                .hoDemNguoiDung(hoDemNguoiDung)
+                .tenNguoiDung(tenNguoiDung)
+                .emailNguoiDung(emailNguoiDung)
                 .thoiGianDatCho(datCho.getThoiGianDatCho())
                 .hanGiuCho(datCho.getHanGiuCho())
                 .trangThaiDatCho(datCho.getTrangThai())
                 .ghiChuHuy(datCho.getGhiChuHuy())
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public void updateStatusOnBookReturn(Long maSach) {
+        List<DatCho> reservations = datChoRepository.findBySach_MaSachAndTrangThaiOrderByThoiGianDatChoAsc(maSach, TrangThaiDatCho.DANG_CHO);
+        if (!reservations.isEmpty()) {
+            DatCho oldestReservation = reservations.get(0);
+            oldestReservation.setHanGiuCho(LocalDateTime.now().plusDays(1));
+            datChoRepository.save(oldestReservation);
+        }
     }
 }

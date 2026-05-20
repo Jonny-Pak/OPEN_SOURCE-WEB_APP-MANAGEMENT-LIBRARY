@@ -17,4 +17,5 @@ public interface DatChoRepository extends JpaRepository<DatCho, UUID> {
     List<DatCho> findByTrangThaiAndHanGiuChoBefore(TrangThaiDatCho trangThai, LocalDateTime hanGiuCho);
     long countBySach_MaSachAndTrangThai(Long maSach, TrangThaiDatCho trangThai);
     long countByNguoiDung_MaNguoiDungAndTrangThai(UUID maNguoiDung, TrangThaiDatCho trangThai);
+    List<DatCho> findBySach_MaSachAndTrangThaiOrderByThoiGianDatChoAsc(Long maSach, TrangThaiDatCho trangThai);
 }

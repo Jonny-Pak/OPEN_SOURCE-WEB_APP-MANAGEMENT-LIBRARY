@@ -9,8 +9,9 @@ export type TrangThaiDatCho = 'CHO_DUYET' | 'DA_SAN_SANG' | 'DA_HUY' | 'DA_MUON'
 export interface DatCho {
   maDatCho: number
   nguoiDung: Pick<NguoiDung, 'maNguoiDung' | 'hoDem' | 'ten' | 'email'>
-  sach: Pick<Sach, 'maSach' | 'tenSach' | 'isbn'>
-  ngayDat: string
+  sach: Pick<Sach, 'maSach' | 'tenSach' | 'maIsbn'>
+  ngayDatCho: string
+  ngayHetHan: string
   trangThai: TrangThaiDatCho
 }
 

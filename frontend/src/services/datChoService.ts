@@ -1,85 +1,92 @@
-// /**
-//  * datChoService.ts — Service quản lý Đặt chỗ mượn sách.
-//  */
-// import apiClient from './apiClient'
-// import type { PageResponse } from '@/types/common'
-// import type { DatCho, HuyDatChoRequest, TrangThaiDatCho } from '@/types/datcho'
-
-// export const datChoService = {
-//   danhSach: () =>
-//     apiClient.get<DatCho[]>('/api/v1/dat-cho'),
-
-//   /** Độc giả tự đặt chỗ mượn sách theo sachId */
-//   taoChoDocGia: (sachId: number) =>
-//     apiClient.post<DatCho>('/api/v1/dat-cho', { sachId }),
-
-//   duyet: (id: number) =>
-//     apiClient.put<DatCho>(`/api/v1/dat-cho/${id}/duyet`),
-
-//   huy: (id: number, body: HuyDatChoRequest) =>
-//     apiClient.put<DatCho>(`/api/v1/dat-cho/${id}/huy`, body)
-// }
 /**
- * datChoService.ts — (MOCK DATA) Service quản lý Đặt chỗ mượn sách.
+ * datChoService.ts — Service quản lý Đặt chỗ mượn sách.
  */
-import type { DatCho, HuyDatChoRequest } from '@/types/datcho'
+import apiClient from './apiClient'
+import { useAuthStore } from '@/stores/auth'
+import type { DatCho, HuyDatChoRequest, TrangThaiDatCho } from '@/types/datcho'
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-
-let mockDatCho: DatCho[] = [
-  {
-    maDatCho: 1,
-    nguoiDung: { maNguoiDung: '3', hoDem: 'Lê Văn', ten: 'C', email: 'lvc@school.edu.vn' },
-    sach: { maSach: 1, tenSach: 'Kính Vạn Hoa - Tập 1', isbn: '978-604-2-22874-5' },
-    ngayDat: '2026-05-11T10:00:00Z',
-    trangThai: 'CHO_DUYET'
-  },
-  {
-    maDatCho: 2,
-    nguoiDung: { maNguoiDung: '4', hoDem: 'Phạm Thị', ten: 'D', email: 'ptd@school.edu.vn' },
-    sach: { maSach: 2, tenSach: 'Đắc Nhân Tâm', isbn: '978-604-3-18465-1' },
-    ngayDat: '2026-05-09T14:30:00Z',
-    trangThai: 'DA_SAN_SANG'
+function mapResponseToDatCho(res: any): DatCho {
+  if (!res) return res
+  if (res.nguoiDung && res.sach) {
+    return res
   }
-]
 
-export const datChoService = {
-  danhSach: async () => { await delay(500); return [...mockDatCho] },
+  let status: TrangThaiDatCho = 'CHO_DUYET'
+  const rawStatus = res.trangThaiDatCho || res.trangThai
+  if (rawStatus === 'DANG_CHO') {
+    status = 'CHO_DUYET'
+  } else if (rawStatus === 'DA_NHAN_SACH' || rawStatus === 'DA_MUON') {
+    status = 'DA_MUON'
+  } else if (rawStatus === 'DA_HUY' || rawStatus === 'HET_HAN') {
+    status = 'DA_HUY'
+  } else if (rawStatus === 'DA_SAN_SANG') {
+    status = 'DA_SAN_SANG'
+  }
 
-  taoChoDocGia: async (sachId: number) => {
-    await delay(600)
-    const newId = mockDatCho.length ? Math.max(...mockDatCho.map(d => d.maDatCho)) + 1 : 1
-    const newItem: DatCho = {
-      maDatCho: newId,
-      nguoiDung: { maNguoiDung: '99', hoDem: 'Sinh viên', ten: 'Test', email: 'sv@school.edu.vn' },
-      sach: { maSach: sachId, tenSach: 'Sách Mock', isbn: 'MOCK-ISBN' },
-      ngayDat: new Date().toISOString(),
-      trangThai: 'CHO_DUYET'
-    }
-    mockDatCho.push(newItem)
-    return newItem
-  },
-
-  duyet: async (id: number) => {
-    await delay(500)
-    const index = mockDatCho.findIndex(d => d.maDatCho === id)
-    if (index !== -1) {
-      const datCho = mockDatCho[index]
-      if (datCho) datCho.trangThai = 'DA_SAN_SANG'
-    }
-    return mockDatCho[index]
-  },
-
-  huy: async (id: number, body: HuyDatChoRequest) => {
-    await delay(500)
-    const index = mockDatCho.findIndex(d => d.maDatCho === id)
-    if (index !== -1) {
-      const datCho = mockDatCho[index]
-      if (datCho) {
-        datCho.trangThai = 'DA_HUY'
-        console.log(`Đã hủy đặt chỗ. Lý do: ${body.lyDo}`) // In ra console để biết data truyền đúng
-      }
-    }
-    return mockDatCho[index]
+  return {
+    maDatCho: res.maDatCho,
+    nguoiDung: {
+      maNguoiDung: res.maNguoiDung || '',
+      hoDem: res.hoDemNguoiDung || '',
+      ten: res.tenNguoiDung || 'Độc giả',
+      email: res.emailNguoiDung || 'N/A'
+    },
+    sach: {
+      maSach: res.maSach || 0,
+      tenSach: res.tenSach || 'Đầu sách',
+      maIsbn: res.maIsbn || 'N/A'
+    },
+    ngayDatCho: res.thoiGianDatCho || res.ngayDatCho || new Date().toISOString(),
+    ngayHetHan: res.hanGiuCho || res.ngayHetHan || new Date().toISOString(),
+    trangThai: status
   }
 }
+
+const mapList = (list: any[]): DatCho[] => (Array.isArray(list) ? list.map(mapResponseToDatCho) : [])
+const mapSingle = (item: any): DatCho => mapResponseToDatCho(item)
+
+export const datChoService = {
+  // Existing methods
+  danhSach: () =>
+    apiClient.get<any[]>('/api/dat-cho').then(mapList),
+
+  taoChoDocGia: (sachId: number) => {
+    const authStore = useAuthStore()
+    return apiClient.post<any>('/api/dat-cho', {
+      maSach: sachId,
+      maNguoiDung: authStore.thongTinNguoiDung?.maNguoiDung
+    }).then(mapSingle)
+  },
+
+  duyet: (id: string | number) =>
+    apiClient.put<any>(`/api/v1/dat-cho/${id}/duyet`).then(mapSingle),
+
+  huy: async (id: string | number, body: HuyDatChoRequest) => {
+    const ghiChu = body.lyDo || 'Độc giả yêu cầu hủy đặt chỗ'
+    await apiClient.put<void>(`/api/dat-cho/${id}/huy?ghiChu=${encodeURIComponent(ghiChu)}`)
+  },
+
+  // Requested English methods
+  getAll: () => {
+    return apiClient.get<any[]>('/api/dat-cho').then(mapList)
+  },
+
+  getMy: () => {
+    return apiClient.get<any[]>('/api/dat-cho/cua-toi').then(mapList)
+  },
+
+  reserve: (sachId: number) => {
+    const authStore = useAuthStore()
+    return apiClient.post<any>('/api/dat-cho', {
+      maSach: sachId,
+      maNguoiDung: authStore.thongTinNguoiDung?.maNguoiDung
+    }).then(mapSingle)
+  },
+
+  cancel: async (datChoId: string | number) => {
+    const ghiChu = encodeURIComponent('Hủy qua website')
+    await apiClient.put<void>(`/api/dat-cho/${datChoId}/huy?ghiChu=${ghiChu}`)
+  }
+}
+
+export default datChoService

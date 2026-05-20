@@ -38,6 +38,10 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException(
                         "Không tìm thấy người dùng với email: " + email));
 
+        if (nguoiDung.getNgayXoa() != null) {
+            throw new UsernameNotFoundException("Tài khoản đã bị xóa");
+        }
+
         // Bọc entity NguoiDung vào CustomUserDetails để Spring Security sử dụng
         return new CustomUserDetails(nguoiDung);
     }
