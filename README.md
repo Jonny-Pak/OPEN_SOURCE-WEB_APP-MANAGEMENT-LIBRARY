@@ -19,33 +19,41 @@ Dự án áp dụng mô hình **Client-Server tách biệt (RESTful API + SPA)**
 
 ---
 
-## 📂 Cấu Trúc Thư Mục Dự Án
+## Cấu Trúc Thư Mục Dự Án
 
 ```text
 library_system/
 │
 ├── backend/                       # Source code Backend (Spring Boot)
-│   └── src/main/java/com/hcmunre/library_backend/
-│       ├── config/                # Cấu hình Security, CORS, Swagger...
+│   └── src/main/java/com/hcmunre/library/
+│       ├── config/                # Cấu hình hệ thống (CORS, Cloudinary, OpenAPI...)
 │       ├── controller/            # Nhận HTTP Requests, trả về JSON Responses
 │       ├── dto/                   # Data Transfer Objects (Request/Response format)
 │       ├── entity/                # (Models) Map với các bảng trong Database
+│       ├── enums/                 # Định nghĩa các hằng số, trạng thái
 │       ├── exception/             # Xử lý lỗi tập trung (GlobalExceptionHandler)
 │       ├── repository/            # Tương tác với Database (Spring Data JPA)
+│       ├── scheduler/             # Các tác vụ chạy ngầm định kỳ (Cron jobs)
+│       ├── security/              # Cấu hình bảo mật, xử lý JWT Token
 │       └── service/               # Chứa logic nghiệp vụ (Business logic)
 │
-├── frontend/                      # Source code Frontend (Vue 3)
+├── frontend/                      # Source code Frontend (Vue 3 + TypeScript)
 │   ├── src/
-│   │   ├── assets/                # Hình ảnh, CSS toàn cục
-│   │   ├── components/            # Các UI component dùng chung (Navbar, Table...)
-│   │   ├── views/                 # Các trang chính (Dashboard, Login, Books...)
-│   │   ├── router/                # Cấu hình đường dẫn các trang
-│   │   ├── stores/                # Pinia state management
-│   │   └── services/              # Các file gọi API đến Backend (Axios)
+│   │   ├── assets/                # Hình ảnh, CSS toàn cục, Font chữ
+│   │   ├── components/            # Các UI component dùng chung (Layout, Dialog...)
+│   │   ├── composables/           # Các custom hook (useToast, usePagination...)
+│   │   ├── router/                # Cấu hình đường dẫn, phân quyền các trang
+│   │   ├── services/              # Các file gọi API kết nối Backend (Axios)
+│   │   ├── stores/                # Pinia state management (Auth, Settings...)
+│   │   ├── types/                 # Định nghĩa Interface/Type cho TypeScript
+│   │   └── views/                 # Các màn hình chính (Admin, User, Auth...)
 │   └── package.json
 │
+├── CAUTRUC.md                     # Tài liệu giải thích chi tiết cấu trúc thư mục
 └── README.md                      # Tài liệu tổng quan dự án
 ```
+
+👉 **Để xem giải thích chi tiết chức năng của từng thư mục và tệp tin, vui lòng tham khảo file [CAUTRUC.md](./CAUTRUC.md).**
 
 ---
 
@@ -92,4 +100,43 @@ Khi commit code, yêu cầu bắt buộc ghi message theo chuẩn sau (bằng ti
 
 ## ⚙️ Hướng Dẫn Cài Đặt
 
-*(Sẽ cập nhật sau khi cấu hình xong Database và các script chạy dự án)*
+### Yêu cầu hệ thống
+- **Java 17** trở lên
+- **Node.js 18** trở lên & npm
+- **PostgreSQL 14** trở lên
+
+### Bước 1: Cài đặt Cơ sở dữ liệu (PostgreSQL)
+1. Mở PostgreSQL (qua pgAdmin hoặc CLI) và tạo một database mới tên là `quanlythuvien`.
+2. Mở file `backend/src/main/resources/application.yaml`.
+3. Tìm đến phần `spring.datasource` và cập nhật `username`, `password` cho khớp với PostgreSQL của máy bạn:
+   ```yaml
+   datasource:
+     url: jdbc:postgresql://localhost:5432/quanlythuvien
+     username: postgres
+     password: 123456 # Thay bằng mật khẩu của bạn
+   ```
+
+### Bước 2: Chạy Backend (Spring Boot)
+1. Mở terminal, di chuyển vào thư mục `backend/`:
+   ```bash
+   cd backend
+   ```
+2. Chạy ứng dụng bằng Maven Wrapper:
+   - Trên Windows: `.\mvnw spring-boot:run`
+   - Trên Mac/Linux: `./mvnw spring-boot:run`
+3. Backend sẽ khởi động và chạy tại: `http://localhost:8080`. (Cơ sở dữ liệu sẽ tự động được tạo bảng nhờ Hibernate).
+
+### Bước 3: Chạy Frontend (Vue.js)
+1. Mở một terminal mới, di chuyển vào thư mục `frontend/`:
+   ```bash
+   cd frontend
+   ```
+2. Cài đặt các thư viện (dependencies):
+   ```bash
+   npm install
+   ```
+3. Khởi động server phát triển:
+   ```bash
+   npm run dev
+   ```
+4. Mở trình duyệt và truy cập vào: `http://localhost:5173`. Hệ thống đã sẵn sàng sử dụng!

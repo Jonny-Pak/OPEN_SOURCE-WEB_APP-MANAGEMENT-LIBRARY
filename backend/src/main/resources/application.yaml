@@ -4,6 +4,17 @@ server:
 spring:
   application:
     name: quanlythuvien
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: thuanln1907@gmail.com
+    password: xqtwwnjmyndssntb
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
   datasource:
     url: jdbc:postgresql://localhost:5432/quanlythuvien
@@ -11,7 +22,36 @@ spring:
     password: 123456 # đổi mật khẩu ở đây nhé
     driver-class-name: org.postgresql.Driver
 
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB      # Giới hạn mỗi file (ZIP + ảnh)
+      max-request-size: 55MB   # Giới hạn toàn bộ request
+
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
+
+# ===== Cấu hình JWT =====
+# Khóa bí mật mã hóa Base64 (thay đổi trong môi trường production!)
+# Thời gian hết hạn: 7 ngày = 604800000 ms (để dev/test dễ dàng)
+jwt:
+  secret: Y29tLmhjbXVucmUubGlicmFyeS5zZWNyZXQua2V5LmZvci5qd3QuYXV0aGVudGljYXRpb24uc3VwZXIuc2VjdXJl
+  expiration: 604800000
+
+# ===== Cấu hình Logging =====
+# Log ghi vào file logs/library.log, tự động xoay mỗi 10MB, giữ 30 ngày
+logging:
+  file:
+    name: logs/library.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 30
+  level:
+    # Log của ứng dụng — DEBUG để bắt exception chi tiết khi import
+    com.hcmunre.library: DEBUG
+    # Tắt log SQL chi tiết khi production (chỉ bật khi debug)
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql: WARN
