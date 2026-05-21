@@ -108,7 +108,7 @@ const handleLogin = async () => {
                   <span class="checkmark"></span>
                   Ghi nhớ đăng nhập
                 </label>
-                <a href="#" class="link forgot-password">Quên mật khẩu?</a>
+                <router-link to="/forgot-password" class="link forgot-password">Quên mật khẩu?</router-link>
               </div>
               
               <button type="submit" class="btn btn-primary btn-block" :disabled="isSubmitting">

@@ -73,7 +73,6 @@ const menuItems: MenuItem[] = [
   {
     label: 'Danh mục',
     icon: 'fa-solid fa-layer-group',
-    onlyAdmin: true,
     children: [
       { label: 'Tác giả', icon: 'fa-solid fa-pen-nib', route: '/admin/danh-muc/tac-gia', permission: 'tac-gia:view' },
       { label: 'Nhà xuất bản', icon: 'fa-solid fa-building-columns', route: '/admin/danh-muc/nha-xuat-ban', permission: 'nha-xuat-ban:view' },

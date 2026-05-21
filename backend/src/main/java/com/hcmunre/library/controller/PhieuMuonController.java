@@ -33,6 +33,9 @@ public class PhieuMuonController {
 
     private final PhieuMuonService phieuMuonService;
     private final PhieuPhatService phieuPhatService;
+    private final com.hcmunre.library.scheduler.PhieuMuonScheduler phieuMuonScheduler;
+
+
 
     @PostMapping
     @PreAuthorize("hasAnyRole('THU_THU', 'QUAN_TRI_VIEN') or (#request.maNguoiDung == authentication.principal.nguoiDung.maNguoiDung)")

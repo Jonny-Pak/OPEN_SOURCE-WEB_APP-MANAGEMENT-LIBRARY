@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-// @Component <-- Đã vô hiệu hóa để không chạy ngầm và không gây lỗi terminal
+@Component
 @RequiredArgsConstructor
 @Slf4j
 public class EmailOutboxScheduler {
