@@ -117,6 +117,11 @@ const router = createRouter({
       name: 'login',
       component: LoginView,
     },
+    {
+      path: '/forgot-password',
+      name: 'forgot-password',
+      component: () => import('../views/Login/ForgotPasswordView.vue'),
+    },
 
     // ===== ADMIN ROUTES =====
     {

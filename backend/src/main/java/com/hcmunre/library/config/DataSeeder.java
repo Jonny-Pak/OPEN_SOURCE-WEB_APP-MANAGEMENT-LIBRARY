@@ -55,6 +55,8 @@ public class DataSeeder implements CommandLineRunner {
                         // Nếu DB đã có sách nhưng chưa có yêu cầu gia hạn, seed gia hạn mẫu
                         seedGiaHanIfNeeded();
                 }
+
+
         }
 
         private void seedUsers() {
@@ -95,9 +97,26 @@ public class DataSeeder implements CommandLineRunner {
 
                         nguoiDungRepository.saveAll(Arrays.asList(admin, thuThu, docGia));
                         log.info(
-                                        "✅ Đã tạo 3 tài khoản test: admin@library.edu.vn | thuvien@library.edu.vn | docgia@library.edu.vn");
+                                        "✅ Đã tạo 3 tài khoản test mặc định");
                 } else {
-                        log.info("ℹ️ Bảng người dùng đã có dữ liệu — bỏ qua seed users");
+                        log.info("ℹ️ Bảng người dùng đã có dữ liệu — bỏ qua seed users mặc định");
+                }
+
+                // Luôn kiểm tra và thêm tài khoản mới nếu chưa có
+                if (!nguoiDungRepository.existsByEmail("1250080199@sv.hcmunre.edu.vn")) {
+                        NguoiDung docGia2 = NguoiDung.builder()
+                                        .hoDem("Lê Thanh")
+                                        .ten("Tính")
+                                        .email("1250080199@sv.hcmunre.edu.vn")
+                                        .soDienThoai("0900000004")
+                                        .matKhau(passwordEncoder.encode("SinhVien@123456"))
+                                        .vaiTro(VaiTro.DOC_GIA)
+                                        .trangThai(TrangThaiNguoiDung.HOAT_DONG)
+                                        .gioiTinh(GioiTinh.NAM)
+                                        .ngaySinh(LocalDate.of(2002, 5, 10))
+                                        .build();
+                        nguoiDungRepository.save(docGia2);
+                        log.info("✅ Đã tạo tài khoản test bổ sung: 1250080199@sv.hcmunre.edu.vn");
                 }
         }
 
@@ -482,7 +501,8 @@ public class DataSeeder implements CommandLineRunner {
                                 log.info("✅ Đã seed 1 yêu cầu gia hạn mẫu (CHỜ DUYỆT)");
                         }
                 }
-        }
+
+
 
         /**
          * Seed yêu cầu gia hạn mẫu nếu chưa có (dùng cho DB đã có data sẵn).

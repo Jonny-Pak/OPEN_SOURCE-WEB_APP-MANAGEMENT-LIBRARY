@@ -125,9 +125,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/nha-xuat-ban/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/hinh-anh-sach/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/cuon-sach/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/danh-muc/**", "/api/v1/danh-muc/**").permitAll()
                 // Cho phép xem file tĩnh (ảnh sách, avatar) công khai
                 .requestMatchers(HttpMethod.GET, "/api/v1/files/**").permitAll()
                 .requestMatchers("/api/v1/lien-he/**").permitAll()
+
                 // Tất cả request khác BẮT BUỘC phải đăng nhập (có token)
                 .anyRequest().authenticated()
             )

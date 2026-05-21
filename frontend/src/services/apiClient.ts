@@ -34,6 +34,11 @@ apiClient.interceptors.response.use(
 
       // 401 Redirects to /login
       if (status === 401) {
+        const url = error.config?.url || ''
+        if (url.includes('/login')) {
+           return Promise.reject(error.response.data || new Error('Tài khoản hoặc mật khẩu không chính xác'))
+        }
+
         authStore.xoaXacThuc()
         
         // Save redirect path if possible
@@ -41,7 +46,10 @@ apiClient.interceptors.response.use(
         if (currentPath && currentPath !== '/login') {
           await router.push(`/login?redirect=${encodeURIComponent(currentPath)}`)
         } else {
-          await router.push('/login')
+          // If we are already on the login page and it wasn't a login request, we don't necessarily need to push to /login again, but it's safe.
+          if (currentPath !== '/login') {
+             await router.push('/login')
+          }
         }
         
         return Promise.reject(new Error('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại'))
